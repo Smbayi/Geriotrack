@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GérioTrack — Connexion portail</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--bg3:#1a2235;--border:rgba(255,255,255,0.07);--teal:#00d4aa;--teal-dim:rgba(0,212,170,0.10);--red:#ff4d6d;--purple:#a78bfa;--purple-dim:rgba(167,139,250,0.10);--blue:#60a5fa;--blue-dim:rgba(96,165,250,0.10);--txt:#e2e8f0;--txt2:#94a3b8;--txt3:#475569;--font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'IBM Plex Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:var(--bg);color:var(--txt);font-family:var(--font-body);display:flex;align-items:center;justify-content:center;padding:24px;background-image:radial-gradient(ellipse at 20% 20%,rgba(0,212,170,.08),transparent 40%),radial-gradient(ellipse at 80% 80%,rgba(167,139,250,.08),transparent 40%)}
+.wrap{width:min(520px,100%)}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:32px 28px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.logo{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.logo-icon{width:40px;height:40px;background:var(--teal);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.logo-icon svg{width:20px;height:20px;stroke:#0a0e17;fill:none;stroke-width:2.2;stroke-linecap:round}
+.logo-name{font-family:var(--font-head);font-size:18px;font-weight:700;color:#fff}
+.logo-sub{font-size:11px;color:var(--txt3);font-family:var(--font-mono);margin-top:2px}
+h1{font-family:var(--font-head);font-size:22px;font-weight:700;color:#fff;margin-bottom:6px}
+.lead{font-size:13px;color:var(--txt2);line-height:1.5;margin-bottom:20px}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px}
+@media(max-width:480px){.roles{grid-template-columns:1fr}.card{padding:24px 18px}h1{font-size:20px}}
+.role{padding:18px 14px;border-radius:14px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;text-align:center;transition:all .15s}
+.role:hover{border-color:var(--border2,rgba(255,255,255,.13))}
+.role.active.famille{border-color:rgba(167,139,250,.45);background:var(--purple-dim);box-shadow:0 0 0 1px rgba(167,139,250,.2)}
+.role.active.patient{border-color:rgba(0,212,170,.45);background:var(--teal-dim);box-shadow:0 0 0 1px rgba(0,212,170,.2)}
+.role-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.role.famille .role-icon{background:var(--purple-dim);color:var(--purple)}
+.role.patient .role-icon{background:var(--teal-dim);color:var(--teal)}
+.role-icon svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
+.role-title{font-family:var(--font-head);font-size:15px;font-weight:600;color:#fff;margin-bottom:4px}
+.role-desc{font-size:11px;color:var(--txt3);font-family:var(--font-mono);line-height:1.4}
+.step2{display:none}
+.step2.show{display:block}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:10px;color:var(--txt3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.field input,.field select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:11px 12px;color:var(--txt);font-size:14px;outline:none}
+.field input:focus,.field select:focus{border-color:rgba(0,212,170,.4)}
+.field select option{background:var(--bg2)}
+.btn{width:100%;margin-top:8px;padding:12px;border:none;border-radius:10px;background:var(--teal);color:#0a0e17;font-family:var(--font-head);font-weight:700;font-size:14px;cursor:pointer}
+.btn:hover{background:#00ebb9}
+.btn.purple{background:var(--purple);color:#0a0e17}
+.btn.purple:hover{filter:brightness(1.08)}
+.hint{margin-top:16px;padding:12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;font-size:11px;color:var(--txt2);font-family:var(--font-mono);line-height:1.5}
+.hint strong{color:var(--teal)}
+.err{display:none;margin-top:10px;color:var(--red);font-size:12px;font-family:var(--font-mono)}
+.back{display:block;text-align:center;margin-top:16px;font-size:12px;color:var(--txt3);text-decoration:none;font-family:var(--font-mono)}
+.back:hover{color:var(--teal)}
+.change-role{background:none;border:none;color:var(--txt3);font-size:11px;font-family:var(--font-mono);cursor:pointer;margin-bottom:12px;padding:0}
+.change-role:hover{color:var(--teal)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+      <div><div class="logo-name">GérioTrack</div><div class="logo-sub">Portail usagers · Kinshasa</div></div>
+    </div>
+
+    <div id="step1">
+      <h1>Qui êtes-vous ?</h1>
+      <p class="lead">Choisissez votre profil pour accéder à votre espace. Les fonctionnalités sont adaptées à chaque rôle.</p>
+      <div class="roles">
+        <div class="role famille" id="roleFamille" onclick="pickRole('famille')">
+          <div class="role-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div class="role-title">Famille</div>
+          <div class="role-desc">Suivre mon proche, alertes, appels, localisation</div>
+        </div>
+        <div class="role patient" id="rolePatient" onclick="pickRole('patient')">
+          <div class="role-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <div class="role-title">Patient</div>
+          <div class="role-desc">Mon état, mes alertes, contacter famille & médecin</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step2" id="step2">
+      <button type="button" class="change-role" onclick="resetRole()">← Changer de profil</button>
+      <h1 id="stepTitle">Connexion</h1>
+      <p class="lead" id="stepLead">Identifiez-vous pour continuer.</p>
+      <form id="loginForm" onsubmit="return doLogin(event)">
+        <div class="field">
+          <label for="profil" id="profilLabel">Profil</label>
+          <select id="profil"></select>
+        </div>
+        <div class="field">
+          <label for="code">Code d’accès</label>
+          <input id="code" type="password" value="gerio123" required>
+        </div>
+        <button class="btn" id="submitBtn" type="submit">Entrer dans mon espace</button>
+        <div class="err" id="err">Code incorrect. Essayez : gerio123</div>
+      </form>
+      <div class="hint">Démo — code : <strong>gerio123</strong><br>Les comptes <strong>Famille</strong> et <strong>Patient</strong> sont séparés : chacun a son propre espace, sans bascule directe.</div>
+    </div>
+
+    <a class="back" href="/">← Espace médecin (admin)</a>
+  </div>
+</div>
+
+<script>
+let role = null;
+
+const PROFILS = {
+  famille: [
+    {id:'F001', label:'Marie Dupont — proche de Jean Dupont'},
+    {id:'F002', label:'Paul Martin — proche de Marie Martin'},
+    {id:'F003', label:'Julie Simon — proche d’André Simon'},
+  ],
+  patient: [
+    {id:'P001', label:'Jean Dupont — Gombe'},
+    {id:'P002', label:'Marie Martin — Lingwala'},
+    {id:'P008', label:'André Simon — Kalamu'},
+  ],
+};
+
+function pickRole(r){
+  role = r;
+  document.getElementById('roleFamille').classList.toggle('active', r==='famille');
+  document.getElementById('rolePatient').classList.toggle('active', r==='patient');
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step2').classList.add('show');
+
+  const sel = document.getElementById('profil');
+  sel.innerHTML = PROFILS[r].map(p => `<option value="${p.id}">${p.label}</option>`).join('');
+
+  if(r==='famille'){
+    document.getElementById('stepTitle').textContent = 'Connexion famille';
+    document.getElementById('stepLead').textContent = 'Suivez l’état de santé de votre proche et recevez les alertes.';
+    document.getElementById('profilLabel').textContent = 'Profil famille';
+    document.getElementById('submitBtn').className = 'btn purple';
+    document.getElementById('submitBtn').textContent = 'Entrer en tant que famille';
+  } else {
+    document.getElementById('stepTitle').textContent = 'Connexion patient';
+    document.getElementById('stepLead').textContent = 'Consultez votre suivi et contactez votre famille ou le médecin.';
+    document.getElementById('profilLabel').textContent = 'Mon profil patient';
+    document.getElementById('submitBtn').className = 'btn';
+    document.getElementById('submitBtn').textContent = 'Entrer en tant que patient';
+  }
+}
+
+function resetRole(){
+  role = null;
+  document.getElementById('step1').style.display = 'block';
+  document.getElementById('step2').classList.remove('show');
+  document.getElementById('roleFamille').classList.remove('active');
+  document.getElementById('rolePatient').classList.remove('active');
+  document.getElementById('err').style.display = 'none';
+}
+
+function doLogin(e){
+  e.preventDefault();
+  if(!role) return false;
+  const code = document.getElementById('code').value.trim();
+  if(code !== 'gerio123'){
+    document.getElementById('err').style.display = 'block';
+    return false;
+  }
+  const profil = document.getElementById('profil').value;
+  sessionStorage.setItem('gerio_role', role);
+  sessionStorage.setItem('gerio_profil', profil);
+  // compat ancien portail
+  if(role === 'famille') sessionStorage.setItem('gerio_famille', profil);
+  else sessionStorage.removeItem('gerio_famille');
+
+  window.location.href = role === 'famille' ? '/portail/famille/' : '/portail/patient/';
+  return false;
+}
+</script>
+</body>
+</html>

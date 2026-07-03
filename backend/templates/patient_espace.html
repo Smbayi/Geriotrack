@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GérioTrack — Espace patient</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#071410;--bg2:#0d1f1a;--bg3:#132a23;--bg4:#1a342c;
+  --border:rgba(0,212,170,.12);--border2:rgba(0,212,170,.28);
+  --accent:#00d4aa;--accent-dim:rgba(0,212,170,.12);
+  --red:#ff4d6d;--red-dim:rgba(255,77,109,.14);
+  --amber:#f59e0b;--blue:#60a5fa;--purple:#a78bfa;--green:#34d399;
+  --txt:#e8fff7;--txt2:#9ecfbf;--txt3:#4d7a6c;
+  --sidebar-w:260px;--bottom-h:68px;
+  --font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'IBM Plex Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-size:15px;min-height:100vh;display:flex}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 0%,rgba(0,212,170,.14),transparent 50%);z-index:0}
+
+.sidebar{width:var(--sidebar-w);min-height:100vh;background:linear-gradient(180deg,#0f241d,#0a1814);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100}
+.sidebar-logo{padding:22px 18px;border-bottom:1px solid var(--border)}
+.logo-mark{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.logo-icon svg{width:18px;height:18px;stroke:#071410;fill:none;stroke-width:2.2;stroke-linecap:round}
+.logo-name{font-family:var(--font-head);font-size:16px;font-weight:700;color:#fff}
+.logo-sub{font-size:10px;color:var(--accent);margin-top:2px;font-family:var(--font-mono)}
+.sidebar-section{padding:14px 10px}
+.sidebar-label{font-size:10px;color:var(--txt3);letter-spacing:.12em;text-transform:uppercase;padding:0 10px;margin-bottom:8px;font-family:var(--font-mono)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;cursor:pointer;color:var(--txt2);font-size:14px;transition:all .15s;margin-bottom:4px;border:1px solid transparent;text-decoration:none;background:transparent;width:100%;font-family:var(--font-body)}
+.nav-item:hover{background:var(--bg3);color:var(--txt)}
+.nav-item.active{background:var(--accent-dim);color:var(--accent);border-color:var(--border2);font-weight:600}
+.nav-item svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;flex-shrink:0}
+.nav-item .lbl{flex:1;text-align:left}
+.nav-badge{background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:var(--font-mono)}
+.sidebar-bottom{margin-top:auto;border-top:1px solid var(--border);padding:14px}
+.user-card{display:flex;align-items:center;gap:10px}
+.u-av{width:40px;height:40px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--accent);font-family:var(--font-head)}
+.u-name{font-size:14px;font-weight:600}.u-role{font-size:11px;color:var(--txt3)}
+
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0;position:relative;z-index:1}
+.topbar{min-height:58px;background:rgba(13,31,26,.92);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:10px 18px;gap:10px;position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);flex-wrap:wrap}
+.topbar-title{font-family:var(--font-head);font-size:17px;font-weight:700;color:#fff}
+.topbar-sub{font-size:11px;color:var(--txt3);font-family:var(--font-mono)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.pill{background:var(--accent-dim);border:1px solid var(--border2);padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;color:var(--accent);font-family:var(--font-mono)}
+.clock{font-family:var(--font-mono);font-size:12px;color:var(--txt2)}
+.content{padding:16px;flex:1;max-width:720px;margin:0 auto;width:100%}
+.panel{display:none}.panel.active{display:block}
+
+.welcome{text-align:center;margin-bottom:18px}
+.welcome h2{font-family:var(--font-head);font-size:24px;font-weight:700;color:#fff;margin-bottom:6px}
+.welcome p{color:var(--txt2);font-size:14px}
+.status-orb{width:120px;height:120px;border-radius:50%;margin:18px auto;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:18px;font-weight:700;border:3px solid;position:relative}
+.status-orb::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:1px solid currentColor;opacity:.25}
+.status-orb.ok{color:var(--accent);background:var(--accent-dim);border-color:var(--accent);box-shadow:0 0 40px rgba(0,212,170,.2)}
+.status-orb.alert{color:var(--red);background:var(--red-dim);border-color:var(--red);box-shadow:0 0 40px rgba(255,77,109,.25)}
+.status-orb.warn{color:var(--amber);background:rgba(245,158,11,.12);border-color:var(--amber)}
+
+.big-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.big-btn{border:none;border-radius:18px;padding:22px 14px;font-family:var(--font-head);font-size:16px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:transform .15s}
+.big-btn:active{transform:scale(.97)}
+.big-btn svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.big-ok{background:var(--accent);color:#071410}
+.big-sos{background:var(--red);color:#fff}
+
+.info-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.info{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center}
+.info .lbl{font-size:11px;color:var(--txt3);font-family:var(--font-mono);text-transform:uppercase;margin-bottom:6px}
+.info .val{font-family:var(--font-head);font-size:20px;font-weight:700;color:#fff}
+
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:14px}
+.card-h{padding:14px 16px;border-bottom:1px solid var(--border);font-family:var(--font-head);font-size:14px;font-weight:700;color:#fff}
+.card-b{padding:14px 16px}
+.contact-btn{width:100%;display:flex;align-items:center;gap:12px;padding:16px;border-radius:14px;border:1px solid var(--border);background:var(--bg3);color:var(--txt);font-size:15px;font-weight:500;cursor:pointer;margin-bottom:10px;font-family:var(--font-body);text-align:left}
+.contact-btn:last-child{margin-bottom:0}
+.contact-btn .ico{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.contact-btn .ico svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2}
+.contact-btn .ico.fam{background:rgba(96,165,250,.15);color:var(--blue)}
+.contact-btn .ico.doc{background:rgba(167,139,250,.15);color:var(--purple)}
+.contact-btn .ico.sms{background:var(--accent-dim);color:var(--accent)}
+.contact-btn .meta{font-size:12px;color:var(--txt3);font-family:var(--font-mono);margin-top:2px}
+
+.alert-item{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)}
+.alert-item:last-child{border-bottom:none}
+.a-icon{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.a-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+.ai-red{background:var(--red-dim);color:var(--red)}.ai-blue{background:rgba(96,165,250,.12);color:var(--blue)}
+.a-text{font-size:14px;font-weight:500}.a-time{font-size:12px;color:var(--txt3);font-family:var(--font-mono);margin-top:3px}
+.msg-box textarea{width:100%;min-height:100px;background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:14px;color:var(--txt);font-size:15px;font-family:var(--font-body);outline:none;resize:vertical;margin-bottom:10px}
+.msg-box textarea:focus{border-color:var(--border2)}
+.msg-row{display:flex;flex-direction:column;gap:8px}
+.msg-row button{padding:14px;border-radius:14px;border:1px solid var(--border);background:var(--bg3);color:var(--txt2);font-size:14px;cursor:pointer;font-family:var(--font-body)}
+.msg-row button.primary{background:var(--accent);border-color:var(--accent);color:#071410;font-weight:700;font-family:var(--font-head)}
+.loc-box{text-align:center;padding:10px 0 6px}
+.loc-zone{font-family:var(--font-head);font-size:28px;font-weight:700;color:var(--accent);margin-bottom:6px}
+.loc-coords{font-family:var(--font-mono);font-size:12px;color:var(--txt3);margin-bottom:16px}
+.full-btn{width:100%;padding:16px;border-radius:14px;border:none;background:var(--accent);color:#071410;font-family:var(--font-head);font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px}
+.full-btn.ghost{background:transparent;border:1px solid var(--border2);color:var(--accent)}
+.note{color:var(--txt2);line-height:1.6;font-size:14px}
+.hist{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.hitem{padding:12px;background:var(--bg3);border-radius:12px;border:1px solid var(--border)}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:16px;right:16px;max-width:400px;margin:0 auto;z-index:700;background:var(--bg2);border:1px solid var(--border2);color:var(--accent);padding:14px;border-radius:14px;font-size:13px;font-family:var(--font-mono);opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;text-align:center}
+.toast.show{opacity:1;transform:translateY(0)}
+.logout{color:var(--txt3)!important}
+
+.bottom-nav{display:none;position:fixed;left:0;right:0;bottom:0;height:calc(var(--bottom-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(13,31,26,.97);border-top:1px solid var(--border);z-index:200}
+.bottom-nav .nav-item{flex-direction:column;gap:3px;padding:8px 2px;margin:0;border:none;border-radius:0;font-size:10px;justify-content:center}
+.bottom-nav .nav-item.active{background:transparent;color:var(--accent);border:none}
+.bottom-nav .nav-item svg{width:20px;height:20px}
+
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{margin-left:0;padding-bottom:var(--bottom-h)}
+  .bottom-nav{display:flex}
+  .content{padding:14px;padding-bottom:calc(14px + var(--bottom-h))}
+  .welcome h2{font-size:20px}
+  .status-orb{width:100px;height:100px;font-size:15px}
+  .big-btn{padding:18px 10px;font-size:14px}
+}
+@media(min-width:769px) and (max-width:1024px){
+  .content{max-width:640px;padding:18px}
+}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div><div class="logo-name">GérioTrack</div><div class="logo-sub">MON ESPACE PATIENT</div></div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Menu</div>
+    <button class="nav-item active" data-panel="accueil" onclick="showPanel('accueil',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg><span class="lbl">Accueil</span></button>
+    <button class="nav-item" data-panel="alertes" onclick="showPanel('alertes',this)"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="lbl">Mes alertes</span><span class="nav-badge" id="navAlertBadge">0</span></button>
+    <button class="nav-item" data-panel="comm" onclick="showPanel('comm',this)"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span class="lbl">Appeler</span></button>
+    <button class="nav-item" data-panel="localisation" onclick="showPanel('localisation',this)"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="lbl">Ma position</span></button>
+    <button class="nav-item" data-panel="notes" onclick="showPanel('notes',this)"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="lbl">Notes médecin</span></button>
+  </div>
+  <div class="sidebar-section">
+    <button class="nav-item logout" onclick="logout()"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span class="lbl">Déconnexion</span></button>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="u-av" id="uAv">P</div>
+      <div><div class="u-name" id="uName">Patient</div><div class="u-role">Compte personnel</div></div>
+    </div>
+  </div>
+</aside>
+
+<nav class="bottom-nav" id="bottomNav"></nav>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="pageTitle">Accueil</div>
+      <div class="topbar-sub" id="pageSub">Bonjour, voici votre journée</div>
+    </div>
+    <div class="topbar-right">
+      <div class="pill">PATIENT</div>
+      <div class="clock" id="clock">--:--:--</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="panel active" id="panel-accueil">
+      <div class="welcome">
+        <h2 id="hello">Bonjour</h2>
+        <p>Comment vous sentez-vous aujourd’hui ?</p>
+        <div class="status-orb ok" id="statusOrb">Tout va bien</div>
+      </div>
+      <div class="big-actions">
+        <button class="big-btn big-ok" onclick="imOk()">
+          <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Je vais bien
+        </button>
+        <button class="big-btn big-sos" onclick="sos()">
+          <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Urgence
+        </button>
+      </div>
+      <div class="info-cards">
+        <div class="info"><div class="lbl">Ma zone</div><div class="val" id="infoZone">—</div></div>
+        <div class="info"><div class="lbl">Alertes</div><div class="val" id="infoAlerts">0</div></div>
+      </div>
+      <div class="card">
+        <div class="card-h">Besoin d’aide ?</div>
+        <div class="card-b">
+          <button class="contact-btn" onclick="callFamily()"><div class="ico fam"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div><div><div>Appeler ma famille</div><div class="meta" id="famShort">—</div></div></button>
+          <button class="contact-btn" onclick="callDoctor()"><div class="ico doc"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div><div><div>Appeler mon médecin</div><div class="meta" id="docShort">—</div></div></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-alertes">
+      <div class="card">
+        <div class="card-h">Mes alertes</div>
+        <div class="card-b" id="allAlerts"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-comm">
+      <div class="card">
+        <div class="card-h">Qui appeler ?</div>
+        <div class="card-b">
+          <button class="contact-btn" onclick="callFamily()"><div class="ico fam"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div><div><div id="famName">Famille</div><div class="meta" id="famTel">—</div></div></button>
+          <button class="contact-btn" onclick="callDoctor()"><div class="ico doc"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div><div><div id="docName">Médecin</div><div class="meta" id="docTel">—</div></div></button>
+          <button class="contact-btn" onclick="smsFamily()"><div class="ico sms"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div><div>Envoyer un SMS à ma famille</div><div class="meta">Message rapide</div></div></button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h">Écrire un message</div>
+        <div class="card-b">
+          <div class="msg-box">
+            <textarea id="msgText" placeholder="Écrivez ici…"></textarea>
+            <div class="msg-row">
+              <button type="button" onclick="quickMsg('Je vais bien, ne vous inquiétez pas.')">Je vais bien</button>
+              <button type="button" onclick="quickMsg('J’ai besoin d’aide, merci de me rappeler.')">Besoin d’aide</button>
+              <button type="button" class="primary" onclick="sendMessage()">Envoyer à ma famille</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-localisation">
+      <div class="card">
+        <div class="card-h">Ma position</div>
+        <div class="card-b">
+          <div class="loc-box">
+            <div class="loc-zone" id="locZone">—</div>
+            <div class="loc-coords" id="locCoords">—</div>
+          </div>
+          <button class="full-btn" onclick="shareLocation()">Envoyer ma position à la famille</button>
+          <button class="full-btn ghost" onclick="goMap()">Voir sur la carte</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-notes">
+      <div class="card">
+        <div class="card-h">Notes de mon médecin</div>
+        <div class="card-b">
+          <p class="note" id="sNote">—</p>
+          <div class="hist" id="sHist"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+if(sessionStorage.getItem('gerio_role')!=='patient'){
+  window.location.href='/portail/';
+}
+
+const PATIENTS={
+  P001:{id:'P001',p:'Jean',n:'Dupont',a:78,zone:'Gombe',s:'stable',med:'Dr. Martin',medTel:'+243 81 111 0001',fam:'Marie Dupont',famTel:'+243 81 234 5678',lat:-4.3050,lon:15.3080,note:'Vous suivez bien votre traitement. Continuez ainsi.',hist:[{m:'Consultation OK',tm:'Aujourd\'hui'}],alerts:[{type:'blue',m:'Rappel : prendre vos médicaments',tm:'Aujourd\'hui 09:00'}]},
+  P002:{id:'P002',p:'Marie',n:'Martin',a:84,zone:'Lingwala',s:'alert',med:'Dr. Leroux',medTel:'+243 81 111 0002',fam:'Paul Martin',famTel:'+243 82 987 6543',lat:-4.3180,lon:15.3020,note:'Surveillez votre rythme. Votre famille a été informée.',hist:[{m:'Alerte chute signalée',tm:'14:32'}],alerts:[{type:'red',m:'Chute détectée — famille alertée',tm:'Aujourd\'hui 14:32'},{type:'red',m:'Rythme cardiaque élevé',tm:'Aujourd\'hui 14:30'}]},
+  P008:{id:'P008',p:'André',n:'Simon',a:82,zone:'Kalamu',s:'alert',med:'Dr. Leroux',medTel:'+243 81 111 0002',fam:'Julie Simon',famTel:'+243 81 112 2334',lat:-4.3480,lon:15.3050,note:'Le cardiologue a été contacté. Reposez-vous.',hist:[{m:'Alerte cardiaque',tm:'14:45'}],alerts:[{type:'red',m:'Alerte cardiaque — famille alertée',tm:'Aujourd\'hui 14:45'}]},
+};
+
+const patientId=sessionStorage.getItem('gerio_profil')||'P001';
+let me={...(PATIENTS[patientId]||PATIENTS.P001)};
+
+document.getElementById('uAv').textContent=(me.p[0]+me.n[0]).toUpperCase();
+document.getElementById('uName').textContent=`${me.p} ${me.n}`;
+document.getElementById('hello').textContent=`Bonjour ${me.p}`;
+
+function renderAll(){
+  const p=me;
+  const orb=document.getElementById('statusOrb');
+  if(p.s==='alert'){orb.className='status-orb alert';orb.textContent='Attention';}
+  else if(p.s==='warn'){orb.className='status-orb warn';orb.textContent='Surveiller';}
+  else{orb.className='status-orb ok';orb.textContent='Tout va bien';}
+  document.getElementById('infoZone').textContent=p.zone;
+  document.getElementById('infoAlerts').textContent=p.alerts.length;
+  document.getElementById('navAlertBadge').textContent=p.alerts.length;
+  document.querySelectorAll('.nav-badge-mobile').forEach(el=>el.textContent=p.alerts.length);
+  document.getElementById('famShort').textContent=p.fam;
+  document.getElementById('docShort').textContent=p.med;
+  document.getElementById('famName').textContent=p.fam;
+  document.getElementById('famTel').textContent=p.famTel;
+  document.getElementById('docName').textContent=p.med;
+  document.getElementById('docTel').textContent=p.medTel;
+  document.getElementById('locZone').textContent=p.zone;
+  document.getElementById('locCoords').textContent=`${Math.abs(p.lat).toFixed(4)}°S · ${p.lon.toFixed(4)}°E`;
+  document.getElementById('sNote').textContent=p.note;
+  document.getElementById('sHist').innerHTML=p.hist.map(h=>`<div class="hitem"><div class="a-text">${h.m}</div><div class="a-time">${h.tm}</div></div>`).join('');
+  document.getElementById('allAlerts').innerHTML=p.alerts.map(a=>`<div class="alert-item">
+    <div class="a-icon ${a.type==='red'?'ai-red':'ai-blue'}"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+    <div><div class="a-text">${a.m}</div><div class="a-time">${a.tm}</div></div>
+  </div>`).join('')||'<div style="color:var(--txt3)">Aucune alerte</div>';
+}
+
+function showPanel(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item[data-panel]').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll(`.nav-item[data-panel="${id}"]`).forEach(n=>n.classList.add('active'));
+  const titles={accueil:['Accueil','Bonjour, voici votre journée'],alertes:['Mes alertes','Ce qui vous concerne'],comm:['Appeler','Famille & médecin'],localisation:['Ma position','Kinshasa'],notes:['Notes médecin','Vos informations']};
+  document.getElementById('pageTitle').textContent=titles[id][0];
+  document.getElementById('pageSub').textContent=titles[id][1];
+}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+function imOk(){me.s='stable';toast('Message envoyé : « Je vais bien » — simulation');renderAll();}
+function sos(){
+  me.s='alert';
+  me.alerts.unshift({type:'red',m:'Vous avez demandé de l’aide — famille alertée',tm:'À l\'instant'});
+  toast('URGENCE envoyée à votre famille et au médecin');
+  renderAll();
+}
+function callFamily(){toast(`Appel vers ${me.fam} — simulation`);}
+function callDoctor(){toast(`Appel vers ${me.med} — simulation`);}
+function smsFamily(){toast(`SMS envoyé à ${me.fam} — simulation`);}
+function shareLocation(){toast(`Position ${me.zone} envoyée à la famille — simulation`);}
+function goMap(){window.location.href=`/portail/carte/?patient=${me.id}`;}
+function quickMsg(t){document.getElementById('msgText').value=t;}
+function sendMessage(){
+  const t=document.getElementById('msgText').value.trim();
+  if(!t){toast('Écrivez un message');return;}
+  toast('Message envoyé à votre famille — simulation');
+  document.getElementById('msgText').value='';
+}
+function logout(){
+  sessionStorage.removeItem('gerio_role');
+  sessionStorage.removeItem('gerio_profil');
+  sessionStorage.removeItem('gerio_famille');
+  window.location.href='/portail/';
+}
+
+document.getElementById('bottomNav').innerHTML=`
+  <button class="nav-item active" data-panel="accueil" onclick="showPanel('accueil')" style="flex:1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg><span class="lbl">Accueil</span></button>
+  <button class="nav-item" data-panel="alertes" onclick="showPanel('alertes')" style="position:relative;flex:1"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="lbl">Alertes</span><span class="nav-badge nav-badge-mobile">0</span></button>
+  <button class="nav-item" data-panel="comm" onclick="showPanel('comm')" style="flex:1"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span class="lbl">Appeler</span></button>
+  <button class="nav-item" data-panel="localisation" onclick="showPanel('localisation')" style="flex:1"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="lbl">Position</span></button>
+`;
+
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR');},1000);
+document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR');
+renderAll();
+</script>
+</body>
+</html>

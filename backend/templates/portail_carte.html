@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GérioTrack — Carte</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+:root{
+  --bg:#0a0e17;--bg2:#111827;--bg3:#1a2235;
+  --border:rgba(255,255,255,.08);
+  --accent:#00d4aa;--accent-dim:rgba(0,212,170,.12);
+  --red:#ff4d6d;--amber:#f59e0b;--txt:#e2e8f0;--txt2:#94a3b8;--txt3:#475569;
+  --font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'IBM Plex Mono',monospace;
+}
+body.role-famille{
+  --bg:#0c0a12;--bg2:#16121f;--bg3:#1f1a2b;
+  --border:rgba(167,139,250,.14);
+  --accent:#a78bfa;--accent-dim:rgba(167,139,250,.12);
+}
+body.role-patient{
+  --bg:#071410;--bg2:#0d1f1a;--bg3:#132a23;
+  --border:rgba(0,212,170,.14);
+  --accent:#00d4aa;--accent-dim:rgba(0,212,170,.12);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--txt);font-family:var(--font-body);display:flex;flex-direction:column}
+
+.top{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.back{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--txt2);text-decoration:none;font-size:12px;font-family:var(--font-mono);cursor:pointer}
+.back:hover{color:var(--accent);border-color:var(--accent)}
+.back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.titles{flex:1;min-width:140px}
+.titles h1{font-family:var(--font-head);font-size:16px;font-weight:700;color:#fff}
+.titles p{font-size:11px;color:var(--txt3);font-family:var(--font-mono);margin-top:2px}
+.badge{padding:5px 10px;border-radius:20px;font-size:10px;font-weight:700;font-family:var(--font-mono);background:var(--accent-dim);color:var(--accent);border:1px solid rgba(255,255,255,.06)}
+
+.map-wrap{flex:1;position:relative;min-height:0}
+#map{width:100%;height:100%;background:var(--bg)}
+.maplibregl-ctrl-group{background:var(--bg2)!important;border:1px solid var(--border)!important;box-shadow:none!important}
+.maplibregl-ctrl-group button{background:var(--bg2)!important}
+.maplibregl-ctrl-group button span{filter:invert(1)}
+.maplibregl-ctrl-attrib{background:rgba(0,0,0,.55)!important;color:var(--txt3)!important;font-size:10px!important}
+.maplibregl-ctrl-attrib a{color:var(--txt2)!important}
+
+.overlay{position:absolute;left:12px;right:12px;bottom:12px;z-index:5;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.card{pointer-events:auto;background:rgba(17,24,39,.94);border:1px solid var(--border);border-radius:16px;padding:14px;backdrop-filter:blur(10px)}
+body.role-famille .card{background:rgba(22,18,31,.95)}
+body.role-patient .card{background:rgba(13,31,26,.95)}
+.row{display:flex;align-items:center;gap:12px}
+.av{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;font-size:14px;border:2px solid;flex-shrink:0}
+.name{font-family:var(--font-head);font-size:16px;font-weight:700;color:#fff}
+.meta{font-size:11px;color:var(--txt3);font-family:var(--font-mono);margin-top:3px}
+.coords{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.coord{background:rgba(255,255,255,.04);border-radius:10px;padding:8px;text-align:center}
+.coord .l{font-size:9px;color:var(--txt3);font-family:var(--font-mono);text-transform:uppercase}
+.coord .v{font-size:12px;font-family:var(--font-mono);color:var(--accent);margin-top:3px;font-weight:600}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-family:var(--font-mono);color:var(--accent)}
+.live i{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;animation:p 1.2s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.actions button{padding:11px;border-radius:10px;border:1px solid var(--border);background:var(--accent-dim);color:var(--accent);font-family:var(--font-mono);font-size:11px;cursor:pointer}
+.actions button:hover{filter:brightness(1.1)}
+.marker{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;font-size:12px;border:3px solid;box-shadow:0 4px 16px rgba(0,0,0,.45);position:relative}
+.marker.pulse::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2px solid currentColor;animation:pulse 1.5s infinite;opacity:0}
+@keyframes pulse{0%{transform:scale(.8);opacity:.6}100%{transform:scale(1.4);opacity:0}}
+.city{position:absolute;top:12px;right:12px;z-index:5;background:rgba(0,0,0,.55);border:1px solid var(--border);border-radius:10px;padding:7px 10px;font-size:10px;font-family:var(--font-mono);color:var(--txt2)}
+.city strong{color:var(--accent)}
+@media(max-width:520px){
+  .coords{grid-template-columns:1fr}
+  .actions{grid-template-columns:1fr}
+  .titles h1{font-size:14px}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="back" id="backLink" href="/portail/">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    Retour
+  </a>
+  <div class="titles">
+    <h1 id="pageTitle">Carte</h1>
+    <p id="pageSub">Kinshasa · GPS temps réel</p>
+  </div>
+  <div class="badge" id="roleBadge">PORTAIL</div>
+</div>
+
+<div class="map-wrap">
+  <div id="map"></div>
+  <div class="city">Zone · <strong>Kinshasa</strong></div>
+  <div class="overlay">
+    <div class="card">
+      <div class="row">
+        <div class="av" id="av">—</div>
+        <div style="flex:1;min-width:0">
+          <div class="name" id="name">—</div>
+          <div class="meta" id="meta">—</div>
+          <div class="live" style="margin-top:6px"><i></i><span id="liveText">Position live</span></div>
+        </div>
+      </div>
+      <div class="coords">
+        <div class="coord"><div class="l">Zone</div><div class="v" id="zone">—</div></div>
+        <div class="coord"><div class="l">Latitude</div><div class="v" id="lat">—</div></div>
+        <div class="coord"><div class="l">Longitude</div><div class="v" id="lon">—</div></div>
+      </div>
+      <div class="actions">
+        <button type="button" onclick="centerOnPatient()">Centrer</button>
+        <button type="button" id="shareBtn" onclick="sharePos()">Partager</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const role = sessionStorage.getItem('gerio_role');
+if(role !== 'famille' && role !== 'patient'){
+  window.location.href = '/portail/';
+}
+
+const FAMILY_LINKS = { F001:'P001', F002:'P002', F003:'P008' };
+const PATIENTS = {
+  P001:{id:'P001',p:'Jean',n:'Dupont',a:78,zone:'Gombe',s:'stable',lat:-4.3050,lon:15.3080,color:'#00d4aa'},
+  P002:{id:'P002',p:'Marie',n:'Martin',a:84,zone:'Lingwala',s:'alert',lat:-4.3180,lon:15.3020,color:'#ff4d6d'},
+  P003:{id:'P003',p:'Lucie',n:'Bernard',a:71,zone:'Kintambo',s:'warn',lat:-4.3280,lon:15.2750,color:'#f59e0b'},
+  P004:{id:'P004',p:'Paul',n:'Robert',a:80,zone:'Barumbu',s:'stable',lat:-4.3120,lon:15.3250,color:'#60a5fa'},
+  P005:{id:'P005',p:'Claire',n:'Lambert',a:76,zone:'Kinshasa',s:'stable',lat:-4.3250,lon:15.3150,color:'#a78bfa'},
+  P006:{id:'P006',p:'Georges',n:'Petit',a:88,zone:'Ngaliema',s:'warn',lat:-4.3350,lon:15.2550,color:'#f59e0b'},
+  P007:{id:'P007',p:'Hélène',n:'Moreau',a:73,zone:'Bandalungwa',s:'stable',lat:-4.3550,lon:15.2850,color:'#34d399'},
+  P008:{id:'P008',p:'André',n:'Simon',a:82,zone:'Kalamu',s:'alert',lat:-4.3480,lon:15.3050,color:'#ff4d6d'},
+  P009:{id:'P009',p:'Yvette',n:'Garnier',a:79,zone:'Limete',s:'stable',lat:-4.3650,lon:15.3350,color:'#34d399'},
+  P010:{id:'P010',p:'René',n:'Leroy',a:85,zone:'Lemba',s:'warn',lat:-4.3850,lon:15.3100,color:'#f59e0b'},
+  P011:{id:'P011',p:'Odette',n:'Blanc',a:74,zone:'Matete',s:'stable',lat:-4.3750,lon:15.3450,color:'#34d399'},
+  P012:{id:'P012',p:'Fernand',n:'Rousseau',a:91,zone:'Masina',s:'stable',lat:-4.3780,lon:15.3900,color:'#60a5fa'},
+};
+
+const profil = sessionStorage.getItem('gerio_profil') || sessionStorage.getItem('gerio_famille');
+let allowedId = null;
+if(role === 'patient'){
+  allowedId = profil;
+} else {
+  allowedId = FAMILY_LINKS[profil] || 'P001';
+}
+
+// Un patient / une famille ne voit QUE son patient lié
+const urlId = new URLSearchParams(location.search).get('patient');
+const patientId = (urlId && urlId === allowedId) ? urlId : allowedId;
+const patient = { ...(PATIENTS[patientId] || PATIENTS.P001) };
+
+document.body.classList.add(role === 'famille' ? 'role-famille' : 'role-patient');
+document.getElementById('roleBadge').textContent = role === 'famille' ? 'FAMILLE' : 'PATIENT';
+document.getElementById('backLink').href = role === 'famille' ? '/portail/famille/' : '/portail/patient/';
+
+if(role === 'famille'){
+  document.getElementById('pageTitle').textContent = 'Position de mon proche';
+  document.getElementById('pageSub').textContent = `${patient.p} ${patient.n} · Kinshasa`;
+  document.getElementById('liveText').textContent = 'Position live du proche';
+  document.getElementById('shareBtn').textContent = 'Recevoir par SMS';
+} else {
+  document.getElementById('pageTitle').textContent = 'Ma position';
+  document.getElementById('pageSub').textContent = 'Mon GPS · Kinshasa';
+  document.getElementById('liveText').textContent = 'Ma position live';
+  document.getElementById('shareBtn').textContent = 'Envoyer à ma famille';
+}
+
+const KINSHASA = {
+  maxBounds: [[15.15, -4.52], [15.52, -4.22]],
+  minZoom: 11,
+  maxZoom: 18,
+};
+
+const col = patient.s === 'alert' ? '#ff4d6d' : patient.s === 'warn' ? '#f59e0b' : (role === 'famille' ? '#a78bfa' : '#00d4aa');
+const ini = (patient.p[0] + patient.n[0]).toUpperCase();
+
+function updateCard(){
+  document.getElementById('av').textContent = ini;
+  document.getElementById('av').style.cssText = `background:${col}22;color:${col};border-color:${col}`;
+  document.getElementById('name').textContent = `${patient.p} ${patient.n}`;
+  document.getElementById('meta').textContent = `${patient.a} ans · ${patient.zone} · ${patient.s === 'alert' ? 'Alerte' : patient.s === 'warn' ? 'À surveiller' : 'Stable'}`;
+  document.getElementById('zone').textContent = patient.zone;
+  document.getElementById('lat').textContent = Math.abs(patient.lat).toFixed(5) + '°S';
+  document.getElementById('lon').textContent = patient.lon.toFixed(5) + '°E';
+}
+
+const map = new maplibregl.Map({
+  container: 'map',
+  style: 'https://tiles.openfreemap.org/styles/dark',
+  center: [patient.lon, patient.lat],
+  zoom: 14,
+  minZoom: KINSHASA.minZoom,
+  maxZoom: KINSHASA.maxZoom,
+  maxBounds: KINSHASA.maxBounds,
+  maxBoundsViscosity: 1,
+});
+map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
+
+const el = document.createElement('div');
+el.className = 'marker' + (patient.s === 'alert' ? ' pulse' : '');
+el.style.background = col + '30';
+el.style.color = col;
+el.style.borderColor = col;
+el.textContent = ini;
+
+const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+  .setLngLat([patient.lon, patient.lat])
+  .addTo(map);
+
+let trail = [[patient.lon, patient.lat]];
+map.on('load', () => {
+  map.addSource('trail', {
+    type: 'geojson',
+    data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: trail } },
+  });
+  map.addLayer({
+    id: 'trail-line',
+    type: 'line',
+    source: 'trail',
+    paint: { 'line-color': col, 'line-width': 3, 'line-opacity': 0.55, 'line-dasharray': [2, 2] },
+  });
+});
+
+function clamp(lat, lon){
+  const [[minLon, minLat], [maxLon, maxLat]] = KINSHASA.maxBounds;
+  return {
+    lat: Math.min(maxLat, Math.max(minLat, lat)),
+    lon: Math.min(maxLon, Math.max(minLon, lon)),
+  };
+}
+
+function tick(){
+  const drift = patient.s === 'alert' ? 0.0005 : 0.00012;
+  const next = clamp(
+    patient.lat + (Math.random() - 0.5) * drift,
+    patient.lon + (Math.random() - 0.5) * drift
+  );
+  patient.lat = next.lat;
+  patient.lon = next.lon;
+  marker.setLngLat([patient.lon, patient.lat]);
+  trail.push([patient.lon, patient.lat]);
+  if(trail.length > 40) trail.shift();
+  const src = map.getSource('trail');
+  if(src){
+    src.setData({
+      type: 'Feature',
+      properties: {},
+      geometry: { type: 'LineString', coordinates: trail.length > 1 ? trail : [trail[0], trail[0]] },
+    });
+  }
+  updateCard();
+}
+
+function centerOnPatient(){
+  map.flyTo({ center: [patient.lon, patient.lat], zoom: 15, essential: true, duration: 800 });
+}
+
+function sharePos(){
+  const msg = role === 'famille'
+    ? `Position reçue : ${patient.p} ${patient.n} — ${patient.zone} (${Math.abs(patient.lat).toFixed(4)}°S, ${patient.lon.toFixed(4)}°E)`
+    : `Position envoyée à la famille : ${patient.zone} (${Math.abs(patient.lat).toFixed(4)}°S, ${patient.lon.toFixed(4)}°E)`;
+  alert(msg + '\n\n(simulation SMS)');
+}
+
+updateCard();
+setInterval(tick, 3500);
+</script>
+</body>
+</html>

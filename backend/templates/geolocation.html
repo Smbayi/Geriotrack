@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GérioTrack — Géolocalisation Kinshasa</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--bg3:#1a2235;--bg4:#212d42;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--teal:#00d4aa;--teal-dim:rgba(0,212,170,0.10);--red:#ff4d6d;--red-dim:rgba(255,77,109,0.10);--amber:#f59e0b;--amber-dim:rgba(245,158,11,0.10);--blue:#60a5fa;--blue-dim:rgba(96,165,250,0.10);--purple:#a78bfa;--purple-dim:rgba(167,139,250,0.10);--green:#34d399;--green-dim:rgba(52,211,153,0.10);--txt:#e2e8f0;--txt2:#94a3b8;--txt3:#475569;--sidebar-w:240px;--panel-w:320px;--font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'IBM Plex Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-size:14px;height:100vh;display:flex;overflow:hidden}
+
+.sidebar{width:var(--sidebar-w);height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;z-index:200;overflow:hidden}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo-mark{display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;background:var(--teal);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{width:18px;height:18px;stroke:#0a0e17;fill:none;stroke-width:2.2;stroke-linecap:round}
+.logo-name{font-family:var(--font-head);font-size:16px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.logo-sub{font-size:10px;color:var(--txt3);margin-top:2px;font-family:var(--font-mono)}
+.sidebar-section{padding:16px 12px 4px;flex-shrink:0}
+.sidebar-label{font-size:10px;font-weight:500;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase;padding:0 8px;margin-bottom:6px;font-family:var(--font-mono)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--txt2);font-size:13px;font-weight:400;transition:all .15s;margin-bottom:2px;border:1px solid transparent;text-decoration:none;white-space:nowrap}
+.nav-item:hover{background:var(--bg3);color:var(--txt)}
+.nav-item.active{background:var(--teal-dim);color:var(--teal);border-color:rgba(0,212,170,.2);font-weight:500}
+.nav-item svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;flex-shrink:0}
+.nav-item .lbl{flex:1}
+.nav-badge{background:var(--red);color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;font-family:var(--font-mono);flex-shrink:0}
+.sidebar-bottom{margin-top:auto;border-top:1px solid var(--border);padding:14px 12px;flex-shrink:0}
+.user-card{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;cursor:pointer;transition:background .15s}
+.user-card:hover{background:var(--bg3)}
+.u-av{width:32px;height:32px;border-radius:50%;background:var(--purple-dim);border:1.5px solid var(--purple);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--purple);font-family:var(--font-head);flex-shrink:0}
+.u-name{font-size:12px;font-weight:500;color:var(--txt)}
+.u-role{font-size:10px;color:var(--txt3)}
+.u-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);margin-left:auto;box-shadow:0 0 6px var(--teal);animation:pdot 2s infinite;flex-shrink:0}
+@keyframes pdot{0%,100%{opacity:1}50%{opacity:.4}}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:60px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;z-index:100}
+.topbar-title{font-family:var(--font-head);font-size:15px;font-weight:600;color:#fff}
+.topbar-sub{font-size:12px;color:var(--txt3);font-family:var(--font-mono);margin-left:4px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.live-badge{display:flex;align-items:center;gap:6px;background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.25);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;color:var(--teal);font-family:var(--font-mono)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pdot 1.2s infinite}
+.icon-btn{width:34px;height:34px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;color:var(--txt2);position:relative}
+.icon-btn:hover{background:var(--bg);color:var(--txt)}
+.icon-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
+.notif-count{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono)}
+.clock{font-family:var(--font-mono);font-size:12px;color:var(--txt2)}
+.body-row{flex:1;display:flex;overflow:hidden}
+
+.map-container{flex:1;position:relative}
+#map{width:100%;height:100%;background:var(--bg)}
+.maplibregl-ctrl-group{background:var(--bg2)!important;border:1px solid var(--border)!important;box-shadow:none!important}
+.maplibregl-ctrl-group button{background:var(--bg2)!important;border-color:var(--border)!important}
+.maplibregl-ctrl-group button+button{border-top-color:var(--border)!important}
+.maplibregl-ctrl-group button span{filter:invert(1)}
+.maplibregl-ctrl-attrib{background:rgba(10,14,23,.8)!important;color:var(--txt3)!important;font-size:10px!important}
+.maplibregl-ctrl-attrib a{color:var(--txt2)!important}
+.maplibregl-popup-content{background:#111827;color:#e2e8f0;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 12px;font-family:var(--font-mono);font-size:11px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+.maplibregl-popup-tip{border-top-color:#111827!important}
+.maplibregl-popup-close-button{color:#94a3b8;font-size:16px;padding:4px 8px}
+.map-overlay-tl{position:absolute;top:16px;left:16px;z-index:400;display:flex;flex-direction:column;gap:8px}
+.map-stat-pill{display:flex;align-items:center;gap:8px;background:rgba(17,24,39,.92);border:1px solid var(--border);border-radius:10px;padding:8px 12px;backdrop-filter:blur(8px)}
+.msp-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.msp-label{font-size:11px;color:var(--txt3);font-family:var(--font-mono)}
+.msp-val{font-size:13px;font-weight:600;font-family:var(--font-head);color:#fff;margin-left:auto}
+.map-controls{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);z-index:400;display:flex;gap:8px;background:rgba(17,24,39,.92);border:1px solid var(--border);border-radius:12px;padding:6px;backdrop-filter:blur(8px)}
+.map-ctrl-btn{padding:6px 14px;border-radius:8px;border:1px solid transparent;font-size:11px;font-family:var(--font-mono);cursor:pointer;transition:all .15s;color:var(--txt2);background:transparent}
+.map-ctrl-btn:hover{background:var(--bg3);color:var(--txt)}
+.map-ctrl-btn.active{background:var(--teal-dim);border-color:rgba(0,212,170,.3);color:var(--teal)}
+.alert-banner{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:400;background:rgba(255,77,109,.15);border:1px solid rgba(255,77,109,.4);border-radius:10px;padding:10px 18px;display:flex;align-items:center;gap:10px;backdrop-filter:blur(8px);animation:slideDown .3s ease}
+@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.alert-banner svg{width:16px;height:16px;stroke:var(--red);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0}
+.alert-banner-text{font-size:12px;color:var(--txt);font-family:var(--font-mono)}
+.alert-banner-text strong{color:var(--red)}
+.city-badge{position:absolute;bottom:20px;right:16px;z-index:400;background:rgba(17,24,39,.92);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-family:var(--font-mono);font-size:11px;color:var(--txt2);backdrop-filter:blur(8px)}
+.city-badge strong{color:var(--teal)}
+
+.side-panel{width:var(--panel-w);height:100%;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.panel-header{padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0}
+.panel-title{font-family:var(--font-head);font-size:13px;font-weight:600;color:#fff;margin-bottom:4px}
+.panel-sub{font-size:11px;color:var(--txt3);font-family:var(--font-mono)}
+.panel-search{padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.ps-wrap{position:relative}
+.ps-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:13px;height:13px;stroke:var(--txt3);fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none}
+.ps-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 12px 7px 32px;color:var(--txt);font-size:12px;font-family:var(--font-body);outline:none;transition:border-color .2s}
+.ps-input:focus{border-color:rgba(0,212,170,.4)}
+.ps-input::placeholder{color:var(--txt3)}
+.patient-panel-list{flex:1;overflow-y:auto;padding:8px 0}
+.patient-panel-list::-webkit-scrollbar{width:4px}
+.patient-panel-list::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
+.pp-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:background .12s;border-bottom:1px solid var(--border);border-left:3px solid transparent}
+.pp-item:hover{background:var(--bg3)}
+.pp-item.active{background:var(--bg3);border-left-color:var(--teal)}
+.pp-item.alert{border-left-color:var(--red)}
+.pp-item.warn{border-left-color:var(--amber)}
+.pp-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;font-family:var(--font-head);flex-shrink:0;border:1.5px solid}
+.pp-name{font-size:12px;font-weight:500;color:var(--txt);line-height:1.3}
+.pp-info{font-size:10px;color:var(--txt3);font-family:var(--font-mono);margin-top:2px}
+.pp-right{margin-left:auto;text-align:right}
+.pp-bpm{font-size:12px;font-family:var(--font-mono);color:var(--txt2)}
+.pp-status-dot{width:7px;height:7px;border-radius:50%;margin-left:auto;margin-top:4px}
+.selected-card{margin:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;flex-shrink:0}
+.sc-header{padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.sc-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;font-family:var(--font-head);border:2px solid;flex-shrink:0}
+.sc-name{font-family:var(--font-head);font-size:14px;font-weight:600;color:#fff}
+.sc-meta{font-size:10px;color:var(--txt3);font-family:var(--font-mono);margin-top:2px}
+.sc-vitals{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--border)}
+.sc-vital{padding:10px 12px;text-align:center;border-right:1px solid var(--border)}
+.sc-vital:last-child{border-right:none}
+.scv-val{font-family:var(--font-head);font-size:16px;font-weight:700;line-height:1;margin-bottom:2px}
+.scv-label{font-size:9px;color:var(--txt3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.05em}
+.sc-coords{padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:12px;flex-wrap:wrap}
+.coord-item{font-size:10px;font-family:var(--font-mono);color:var(--txt3)}
+.coord-item span{color:var(--teal)}
+.sc-actions{display:flex;border-top:1px solid var(--border)}
+.sc-act{flex:1;padding:10px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;font-family:var(--font-mono);cursor:pointer;transition:all .15s;border:none;background:transparent;color:var(--txt3);border-right:1px solid var(--border)}
+.sc-act:last-child{border-right:none}
+.sc-act:hover{background:var(--bg4);color:var(--txt)}
+.sc-act svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.sc-call:hover{color:var(--green)}.sc-sms:hover{color:var(--blue)}.sc-center:hover{color:var(--teal)}.sc-analyse:hover{color:var(--purple)}
+.gps-trail-legend{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0}
+.legend-title{font-size:10px;font-weight:500;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase;font-family:var(--font-mono);margin-bottom:8px}
+.legend-items{display:flex;flex-direction:column;gap:6px}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--txt2);font-family:var(--font-mono)}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.legend-line{width:20px;height:2px;border-radius:1px;flex-shrink:0}
+.marker-wrap{position:relative;width:32px;height:32px;cursor:pointer}
+.marker-pulse{position:absolute;border-radius:50%;border:1.5px solid;animation:map-pulse 1.5s infinite;opacity:0;top:0;left:0;width:32px;height:32px}
+.marker-core{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:Syne,sans-serif;border:2px solid;box-shadow:0 2px 12px rgba(0,0,0,.5)}
+@keyframes map-pulse{0%{width:32px;height:32px;opacity:.6;top:0;left:0}100%{width:56px;height:56px;opacity:0;top:-12px;left:-12px}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+      <div><div class="logo-name">GérioTrack</div><div class="logo-sub">IoT · Gériatrie</div></div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Navigation</div>
+    <a href="/" class="nav-item">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span class="lbl">Dashboard</span>
+    </a>
+    <a href="/patients/" class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span class="lbl">Patients</span><span class="nav-badge">12</span>
+    </a>
+    <a href="/geolocalisation/" class="nav-item active">
+      <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span class="lbl">Géolocalisation</span>
+    </a>
+    <a href="#" class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="lbl">Alertes</span><span class="nav-badge">3</span>
+    </a>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="u-av">Dr</div>
+      <div><div class="u-name">Dr. Martin</div><div class="u-role">Gériatre · Admin</div></div>
+      <div class="u-dot"></div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div><span class="topbar-title">Géolocalisation</span><span class="topbar-sub">/ Kinshasa · NEO-6M (simulation)</span></div>
+    <div class="topbar-right">
+      <div class="live-badge"><div class="live-dot"></div>GPS LIVE</div>
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="icon-btn"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-count">3</span></div>
+    </div>
+  </div>
+
+  <div class="body-row">
+    <div class="map-container">
+      <div class="map-overlay-tl">
+        <div class="map-stat-pill"><div class="msp-dot" style="background:var(--teal);box-shadow:0 0 6px var(--teal)"></div><span class="msp-label">Patients GPS actifs</span><span class="msp-val">12</span></div>
+        <div class="map-stat-pill"><div class="msp-dot" style="background:var(--red);box-shadow:0 0 6px var(--red);animation:pdot 1s infinite"></div><span class="msp-label">Alertes en cours</span><span class="msp-val" style="color:var(--red)">2</span></div>
+        <div class="map-stat-pill"><div class="msp-dot" style="background:var(--amber)"></div><span class="msp-label">Dernière MAJ GPS</span><span class="msp-val" id="stat-update" style="font-size:11px">--:--:--</span></div>
+      </div>
+
+      <div class="alert-banner">
+        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span class="alert-banner-text"><strong>CHUTE DÉTECTÉE</strong> — Marie Martin · Lingwala · Position GPS transmise</span>
+      </div>
+
+      <div class="map-controls">
+        <button class="map-ctrl-btn active" onclick="setMapFilter('all',this)">Tous (12)</button>
+        <button class="map-ctrl-btn" onclick="setMapFilter('alert',this)">⚠ Alertes (2)</button>
+        <button class="map-ctrl-btn" onclick="setMapFilter('warn',this)">Surveiller (3)</button>
+        <button class="map-ctrl-btn" onclick="setMapFilter('stable',this)">Stables (7)</button>
+        <button class="map-ctrl-btn" onclick="centerAll()">📍 Centrer Kinshasa</button>
+      </div>
+      <div class="city-badge">Zone verrouillée · <strong>Kinshasa</strong></div>
+      <div id="map"></div>
+    </div>
+
+    <div class="side-panel">
+      <div class="selected-card" id="selectedCard" style="display:none">
+        <div class="sc-header">
+          <div class="sc-av" id="scAv"></div>
+          <div><div class="sc-name" id="scName"></div><div class="sc-meta" id="scMeta"></div></div>
+        </div>
+        <div class="sc-vitals">
+          <div class="sc-vital"><div class="scv-val" id="scBpm" style="color:var(--teal)">--</div><div class="scv-label">BPM</div></div>
+          <div class="sc-vital"><div class="scv-val" id="scRisk" style="color:var(--amber)">--%</div><div class="scv-label">Risque</div></div>
+          <div class="sc-vital"><div class="scv-val" id="scPrec" style="color:var(--blue)">--m</div><div class="scv-label">Précision</div></div>
+        </div>
+        <div class="sc-coords">
+          <div class="coord-item">LAT <span id="scLat">--</span></div>
+          <div class="coord-item">LON <span id="scLon">--</span></div>
+          <div class="coord-item">Sats <span>8</span></div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-act sc-call" onclick="callPatient()"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Appeler</button>
+          <button class="sc-act sc-sms" onclick="sendSMS()"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Message</button>
+          <button class="sc-act sc-analyse" onclick="openAnalyse()"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Analyser</button>
+          <button class="sc-act sc-center" onclick="centerOnSelected()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>Centrer</button>
+        </div>
+      </div>
+
+      <div class="panel-header">
+        <div class="panel-title">Patients surveillés</div>
+        <div class="panel-sub">12 positions GPS · Kinshasa</div>
+      </div>
+      <div class="panel-search">
+        <div class="ps-wrap">
+          <svg class="ps-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="ps-input" type="text" placeholder="Rechercher..." oninput="filterPanelList(this.value)">
+        </div>
+      </div>
+      <div class="patient-panel-list" id="patientPanelList"></div>
+
+      <div class="gps-trail-legend">
+        <div class="legend-title">Légende</div>
+        <div class="legend-items">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red);box-shadow:0 0 6px var(--red)"></div>Alerte / Chute détectée</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>À surveiller</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>Stable</div>
+          <div class="legend-item"><div class="legend-line" style="background:var(--teal);opacity:.4"></div>Trajectoire GPS</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Limites strictes de Kinshasa — impossible de naviguer ailleurs */
+const KINSHASA = {
+  center: [15.3136, -4.3276], // [lon, lat]
+  maxBounds: [
+    [15.15, -4.52], // sud-ouest
+    [15.52, -4.22], // nord-est
+  ],
+  minZoom: 11,
+  maxZoom: 18,
+  defaultZoom: 12,
+};
+
+/* Positions simulées dans les communes de Kinshasa */
+const PATIENTS = [
+  {id:'P001',prenom:'Jean',   nom:'Dupont',  age:78,chambre:'Gombe',     statut:'stable',bpm:72, risk:.18,lat:-4.3050,lon:15.3080,color:'#00d4aa',contact:'Marie Dupont · +243 81 234 5678'},
+  {id:'P002',prenom:'Marie',  nom:'Martin',  age:84,chambre:'Lingwala',  statut:'alert', bpm:91, risk:.82,lat:-4.3180,lon:15.3020,color:'#ff4d6d',contact:'Paul Martin · +243 82 987 6543'},
+  {id:'P003',prenom:'Lucie',  nom:'Bernard', age:71,chambre:'Kintambo',  statut:'warn',  bpm:68, risk:.64,lat:-4.3280,lon:15.2750,color:'#f59e0b',contact:'Alain Bernard · +243 89 112 2334'},
+  {id:'P004',prenom:'Paul',   nom:'Robert',  age:80,chambre:'Barumbu',   statut:'stable',bpm:65, risk:.22,lat:-4.3120,lon:15.3250,color:'#60a5fa',contact:'Léa Robert · +243 81 554 4332'},
+  {id:'P005',prenom:'Claire', nom:'Lambert', age:76,chambre:'Kinshasa',  statut:'stable',bpm:77, risk:.30,lat:-4.3250,lon:15.3150,color:'#a78bfa',contact:'Sophie Lambert · +243 82 778 8990'},
+  {id:'P006',prenom:'Georges',nom:'Petit',   age:88,chambre:'Ngaliema',  statut:'warn',  bpm:58, risk:.71,lat:-4.3350,lon:15.2550,color:'#f59e0b',contact:'Anne Petit · +243 81 345 6789'},
+  {id:'P007',prenom:'Hélène', nom:'Moreau',  age:73,chambre:'Bandalungwa',statut:'stable',bpm:74,risk:.15,lat:-4.3550,lon:15.2850,color:'#34d399',contact:'Marc Moreau · +243 89 998 8776'},
+  {id:'P008',prenom:'André',  nom:'Simon',   age:82,chambre:'Kalamu',    statut:'alert', bpm:102,risk:.88,lat:-4.3480,lon:15.3050,color:'#ff4d6d',contact:'Julie Simon · +243 81 112 2334'},
+  {id:'P009',prenom:'Yvette', nom:'Garnier', age:79,chambre:'Limete',    statut:'stable',bpm:69, risk:.25,lat:-4.3650,lon:15.3350,color:'#34d399',contact:'Pierre Garnier · +243 82 223 3445'},
+  {id:'P010',prenom:'René',   nom:'Leroy',   age:85,chambre:'Lemba',     statut:'warn',  bpm:82, risk:.58,lat:-4.3850,lon:15.3100,color:'#f59e0b',contact:'Nathalie Leroy · +243 89 667 7889'},
+  {id:'P011',prenom:'Odette', nom:'Blanc',   age:74,chambre:'Matete',    statut:'stable',bpm:71, risk:.19,lat:-4.3750,lon:15.3450,color:'#34d399',contact:'Louis Blanc · +243 81 455 6678'},
+  {id:'P012',prenom:'Fernand',nom:'Rousseau',age:91,chambre:'Masina',    statut:'stable',bpm:66, risk:.35,lat:-4.3780,lon:15.3900,color:'#60a5fa',contact:'Camille Rousseau · +243 82 788 9901'},
+];
+
+let mapFilter = 'all';
+let selectedId = null;
+let markers = {};
+let trailData = {};
+let map;
+let mapReady = false;
+
+const ini = p => (p.prenom[0] + p.nom[0]).toUpperCase();
+const rc = r => r > .7 ? '#ff4d6d' : r > .4 ? '#f59e0b' : '#00d4aa';
+const sc = s => s === 'alert' ? '#ff4d6d' : s === 'warn' ? '#f59e0b' : '#00d4aa';
+
+function clampToKinshasa(lat, lon) {
+  const [[minLon, minLat], [maxLon, maxLat]] = KINSHASA.maxBounds;
+  return {
+    lat: Math.min(maxLat, Math.max(minLat, lat)),
+    lon: Math.min(maxLon, Math.max(minLon, lon)),
+  };
+}
+
+function initMap() {
+  map = new maplibregl.Map({
+    container: 'map',
+    style: 'https://tiles.openfreemap.org/styles/dark',
+    center: KINSHASA.center,
+    zoom: KINSHASA.defaultZoom,
+    minZoom: KINSHASA.minZoom,
+    maxZoom: KINSHASA.maxZoom,
+    maxBounds: KINSHASA.maxBounds,
+    maxBoundsViscosity: 1.0, // bloque totalement la sortie de Kinshasa
+    attributionControl: true,
+  });
+
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+  map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }), 'bottom-left');
+
+  map.on('load', () => {
+    mapReady = true;
+    PATIENTS.forEach(p => {
+      trailData[p.id] = [[p.lon, p.lat]];
+      const sourceId = `trail-${p.id}`;
+      map.addSource(sourceId, {
+        type: 'geojson',
+        data: lineGeoJSON(trailData[p.id]),
+      });
+      map.addLayer({
+        id: `trail-line-${p.id}`,
+        type: 'line',
+        source: sourceId,
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': p.color,
+          'line-width': 2,
+          'line-opacity': 0.45,
+          'line-dasharray': [2, 2],
+        },
+      });
+    });
+    renderMarkers();
+    renderPanelList();
+    centerAll();
+  });
+}
+
+function lineGeoJSON(coords) {
+  return {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'LineString',
+      coordinates: coords.length >= 2 ? coords : [coords[0], coords[0]],
+    },
+  };
+}
+
+function createMarkerElement(p) {
+  const col = sc(p.statut);
+  const el = document.createElement('div');
+  el.className = 'marker-wrap';
+  el.innerHTML = `
+    ${p.statut === 'alert' ? `<div class="marker-pulse" style="border-color:${col}"></div>` : ''}
+    <div class="marker-core" style="background:${col}20;color:${col};border-color:${col}${p.statut === 'alert' ? `;box-shadow:0 2px 12px rgba(0,0,0,.5),0 0 20px ${col}60` : ''}">${ini(p)}</div>
+  `;
+  el.addEventListener('click', e => {
+    e.stopPropagation();
+    selectPatient(p.id);
+  });
+  return el;
+}
+
+function renderMarkers() {
+  Object.values(markers).forEach(m => m.remove());
+  markers = {};
+
+  PATIENTS.filter(p => mapFilter === 'all' || p.statut === mapFilter).forEach(p => {
+    const popup = new maplibregl.Popup({ offset: 18, closeButton: false }).setHTML(`
+      <div style="font-family:IBM Plex Mono,monospace;font-size:11px">
+        <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:600;margin-bottom:4px">${p.prenom} ${p.nom}</div>
+        <div style="color:#94a3b8">${p.chambre} · ${p.age} ans</div>
+        <div style="margin-top:6px">
+          <span style="color:${p.bpm > 90 ? '#ff4d6d' : '#00d4aa'}">${p.bpm} bpm</span>
+          &nbsp;
+          <span style="color:${rc(p.risk)}">${(p.risk * 100).toFixed(0)}% risque</span>
+        </div>
+      </div>
+    `);
+
+    const marker = new maplibregl.Marker({ element: createMarkerElement(p), anchor: 'center' })
+      .setLngLat([p.lon, p.lat])
+      .setPopup(popup)
+      .addTo(map);
+
+    markers[p.id] = marker;
+  });
+}
+
+function updateTrail(p) {
+  if (!mapReady) return;
+  const sourceId = `trail-${p.id}`;
+  const source = map.getSource(sourceId);
+  if (source) source.setData(lineGeoJSON(trailData[p.id]));
+
+  const layerId = `trail-line-${p.id}`;
+  if (map.getLayer(layerId)) {
+    const visible = mapFilter === 'all' || p.statut === mapFilter;
+    map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
+  }
+}
+
+function updateGPS() {
+  document.getElementById('stat-update').textContent = new Date().toLocaleTimeString('fr-FR');
+  PATIENTS.forEach(p => {
+    const drift = p.statut === 'alert' ? 0.0008 : 0.00015;
+    const next = clampToKinshasa(
+      p.lat + (Math.random() - 0.5) * drift,
+      p.lon + (Math.random() - 0.5) * drift
+    );
+    p.lat = next.lat;
+    p.lon = next.lon;
+    p.bpm = Math.max(50, Math.min(115, Math.round(p.bpm + (Math.random() - 0.5) * 2)));
+
+    trailData[p.id].push([p.lon, p.lat]);
+    if (trailData[p.id].length > 30) trailData[p.id].shift();
+    updateTrail(p);
+
+    if (markers[p.id]) markers[p.id].setLngLat([p.lon, p.lat]);
+  });
+  if (selectedId) {
+    const p = PATIENTS.find(x => x.id === selectedId);
+    if (p) updateSelectedCard(p);
+  }
+  renderPanelList();
+}
+
+function selectPatient(id) {
+  selectedId = id;
+  const p = PATIENTS.find(x => x.id === id);
+  if (!p) return;
+  document.querySelectorAll('.pp-item').forEach(el => el.classList.remove('active'));
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if (el) el.classList.add('active');
+  document.getElementById('selectedCard').style.display = 'block';
+  updateSelectedCard(p);
+  map.flyTo({ center: [p.lon, p.lat], zoom: 14, essential: true, duration: 1000 });
+}
+
+function updateSelectedCard(p) {
+  const col = sc(p.statut);
+  const av = document.getElementById('scAv');
+  av.textContent = ini(p);
+  av.style.cssText = `background:${col}18;color:${col};border-color:${col}50;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;font-family:Syne,sans-serif;border:2px solid;flex-shrink:0`;
+  document.getElementById('scName').textContent = `${p.prenom} ${p.nom}`;
+  document.getElementById('scMeta').textContent = `${p.id} · ${p.chambre} · ${p.age} ans`;
+  document.getElementById('scBpm').textContent = p.bpm;
+  document.getElementById('scBpm').style.color = p.bpm > 90 ? 'var(--red)' : p.bpm < 55 ? 'var(--blue)' : 'var(--teal)';
+  document.getElementById('scRisk').textContent = (p.risk * 100).toFixed(0) + '%';
+  document.getElementById('scRisk').style.color = rc(p.risk);
+  document.getElementById('scPrec').textContent = Math.floor(Math.random() * 5 + 3) + 'm';
+  document.getElementById('scLat').textContent = Math.abs(p.lat).toFixed(6) + '°S';
+  document.getElementById('scLon').textContent = p.lon.toFixed(6) + '°E';
+}
+
+function renderPanelList(query = '') {
+  const q = (query || '').toLowerCase().trim();
+  const list = document.getElementById('patientPanelList');
+  const order = { alert: 0, warn: 1, stable: 2 };
+  const filtered = PATIENTS
+    .filter(p => !q || (`${p.prenom} ${p.nom}`).toLowerCase().includes(q) || p.chambre.toLowerCase().includes(q))
+    .sort((a, b) => order[a.statut] - order[b.statut]);
+
+  list.innerHTML = filtered.map(p => {
+    const col = sc(p.statut);
+    return `<div class="pp-item ${p.statut}${selectedId === p.id ? ' active' : ''}" data-id="${p.id}" onclick="selectPatient('${p.id}')">
+      <div class="pp-av" style="background:${col}18;color:${col};border-color:${col}40">${ini(p)}</div>
+      <div><div class="pp-name">${p.prenom} ${p.nom}</div><div class="pp-info">${p.chambre} · ${p.age} ans</div></div>
+      <div class="pp-right"><div class="pp-bpm" style="color:${p.bpm > 90 ? 'var(--red)' : p.bpm < 55 ? 'var(--blue)' : 'var(--txt2)'}">${p.bpm}<span style="font-size:9px;color:var(--txt3)"> bpm</span></div><div class="pp-status-dot" style="background:${col};margin-left:auto;${p.statut === 'alert' ? 'box-shadow:0 0 6px ' + col : ''}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function filterPanelList(q) { renderPanelList(q); }
+
+function setMapFilter(f, btn) {
+  mapFilter = f;
+  document.querySelectorAll('.map-ctrl-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMarkers();
+  PATIENTS.forEach(updateTrail);
+}
+
+function centerAll() {
+  const bounds = new maplibregl.LngLatBounds();
+  PATIENTS.forEach(p => bounds.extend([p.lon, p.lat]));
+  map.fitBounds(bounds, { padding: 60, maxZoom: 13, duration: 800 });
+}
+
+function centerOnSelected() {
+  if (!selectedId) return;
+  const p = PATIENTS.find(x => x.id === selectedId);
+  if (p) map.flyTo({ center: [p.lon, p.lat], zoom: 15, essential: true, duration: 800 });
+}
+
+function callPatient() {
+  const p = PATIENTS.find(x => x.id === selectedId);
+  if (p) alert(`Appel GSM (simulation):\n${p.contact}`);
+}
+
+function sendSMS() {
+  const p = PATIENTS.find(x => x.id === selectedId);
+  if (p) alert(`Message envoyé (simulation):\n${p.contact}`);
+}
+
+function openAnalyse() {
+  if (!selectedId) return;
+  window.location.href = `/patients/?analyse=${selectedId}`;
+}
+
+function openFiche() {
+  if (!selectedId) return;
+  window.location.href = `/patients/?patient=${selectedId}`;
+}
+
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('fr-FR');
+}, 1000);
+document.getElementById('clock').textContent = new Date().toLocaleTimeString('fr-FR');
+document.addEventListener('DOMContentLoaded', () => {
+  initMap();
+  setInterval(updateGPS, 4000);
+  const pid = new URLSearchParams(location.search).get('patient');
+  if (pid && PATIENTS.some(p => p.id === pid)) {
+    setTimeout(() => selectPatient(pid), 400);
+  }
+});
+</script>
+</body>
+</html>

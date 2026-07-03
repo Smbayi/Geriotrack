@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GérioTrack — Espace famille</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c0a12;--bg2:#16121f;--bg3:#1f1a2b;--bg4:#2a2438;
+  --border:rgba(167,139,250,.12);--border2:rgba(167,139,250,.25);
+  --accent:#a78bfa;--accent-dim:rgba(167,139,250,.12);
+  --teal:#00d4aa;--red:#ff4d6d;--red-dim:rgba(255,77,109,.12);
+  --amber:#f59e0b;--amber-dim:rgba(245,158,11,.12);
+  --blue:#60a5fa;--green:#34d399;
+  --txt:#f3eefc;--txt2:#b7a9d4;--txt3:#6b5f82;
+  --sidebar-w:260px;--bottom-h:64px;
+  --font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'IBM Plex Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-size:14px;min-height:100vh;display:flex}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 0% 0%,rgba(167,139,250,.12),transparent 45%),radial-gradient(ellipse at 100% 100%,rgba(255,77,109,.06),transparent 40%);z-index:0}
+
+.sidebar{width:var(--sidebar-w);min-height:100vh;background:linear-gradient(180deg,#1a1526,#120f1a);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100}
+.sidebar-logo{padding:22px 18px;border-bottom:1px solid var(--border)}
+.logo-mark{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.logo-icon svg{width:18px;height:18px;stroke:#120f1a;fill:none;stroke-width:2.2;stroke-linecap:round}
+.logo-name{font-family:var(--font-head);font-size:16px;font-weight:700;color:#fff}
+.logo-sub{font-size:10px;color:var(--accent);margin-top:2px;font-family:var(--font-mono);letter-spacing:.04em}
+.sidebar-section{padding:14px 10px}
+.sidebar-label{font-size:10px;color:var(--txt3);letter-spacing:.12em;text-transform:uppercase;padding:0 10px;margin-bottom:8px;font-family:var(--font-mono)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;cursor:pointer;color:var(--txt2);font-size:13px;transition:all .15s;margin-bottom:3px;border:1px solid transparent;text-decoration:none;background:transparent;width:100%;font-family:var(--font-body)}
+.nav-item:hover{background:var(--bg3);color:var(--txt)}
+.nav-item.active{background:var(--accent-dim);color:var(--accent);border-color:var(--border2);font-weight:600}
+.nav-item svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;flex-shrink:0}
+.nav-item .lbl{flex:1;text-align:left}
+.nav-badge{background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:var(--font-mono)}
+.sidebar-bottom{margin-top:auto;border-top:1px solid var(--border);padding:14px}
+.user-card{display:flex;align-items:center;gap:10px}
+.u-av{width:36px;height:36px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent);font-family:var(--font-head)}
+.u-name{font-size:13px;font-weight:600;color:var(--txt)}
+.u-role{font-size:10px;color:var(--txt3)}
+
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0;position:relative;z-index:1}
+.topbar{min-height:60px;background:rgba(22,18,31,.92);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:10px 20px;gap:12px;position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);flex-wrap:wrap}
+.topbar-title{font-family:var(--font-head);font-size:16px;font-weight:700;color:#fff}
+.topbar-sub{font-size:11px;color:var(--txt3);font-family:var(--font-mono)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.pill{display:flex;align-items:center;gap:6px;background:var(--accent-dim);border:1px solid var(--border2);padding:5px 11px;border-radius:20px;font-size:11px;font-weight:600;color:var(--accent);font-family:var(--font-mono)}
+.pill-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pdot 1.5s infinite}
+@keyframes pdot{0%,100%{opacity:1}50%{opacity:.35}}
+.clock{font-family:var(--font-mono);font-size:12px;color:var(--txt2)}
+.content{padding:18px;flex:1;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+.panel{display:none}.panel.active{display:block}
+
+.hero{background:linear-gradient(135deg,#2a1f3d,#16121f 60%);border:1px solid var(--border2);border-radius:18px;padding:18px;margin-bottom:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.hero-av{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:20px;font-weight:700;border:2px solid;flex-shrink:0}
+.hero-name{font-family:var(--font-head);font-size:22px;font-weight:700;color:#fff}
+.hero-meta{font-size:12px;color:var(--txt2);font-family:var(--font-mono);margin-top:4px}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;font-size:11px;font-family:var(--font-mono);margin-top:8px;font-weight:600}
+.badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.bok{background:rgba(52,211,153,.12);color:var(--green)}.bwarn{background:var(--amber-dim);color:var(--amber)}.balert{background:var(--red-dim);color:var(--red)}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+.stat .lbl{font-size:11px;color:var(--txt3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.stat .val{font-family:var(--font-head);font-size:26px;font-weight:700;color:#fff}
+.stat .val span{font-size:12px;color:var(--txt3);font-weight:500}
+.stat.alert-border{border-color:rgba(255,77,109,.35)}
+
+.grid2{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:14px}
+.card-h{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:rgba(167,139,250,.04)}
+.card-h .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.card-h .ttl{font-family:var(--font-head);font-size:13px;font-weight:700;color:#fff}
+.card-h .sub{margin-left:auto;font-size:10px;color:var(--txt3);font-family:var(--font-mono)}
+.card-b{padding:14px 16px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 12px;border-radius:12px;border:1px solid;font-size:12px;font-family:var(--font-mono);cursor:pointer;transition:all .15s;background:transparent;color:var(--txt);text-align:center}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0}
+.btn-call{border-color:rgba(52,211,153,.3);color:var(--green);background:rgba(52,211,153,.08)}
+.btn-sms{border-color:rgba(96,165,250,.3);color:var(--blue);background:rgba(96,165,250,.08)}
+.btn-doc{border-color:rgba(167,139,250,.35);color:var(--accent);background:var(--accent-dim)}
+.btn-gps{border-color:rgba(0,212,170,.3);color:var(--teal);background:rgba(0,212,170,.08)}
+.btn:hover{filter:brightness(1.12)}
+
+.alert-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.alert-item:last-child{border-bottom:none}
+.a-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.a-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.ai-red{background:var(--red-dim);color:var(--red)}.ai-amber{background:var(--amber-dim);color:var(--amber)}.ai-blue{background:rgba(96,165,250,.12);color:var(--blue)}
+.a-text{font-size:13px;font-weight:500}.a-time{font-size:11px;color:var(--txt3);font-family:var(--font-mono);margin-top:3px}
+.msg-box textarea{width:100%;min-height:88px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--txt);font-family:var(--font-body);font-size:13px;outline:none;resize:vertical;margin-bottom:10px}
+.msg-box textarea:focus{border-color:var(--border2)}
+.msg-row{display:flex;gap:8px;flex-wrap:wrap}
+.msg-row button{padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--txt2);font-size:12px;font-family:var(--font-mono);cursor:pointer}
+.msg-row button.primary{background:var(--accent);border-color:var(--accent);color:#120f1a;font-weight:700}
+.hist{display:flex;flex-direction:column;gap:8px}
+.hitem{display:flex;gap:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px}
+.hdot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.vrow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.vbox{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.vbv{font-family:var(--font-head);font-size:18px;font-weight:700;margin-bottom:3px}
+.vbl{font-size:10px;color:var(--txt3);font-family:var(--font-mono);text-transform:uppercase}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));right:16px;left:16px;max-width:360px;margin-left:auto;z-index:700;background:var(--bg2);border:1px solid var(--border2);color:var(--accent);padding:12px 14px;border-radius:12px;font-size:12px;font-family:var(--font-mono);opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.logout{color:var(--txt3)!important}
+
+.bottom-nav{display:none;position:fixed;left:0;right:0;bottom:0;height:calc(var(--bottom-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(22,18,31,.96);border-top:1px solid var(--border);z-index:200;backdrop-filter:blur(12px)}
+.bottom-nav .nav-item{flex-direction:column;gap:3px;padding:8px 4px;margin:0;border:none;border-radius:0;font-size:10px;justify-content:center}
+.bottom-nav .nav-item svg{width:18px;height:18px}
+.bottom-nav .nav-item.active{background:transparent;color:var(--accent);border:none}
+.bottom-nav .nav-badge{position:absolute;top:4px;right:calc(50% - 18px);padding:0 5px;min-width:16px;text-align:center}
+
+@media(max-width:900px){
+  .grid2{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}
+}
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{margin-left:0;padding-bottom:var(--bottom-h)}
+  .bottom-nav{display:flex}
+  .content{padding:14px;padding-bottom:calc(14px + var(--bottom-h))}
+  .stats{grid-template-columns:1fr}
+  .hero{padding:14px}
+  .hero-name{font-size:18px}
+  .stat .val{font-size:22px}
+  .actions{grid-template-columns:1fr}
+  .vrow{grid-template-columns:1fr}
+  .topbar{padding:10px 14px}
+}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+      <div><div class="logo-name">GérioTrack</div><div class="logo-sub">ESPACE FAMILLE</div></div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Surveillance</div>
+    <button class="nav-item active" data-panel="accueil" onclick="showPanel('accueil',this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span class="lbl">Surveillance</span></button>
+    <button class="nav-item" data-panel="alertes" onclick="showPanel('alertes',this)"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="lbl">Alertes reçues</span><span class="nav-badge" id="navAlertBadge">0</span></button>
+    <button class="nav-item" data-panel="comm" onclick="showPanel('comm',this)"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="lbl">Contacter l’équipe</span></button>
+    <button class="nav-item" data-panel="localisation" onclick="showPanel('localisation',this)"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="lbl">Où est mon proche</span></button>
+  </div>
+  <div class="sidebar-section">
+    <button class="nav-item logout" onclick="logout()"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span class="lbl">Déconnexion</span></button>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="u-av" id="uAv">F</div>
+      <div><div class="u-name" id="uName">Famille</div><div class="u-role">Contact d’urgence</div></div>
+    </div>
+  </div>
+</aside>
+
+<nav class="bottom-nav" id="bottomNav"></nav>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="pageTitle">Surveillance</div>
+      <div class="topbar-sub" id="pageSub">Suivi de mon proche · Kinshasa</div>
+    </div>
+    <div class="topbar-right">
+      <div class="pill"><div class="pill-dot"></div>FAMILLE</div>
+      <div class="clock" id="clock">--:--:--</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="panel active" id="panel-accueil">
+      <div class="hero">
+        <div class="hero-av" id="phAv">—</div>
+        <div style="flex:1;min-width:180px">
+          <div class="hero-name" id="phName">—</div>
+          <div class="hero-meta" id="phMeta">—</div>
+          <div class="badge bok" id="phBadge">Stable</div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="lbl">Statut du proche</div><div class="val" id="stStatut" style="font-size:20px">Stable</div></div>
+        <div class="stat"><div class="lbl">Risque de chute</div><div class="val" id="stRisk">18<span>%</span></div></div>
+        <div class="stat alert-border"><div class="lbl">Alertes non lues</div><div class="val" id="stAlerts" style="color:var(--red)">0</div></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-h"><div class="dot"></div><span class="ttl">Dernières alertes</span><span class="sub">Temps réel</span></div>
+          <div class="card-b" id="homeAlerts"></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><div class="dot"></div><span class="ttl">Actions famille</span></div>
+          <div class="card-b">
+            <div class="actions">
+              <button class="btn btn-call" onclick="callPatient()">Appeler mon proche</button>
+              <button class="btn btn-sms" onclick="smsPatient()">SMS au proche</button>
+              <button class="btn btn-doc" onclick="callDoctor()">Appeler le médecin</button>
+              <button class="btn btn-gps" onclick="goMap()">Voir sa position</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-alertes">
+      <div class="card">
+        <div class="card-h"><div class="dot" style="background:var(--red)"></div><span class="ttl">Notifications reçues</span><span class="sub">SMS / Appel / Push</span></div>
+        <div class="card-b" id="allAlerts"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-comm">
+      <div class="card">
+        <div class="card-h"><div class="dot"></div><span class="ttl">Contacter l’équipe soignante</span></div>
+        <div class="card-b">
+          <div class="actions" style="margin-bottom:14px">
+            <button class="btn btn-call" onclick="callPatient()">Appeler mon proche</button>
+            <button class="btn btn-doc" onclick="callDoctor()">Appeler le médecin</button>
+            <button class="btn btn-sms" onclick="smsPatient()">SMS au proche</button>
+            <button class="btn btn-sms" onclick="smsDoctor()">SMS au médecin</button>
+          </div>
+          <div style="font-size:12px;color:var(--txt3);font-family:var(--font-mono);line-height:1.7;margin-bottom:14px">
+            Médecin : <span id="docName" style="color:var(--txt)">—</span><br>
+            Proche : <span id="patContact" style="color:var(--txt)">—</span>
+          </div>
+          <div class="msg-box">
+            <textarea id="msgText" placeholder="Message à l’équipe médicale..."></textarea>
+            <div class="msg-row">
+              <button type="button" onclick="quickMsg('Comment va mon proche ?')">Modèle</button>
+              <button type="button" class="primary" onclick="sendMessage()">Envoyer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div class="dot"></div><span class="ttl">Historique des échanges</span></div>
+        <div class="card-b"><div class="hist" id="commHist"></div></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-localisation">
+      <div class="card">
+        <div class="card-h"><div class="dot" style="background:var(--teal)"></div><span class="ttl">Position de mon proche</span><span class="sub">Kinshasa</span></div>
+        <div class="card-b">
+          <div class="vrow" style="margin-bottom:14px">
+            <div class="vbox"><div class="vbv" id="locZone" style="color:var(--accent)">—</div><div class="vbl">Zone</div></div>
+            <div class="vbox"><div class="vbv" id="locLat" style="font-size:13px">—</div><div class="vbl">Lat</div></div>
+            <div class="vbox"><div class="vbv" id="locLon" style="font-size:13px">—</div><div class="vbl">Lon</div></div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-gps" onclick="goMap()">Ouvrir la carte</button>
+            <button class="btn btn-sms" onclick="shareLocation()">Recevoir par SMS</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+if(sessionStorage.getItem('gerio_role')!=='famille' && !sessionStorage.getItem('gerio_famille')){
+  window.location.href='/portail/';
+}
+
+const PROFILES={
+  F001:{name:'Marie Dupont',initials:'MD',patientId:'P001'},
+  F002:{name:'Paul Martin',initials:'PM',patientId:'P002'},
+  F003:{name:'Julie Simon',initials:'JS',patientId:'P008'},
+};
+const PATIENTS={
+  P001:{id:'P001',p:'Jean',n:'Dupont',a:78,zone:'Gombe',s:'stable',r:.18,med:'Dr. Martin',medTel:'+243 81 111 0001',patTel:'+243 81 234 5678',lat:-4.3050,lon:15.3080,alerts:[{type:'blue',m:'Rappel médicaments',tm:'Aujourd\'hui 09:00',channel:'Push'},{type:'ok',m:'Bilan quotidien normal',tm:'Hier 18:00',channel:'SMS'}]},
+  P002:{id:'P002',p:'Marie',n:'Martin',a:84,zone:'Lingwala',s:'alert',r:.82,med:'Dr. Leroux',medTel:'+243 81 111 0002',patTel:'+243 82 987 6543',lat:-4.3180,lon:15.3020,alerts:[{type:'red',m:'CHUTE DÉTECTÉE — Lingwala',tm:'Aujourd\'hui 14:32',channel:'Appel + SMS'},{type:'red',m:'Tachycardie signalée',tm:'Aujourd\'hui 14:30',channel:'SMS'},{type:'amber',m:'Risque chute élevé (82%)',tm:'Aujourd\'hui 12:00',channel:'Push'}]},
+  P008:{id:'P008',p:'André',n:'Simon',a:82,zone:'Kalamu',s:'alert',r:.88,med:'Dr. Leroux',medTel:'+243 81 111 0002',patTel:'+243 81 112 2334',lat:-4.3480,lon:15.3050,alerts:[{type:'red',m:'Arythmie critique',tm:'Aujourd\'hui 14:45',channel:'Appel + SMS'},{type:'red',m:'Alerte cardiaque',tm:'Aujourd\'hui 14:44',channel:'SMS'}]},
+};
+
+const profileId=sessionStorage.getItem('gerio_profil')||sessionStorage.getItem('gerio_famille')||'F001';
+const profile=PROFILES[profileId]||PROFILES.F001;
+let patient={...PATIENTS[profile.patientId]};
+const commLog=[];
+
+document.getElementById('uAv').textContent=profile.initials;
+document.getElementById('uName').textContent=profile.name;
+
+function badgeClass(s){return s==='alert'?'balert':s==='warn'?'bwarn':'bok';}
+function badgeText(s){return s==='alert'?'Alerte':s==='warn'?'À surveiller':'Stable';}
+function riskColor(r){return r>.7?'var(--red)':r>.4?'var(--amber)':'var(--green)';}
+
+function alertHtml(list){
+  return list.map(a=>`<div class="alert-item">
+    <div class="a-icon ${a.type==='red'?'ai-red':a.type==='amber'?'ai-amber':'ai-blue'}"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+    <div><div class="a-text">${a.m}</div><div class="a-time">${a.tm} · via ${a.channel}</div></div>
+  </div>`).join('')||'<div style="color:var(--txt3)">Aucune alerte</div>';
+}
+
+function renderAll(){
+  const p=patient;
+  const col=p.s==='alert'?'var(--red)':p.s==='warn'?'var(--amber)':'var(--green)';
+  document.getElementById('phAv').textContent=(p.p[0]+p.n[0]).toUpperCase();
+  document.getElementById('phAv').style.cssText=`background:${col}18;color:${col};border-color:${col}`;
+  document.getElementById('phName').textContent=`${p.p} ${p.n}`;
+  document.getElementById('phMeta').textContent=`${p.a} ans · ${p.zone} · ${p.med}`;
+  const b=document.getElementById('phBadge'); b.className='badge '+badgeClass(p.s); b.textContent=badgeText(p.s);
+  document.getElementById('stStatut').textContent=badgeText(p.s);
+  document.getElementById('stStatut').style.color=col;
+  document.getElementById('stRisk').innerHTML=`${Math.round(p.r*100)}<span>%</span>`;
+  document.getElementById('stRisk').style.color=riskColor(p.r);
+  document.getElementById('stAlerts').textContent=p.alerts.length;
+  document.getElementById('navAlertBadge').textContent=p.alerts.length;
+  document.querySelectorAll('.nav-badge-mobile').forEach(el=>el.textContent=p.alerts.length);
+  document.getElementById('docName').textContent=`${p.med} · ${p.medTel}`;
+  document.getElementById('patContact').textContent=p.patTel;
+  document.getElementById('locZone').textContent=p.zone;
+  document.getElementById('locLat').textContent=Math.abs(p.lat).toFixed(4)+'°S';
+  document.getElementById('locLon').textContent=p.lon.toFixed(4)+'°E';
+  document.getElementById('homeAlerts').innerHTML=alertHtml(p.alerts.slice(0,3));
+  document.getElementById('allAlerts').innerHTML=alertHtml(p.alerts);
+  document.getElementById('commHist').innerHTML=commLog.length?commLog.map(c=>`<div class="hitem"><div class="hdot" style="background:var(--accent)"></div><div><div class="a-text">${c.m}</div><div class="a-time">${c.tm}</div></div></div>`).join(''):'<div style="color:var(--txt3);font-size:12px">Aucun échange pour le moment.</div>';
+}
+
+function showPanel(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item[data-panel]').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll(`.nav-item[data-panel="${id}"]`).forEach(n=>n.classList.add('active'));
+  const titles={accueil:['Surveillance','Suivi de mon proche · Kinshasa'],alertes:['Alertes reçues','Notifications famille'],comm:['Contacter l’équipe','Appels & messages'],localisation:['Où est mon proche','GPS Kinshasa']};
+  document.getElementById('pageTitle').textContent=titles[id][0];
+  document.getElementById('pageSub').textContent=titles[id][1];
+}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+function logComm(m){commLog.unshift({m,tm:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})});renderAll();}
+function callPatient(){toast(`Appel vers ${patient.p} ${patient.n} — simulation`);logComm(`Appel → proche`);}
+function callDoctor(){toast(`Appel vers ${patient.med} — simulation`);logComm(`Appel → ${patient.med}`);}
+function smsPatient(){toast('SMS envoyé au proche — simulation');logComm('SMS → proche');}
+function smsDoctor(){toast('SMS envoyé au médecin — simulation');logComm(`SMS → ${patient.med}`);}
+function goMap(){window.location.href=`/portail/carte/?patient=${patient.id}`;}
+function shareLocation(){toast(`Position ${patient.zone} reçue par SMS — simulation`);logComm(`GPS ${patient.zone} reçu`);}
+function quickMsg(t){document.getElementById('msgText').value=t;}
+function sendMessage(){
+  const t=document.getElementById('msgText').value.trim();
+  if(!t){toast('Écrivez un message');return;}
+  toast('Message envoyé à l’équipe — simulation');
+  logComm(`Message → équipe : « ${t.slice(0,50)}${t.length>50?'…':''} »`);
+  document.getElementById('msgText').value='';
+}
+function logout(){
+  sessionStorage.removeItem('gerio_famille');
+  sessionStorage.removeItem('gerio_role');
+  sessionStorage.removeItem('gerio_profil');
+  window.location.href='/portail/';
+}
+
+// Bottom nav mobile
+document.getElementById('bottomNav').innerHTML=`
+  <button class="nav-item active" data-panel="accueil" onclick="showPanel('accueil',this)" style="position:relative;flex:1"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span class="lbl">Suivi</span></button>
+  <button class="nav-item" data-panel="alertes" onclick="showPanel('alertes',this)" style="position:relative;flex:1"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="lbl">Alertes</span><span class="nav-badge nav-badge-mobile">0</span></button>
+  <button class="nav-item" data-panel="comm" onclick="showPanel('comm',this)" style="flex:1"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="lbl">Contact</span></button>
+  <button class="nav-item" data-panel="localisation" onclick="showPanel('localisation',this)" style="flex:1"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="lbl">GPS</span></button>
+`;
+
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR');},1000);
+document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR');
+renderAll();
+</script>
+</body>
+</html>

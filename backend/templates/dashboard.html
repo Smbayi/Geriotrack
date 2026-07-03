@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GérioTrack — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--bg3:#1a2235;--bg4:#212d42;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--teal:#00d4aa;--teal-dim:rgba(0,212,170,0.10);--red:#ff4d6d;--red-dim:rgba(255,77,109,0.10);--amber:#f59e0b;--amber-dim:rgba(245,158,11,0.10);--blue:#60a5fa;--blue-dim:rgba(96,165,250,0.10);--purple:#a78bfa;--purple-dim:rgba(167,139,250,0.10);--txt:#e2e8f0;--txt2:#94a3b8;--txt3:#475569;--sidebar-w:240px;--font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'IBM Plex Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-size:14px;min-height:100vh;display:flex;overflow-x:hidden}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow:hidden}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo-mark{display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;background:var(--teal);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{width:18px;height:18px;stroke:#0a0e17;fill:none;stroke-width:2.2;stroke-linecap:round}
+.logo-name{font-family:var(--font-head);font-size:16px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.logo-sub{font-size:10px;color:var(--txt3);margin-top:2px;font-family:var(--font-mono)}
+.sidebar-section{padding:16px 12px 4px;flex-shrink:0}
+.sidebar-label{font-size:10px;font-weight:500;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase;padding:0 8px;margin-bottom:6px;font-family:var(--font-mono)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--txt2);font-size:13px;font-weight:400;transition:all .15s;margin-bottom:2px;border:1px solid transparent;text-decoration:none;white-space:nowrap}
+.nav-item:hover{background:var(--bg3);color:var(--txt)}
+.nav-item.active{background:var(--teal-dim);color:var(--teal);border-color:rgba(0,212,170,.2);font-weight:500}
+.nav-item svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;flex-shrink:0}
+.nav-item span.lbl{flex:1}
+.nav-badge{background:var(--red);color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;font-family:var(--font-mono);flex-shrink:0}
+.sidebar-bottom{margin-top:auto;border-top:1px solid var(--border);padding:14px 12px;flex-shrink:0}
+.user-card{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;cursor:pointer;transition:background .15s}
+.user-card:hover{background:var(--bg3)}
+.u-av{width:32px;height:32px;border-radius:50%;background:var(--purple-dim);border:1.5px solid var(--purple);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--purple);font-family:var(--font-head);flex-shrink:0}
+.u-name{font-size:12px;font-weight:500;color:var(--txt)}
+.u-role{font-size:10px;color:var(--txt3)}
+.u-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);margin-left:auto;box-shadow:0 0 6px var(--teal);animation:pdot 2s infinite;flex-shrink:0}
+@keyframes pdot{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* MAIN */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0}
+.topbar{height:60px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:50;flex-shrink:0}
+.topbar-title{font-family:var(--font-head);font-size:15px;font-weight:600;color:#fff}
+.topbar-sub{font-size:12px;color:var(--txt3);font-family:var(--font-mono);margin-left:4px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.live-badge{display:flex;align-items:center;gap:6px;background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.25);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;color:var(--teal);font-family:var(--font-mono)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pdot 1.5s infinite}
+.clock{font-family:var(--font-mono);font-size:12px;color:var(--txt2)}
+.icon-btn{width:34px;height:34px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;color:var(--txt2);position:relative}
+.icon-btn:hover{background:var(--bg);color:var(--txt)}
+.icon-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
+.nbadge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono)}
+
+/* CONTENT */
+.content{padding:24px 28px;flex:1}
+
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s;cursor:default;animation:fadeUp .4s ease both}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:14px 14px 0 0}
+.stat-card.teal::before{background:var(--teal)}
+.stat-card.red::before{background:var(--red)}
+.stat-card.amber::before{background:var(--amber)}
+.stat-card.blue::before{background:var(--blue)}
+.stat-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.stat-card:nth-child(1){animation-delay:.05s}.stat-card:nth-child(2){animation-delay:.1s}.stat-card:nth-child(3){animation-delay:.15s}.stat-card:nth-child(4){animation-delay:.2s}
+.stat-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.stat-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
+.stat-card.teal .stat-icon{background:var(--teal-dim);color:var(--teal)}
+.stat-card.red  .stat-icon{background:var(--red-dim);color:var(--red)}
+.stat-card.amber .stat-icon{background:var(--amber-dim);color:var(--amber)}
+.stat-card.blue  .stat-icon{background:var(--blue-dim);color:var(--blue)}
+.stat-value{font-family:var(--font-head);font-size:32px;font-weight:700;color:#fff;line-height:1;margin-bottom:4px}
+.stat-label{font-size:12px;color:var(--txt2)}
+.stat-delta{position:absolute;top:20px;right:20px;font-size:11px;font-family:var(--font-mono);padding:2px 7px;border-radius:6px}
+.d-up{background:rgba(0,212,170,.12);color:var(--teal)}
+.d-down{background:rgba(255,77,109,.12);color:var(--red)}
+.d-warn{background:rgba(245,158,11,.12);color:var(--amber)}
+
+/* TWO COLS */
+.two-cols{display:grid;grid-template-columns:1fr 380px;gap:16px;margin-bottom:22px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.card-header{display:flex;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border);gap:10px}
+.card-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.card-title{font-family:var(--font-head);font-size:13px;font-weight:600;color:#fff}
+.card-sub{font-size:11px;color:var(--txt3);margin-left:auto;font-family:var(--font-mono)}
+
+/* ECG */
+.ecg-wrap{padding:14px 20px}
+.ecg-meta{display:flex;align-items:center;gap:20px;margin-bottom:10px}
+.ecg-bpm{font-family:var(--font-head);font-size:28px;font-weight:700;color:var(--teal)}
+.ecg-unit{font-size:12px;color:var(--txt3);font-family:var(--font-mono)}
+.ecg-status{font-size:11px;padding:3px 9px;border-radius:6px;font-family:var(--font-mono);background:var(--teal-dim);color:var(--teal);border:1px solid rgba(0,212,170,.2)}
+canvas#ecgCanvas{width:100%;height:90px;display:block}
+
+/* PATIENT LIST */
+.p-list{padding:4px 0}
+.p-item{display:flex;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;text-decoration:none}
+.p-item:last-child{border-bottom:none}
+.p-item:hover{background:var(--bg3)}
+.p-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;font-family:var(--font-head);flex-shrink:0;border:1.5px solid}
+.p-name{font-size:13px;font-weight:500;color:var(--txt)}
+.p-age{font-size:11px;color:var(--txt3);font-family:var(--font-mono);margin-top:1px}
+.p-hr{font-size:12px;color:var(--txt2);font-family:var(--font-mono);margin-left:auto;min-width:52px;text-align:right}
+.p-badge{font-size:10px;padding:2px 8px;border-radius:5px;font-family:var(--font-mono);font-weight:500;margin-left:8px}
+.pb-ok{background:rgba(52,211,153,.12);color:#34d399}
+.pb-warn{background:var(--amber-dim);color:var(--amber)}
+.pb-alert{background:var(--red-dim);color:var(--red)}
+
+/* THREE COLS */
+.three-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:22px}
+.sensor-body{padding:16px 20px}
+.sensor-val{font-family:var(--font-head);font-size:26px;font-weight:700}
+.sensor-unit{font-size:11px;color:var(--txt3);font-family:var(--font-mono);margin-top:2px}
+.sensor-bar-wrap{height:4px;background:var(--bg4);border-radius:2px;margin:10px 0 6px;overflow:hidden}
+.sensor-bar{height:100%;border-radius:2px;transition:width 1s ease}
+.sensor-lr{display:flex;justify-content:space-between;font-size:10px;color:var(--txt3);font-family:var(--font-mono)}
+.alert-list{padding:4px 0}
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:10px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
+.alert-item:last-child{border-bottom:none}
+.alert-item:hover{background:var(--bg3)}
+.a-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.a-icon svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.ai-red{background:var(--red-dim);color:var(--red)}
+.ai-amber{background:var(--amber-dim);color:var(--amber)}
+.ai-blue{background:var(--blue-dim);color:var(--blue)}
+.a-text{font-size:12px;color:var(--txt);line-height:1.4}
+.a-time{font-size:10px;color:var(--txt3);font-family:var(--font-mono);margin-top:2px}
+.a-new{margin-left:auto;width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:5px}
+
+/* GPS mini */
+.gps-body{padding:14px 18px}
+.gps-map{height:120px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);position:relative;overflow:hidden;margin-bottom:10px}
+.gps-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,212,170,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,170,.05) 1px,transparent 1px);background-size:22px 22px}
+.gps-pin{position:absolute;top:50%;left:55%;transform:translate(-50%,-50%)}
+.pin-pulse{position:absolute;border-radius:50%;border:1.5px solid var(--teal);animation:gring 2s infinite;opacity:0}
+.pin-pulse:nth-child(2){animation-delay:.6s}.pin-pulse:nth-child(3){animation-delay:1.2s}
+@keyframes gring{0%{width:12px;height:12px;opacity:.8;top:0;left:0}100%{width:48px;height:48px;opacity:0;top:-18px;left:-18px}}
+.pin-dot{width:12px;height:12px;border-radius:50%;background:var(--teal);position:relative;z-index:2;box-shadow:0 0 10px var(--teal)}
+.gps-coords{display:flex;gap:14px;font-family:var(--font-mono);font-size:11px;color:var(--txt2);margin-bottom:10px}
+.gps-coords span{color:var(--teal)}
+.gps-btns{display:flex;gap:8px}
+.gps-btn{flex:1;padding:7px;border-radius:7px;border:1px solid;font-size:11px;font-family:var(--font-mono);cursor:pointer;transition:all .15s;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center}
+.gb-teal{background:var(--teal-dim);border-color:rgba(0,212,170,.3);color:var(--teal)}
+.gb-teal:hover{background:rgba(0,212,170,.2)}
+.gb-red{background:var(--red-dim);border-color:rgba(255,77,109,.3);color:var(--red)}
+.gb-red:hover{background:rgba(255,77,109,.2)}
+
+/* BOTTOM */
+.bottom-row{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.activity-body{padding:14px 20px}
+canvas#actCanvas{width:100%;height:110px;display:block}
+.device-list{padding:4px 0}
+.dev-item{display:flex;align-items:center;gap:10px;padding:9px 18px;border-bottom:1px solid var(--border)}
+.dev-item:last-child{border-bottom:none}
+.dev-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dd-on{background:var(--teal);box-shadow:0 0 5px var(--teal)}
+.dd-warn{background:var(--amber);box-shadow:0 0 5px var(--amber)}
+.dev-name{font-size:12px;color:var(--txt)}
+.dev-detail{font-size:10px;color:var(--txt3);font-family:var(--font-mono);margin-top:1px}
+.dev-bat{margin-left:auto;font-size:11px;font-family:var(--font-mono);color:var(--txt2);display:flex;align-items:center;gap:5px}
+.bat{width:26px;height:9px;border:1.2px solid var(--border2);border-radius:2px;position:relative;overflow:hidden}
+.bat::after{content:'';position:absolute;top:1px;left:1px;bottom:1px;border-radius:1px}
+.b90::after{width:calc(90% - 2px);background:var(--teal)}
+.b70::after{width:calc(70% - 2px);background:var(--amber)}
+.b40::after{width:calc(40% - 2px);background:var(--amber)}
+.b15::after{width:calc(15% - 2px);background:var(--red)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+      <div><div class="logo-name">GérioTrack</div><div class="logo-sub">IoT · Gériatrie</div></div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Navigation</div>
+    <a href="/" class="nav-item active">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span class="lbl">Dashboard</span>
+    </a>
+    <a href="/patients/" class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span class="lbl">Patients</span><span class="nav-badge">12</span>
+    </a>
+    <a href="/geolocalisation/" class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span class="lbl">Géolocalisation</span>
+    </a>
+    <a href="#" class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="lbl">Alertes</span><span class="nav-badge">3</span>
+    </a>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="u-av">Dr</div>
+      <div><div class="u-name">Dr. Martin</div><div class="u-role">Gériatre · Admin</div></div>
+      <div class="u-dot"></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div><span class="topbar-title">Dashboard</span><span class="topbar-sub">/ Vue générale</span></div>
+    <div class="topbar-right">
+      <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="icon-btn"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="nbadge">3</span></div>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card teal">
+        <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+        <div class="stat-value" id="v-patients">12</div>
+        <div class="stat-label">Patients surveillés</div>
+        <div class="stat-delta d-up">+2 ce mois</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+        <div class="stat-value" id="v-chutes">3</div>
+        <div class="stat-label">Chutes détectées</div>
+        <div class="stat-delta d-down">Aujourd'hui</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <div class="stat-value" id="v-bpm">72</div>
+        <div class="stat-label">BPM moyen (tous)</div>
+        <div class="stat-delta d-warn">Normal</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <div class="stat-value" id="v-alerts">3</div>
+        <div class="stat-label">Alertes actives</div>
+        <div class="stat-delta d-down">Non acquittées</div>
+      </div>
+    </div>
+
+    <!-- ECG + PATIENTS -->
+    <div class="two-cols">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot" style="background:var(--teal);box-shadow:0 0 6px var(--teal)"></div>
+          <span class="card-title">ECG temps réel — Patient actif</span>
+          <span class="card-sub">Dupont Jean · Ch.4</span>
+        </div>
+        <div class="ecg-wrap">
+          <div class="ecg-meta">
+            <div class="ecg-bpm" id="bpm-disp">72 <span class="ecg-unit">BPM</span></div>
+            <div class="ecg-status" id="ecg-st">Rythme normal</div>
+            <div style="margin-left:auto;font-size:11px;color:var(--txt3);font-family:var(--font-mono)">QRS: <span style="color:var(--txt2)">80ms</span> &nbsp; PR: <span style="color:var(--txt2)">160ms</span></div>
+          </div>
+          <canvas id="ecgCanvas" height="90"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot" style="background:var(--blue)"></div>
+          <span class="card-title">Patients actifs</span>
+          <span class="card-sub">12 / 12 en ligne</span>
+        </div>
+        <div class="p-list">
+          <a href="/patients/" class="p-item">
+            <div class="p-av" style="background:rgba(0,212,170,.15);color:var(--teal);border-color:rgba(0,212,170,.4)">DJ</div>
+            <div><div class="p-name">Dupont Jean</div><div class="p-age">78 ans · Ch.4</div></div>
+            <div class="p-hr" id="hr1">72 bpm</div>
+            <div class="p-badge pb-ok">Stable</div>
+          </a>
+          <a href="/patients/" class="p-item">
+            <div class="p-av" style="background:rgba(255,77,109,.15);color:var(--red);border-color:rgba(255,77,109,.4)">MM</div>
+            <div><div class="p-name">Martin Marie</div><div class="p-age">84 ans · Ch.7</div></div>
+            <div class="p-hr" id="hr2">91 bpm</div>
+            <div class="p-badge pb-alert">Alerte</div>
+          </a>
+          <a href="/patients/" class="p-item">
+            <div class="p-av" style="background:rgba(245,158,11,.15);color:var(--amber);border-color:rgba(245,158,11,.4)">BL</div>
+            <div><div class="p-name">Bernard Lucie</div><div class="p-age">71 ans · Ch.2</div></div>
+            <div class="p-hr" id="hr3">68 bpm</div>
+            <div class="p-badge pb-warn">Surveiller</div>
+          </a>
+          <a href="/patients/" class="p-item">
+            <div class="p-av" style="background:rgba(96,165,250,.15);color:var(--blue);border-color:rgba(96,165,250,.4)">RP</div>
+            <div><div class="p-name">Robert Paul</div><div class="p-age">80 ans · Ch.9</div></div>
+            <div class="p-hr" id="hr4">65 bpm</div>
+            <div class="p-badge pb-ok">Stable</div>
+          </a>
+          <a href="/patients/" class="p-item">
+            <div class="p-av" style="background:rgba(167,139,250,.15);color:var(--purple);border-color:rgba(167,139,250,.4)">LC</div>
+            <div><div class="p-name">Lambert Claire</div><div class="p-age">76 ans · Ch.1</div></div>
+            <div class="p-hr" id="hr5">77 bpm</div>
+            <div class="p-badge pb-ok">Stable</div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- SENSORS + ALERTS + GPS -->
+    <div class="three-cols">
+      <!-- TEMP -->
+      <div class="card">
+        <div class="card-header"><div class="card-dot" style="background:var(--amber)"></div><span class="card-title">Environnement</span><span class="card-sub">DHT22</span></div>
+        <div class="sensor-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <div><div class="sensor-val" style="color:var(--amber)" id="temp-v">22.4</div><div class="sensor-unit">°C — Température</div></div>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.5" stroke-linecap="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+          </div>
+          <div class="sensor-bar-wrap"><div class="sensor-bar" id="temp-b" style="width:56%;background:var(--amber)"></div></div>
+          <div class="sensor-lr"><span>0°C</span><span id="temp-p">56%</span><span>40°C</span></div>
+          <div style="height:14px"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <div><div class="sensor-val" style="color:var(--blue)" id="hum-v">58</div><div class="sensor-unit">% — Humidité</div></div>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.5" stroke-linecap="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+          </div>
+          <div class="sensor-bar-wrap"><div class="sensor-bar" id="hum-b" style="width:58%;background:var(--blue)"></div></div>
+          <div class="sensor-lr"><span>0%</span><span id="hum-p">58%</span><span>100%</span></div>
+        </div>
+      </div>
+
+      <!-- ALERTS -->
+      <div class="card">
+        <div class="card-header"><div class="card-dot" style="background:var(--red);box-shadow:0 0 6px var(--red)"></div><span class="card-title">Alertes récentes</span><span class="card-sub" style="color:var(--red)">3 actives</span></div>
+        <div class="alert-list">
+          <div class="alert-item"><div class="a-icon ai-red"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg></div><div><div class="a-text">Chute — Martin Marie</div><div class="a-time">14:32 · Ch.7 · GPS envoyé</div></div><div class="a-new"></div></div>
+          <div class="alert-item"><div class="a-icon ai-red"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><div><div class="a-text">Tachycardie — Martin Marie</div><div class="a-time">14:30 · 91 BPM · Seuil: 85</div></div><div class="a-new"></div></div>
+          <div class="alert-item"><div class="a-icon ai-amber"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg></div><div><div class="a-text">Fragilité — Bernard Lucie</div><div class="a-time">13:15 · Score ML: 0.78</div></div><div class="a-new"></div></div>
+          <div class="alert-item"><div class="a-icon ai-blue"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div class="a-text">Batterie faible — Ch.3</div><div class="a-time">12:50 · 15% restant</div></div></div>
+        </div>
+      </div>
+
+      <!-- GPS -->
+      <div class="card">
+        <div class="card-header"><div class="card-dot" style="background:var(--teal)"></div><span class="card-title">Dernière position</span><span class="card-sub">NEO-6M · Ch.7</span></div>
+        <div class="gps-body">
+          <div class="gps-map">
+            <div class="gps-grid"></div>
+            <div class="gps-pin"><div class="pin-pulse"></div><div class="pin-pulse"></div><div class="pin-pulse"></div><div class="pin-dot"></div></div>
+            <div style="position:absolute;bottom:7px;left:10px;font-size:10px;color:var(--txt3);font-family:var(--font-mono)">Couloir 2ème étage</div>
+            <div style="position:absolute;top:7px;right:8px;font-size:10px;padding:2px 6px;background:var(--red-dim);color:var(--red);border-radius:4px;font-family:var(--font-mono)">CHUTE</div>
+          </div>
+          <div class="gps-coords">LAT <span>4.3180°S</span> &nbsp; LON <span>15.3020°E</span> · Lingwala</div>
+          <div class="gps-btns">
+            <a href="/geolocalisation/?patient=P002" class="gps-btn gb-teal">Voir carte</a>
+            <button class="gps-btn gb-red" onclick="alert('SMS urgence envoyé (simulation)')">SMS urgence</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+// HORLOGE
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR')},1000);
+document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR');
+
+// ECG
+const ec=document.getElementById('ecgCanvas'),ectx=ec.getContext('2d');
+let ecgData=[],bpm=72;
+function ecgWave(p){const t=p%1;if(t<.1)return 0;if(t<.13)return(t-.1)/.03*-.15;if(t<.16)return-.15+(t-.13)/.03*.15;if(t<.20)return(t-.16)/.04*.35;if(t<.22)return.35+(t-.20)/.02*.65;if(t<.24)return 1-(t-.22)/.02;if(t<.27)return-(t-.24)/.03*.4;if(t<.30)return-.4+(t-.27)/.03*.4;if(t<.36)return(t-.30)/.06*.25;if(t<.42)return.25-(t-.36)/.06*.25;return 0;}
+let phase=0;
+function drawECG(){
+  const W=ec.offsetWidth*devicePixelRatio||600,H=90*devicePixelRatio;
+  ec.width=W;ec.height=H;
+  const mid=H*.5,amp=H*.38,spd=3;
+  ectx.clearRect(0,0,W,H);
+  ectx.strokeStyle='rgba(0,212,170,.07)';ectx.lineWidth=.5;
+  for(let x=0;x<W;x+=20*devicePixelRatio){ectx.beginPath();ectx.moveTo(x,0);ectx.lineTo(x,H);ectx.stroke();}
+  for(let y=0;y<H;y+=20*devicePixelRatio){ectx.beginPath();ectx.moveTo(0,y);ectx.lineTo(W,y);ectx.stroke();}
+  if(ecgData.length>1){
+    const g=ectx.createLinearGradient(0,0,W,0);g.addColorStop(0,'rgba(0,212,170,0)');g.addColorStop(.3,'rgba(0,212,170,.9)');g.addColorStop(1,'rgba(0,212,170,.9)');
+    ectx.strokeStyle=g;ectx.lineWidth=2*devicePixelRatio;ectx.lineJoin='round';ectx.beginPath();
+    const st=Math.max(0,ecgData.length-Math.floor(W/spd));
+    for(let i=st;i<ecgData.length;i++){const px=(i-st)*spd,py=mid-ecgData[i]*amp;i===st?ectx.moveTo(px,py):ectx.lineTo(px,py);}
+    ectx.stroke();
+  }
+}
+function tickECG(){
+  const fr=Math.round(60/(bpm/60)*60/60);
+  phase+=1/fr;ecgData.push(ecgWave(phase));
+  if(ecgData.length>800)ecgData.shift();
+  drawECG();requestAnimationFrame(tickECG);
+}
+tickECG();
+window.addEventListener('resize',()=>{drawECG();});
+
+// TEMPS RÉEL
+let bpms=[72,91,68,65,77];let tempB=22.4,humB=58;
+setInterval(()=>{
+  bpms=bpms.map(v=>Math.max(50,Math.min(110,v+(Math.random()-.5)*2)));
+  ['hr1','hr2','hr3','hr4','hr5'].forEach((id,i)=>{document.getElementById(id).textContent=Math.round(bpms[i])+' bpm';});
+  bpm=bpms[0];
+  const avg=Math.round(bpms.reduce((a,b)=>a+b,0)/bpms.length);
+  document.getElementById('v-bpm').textContent=avg;
+  document.getElementById('bpm-disp').innerHTML=Math.round(bpms[0])+' <span class="ecg-unit">BPM</span>';
+  tempB=Math.max(18,Math.min(28,tempB+(Math.random()-.5)*.2));
+  humB=Math.max(30,Math.min(80,humB+(Math.random()-.5)*.8));
+  document.getElementById('temp-v').textContent=tempB.toFixed(1);
+  document.getElementById('hum-v').textContent=Math.round(humB);
+  const tp=((tempB/40)*100).toFixed(0),hp=Math.round(humB);
+  document.getElementById('temp-b').style.width=tp+'%';document.getElementById('hum-b').style.width=hp+'%';
+  document.getElementById('temp-p').textContent=tp+'%';document.getElementById('hum-p').textContent=hp+'%';
+},2000);
+</script>
+</body>
+</html>
