@@ -22,10 +22,10 @@ h1{font-family:var(--font-head);font-size:22px;font-weight:700;color:#fff;margin
 @media(max-width:480px){.roles{grid-template-columns:1fr}.card{padding:24px 18px}h1{font-size:20px}}
 .role{padding:18px 14px;border-radius:14px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;text-align:center;transition:all .15s}
 .role:hover{border-color:var(--border2,rgba(255,255,255,.13))}
-.role.active.famille{border-color:rgba(167,139,250,.45);background:var(--purple-dim);box-shadow:0 0 0 1px rgba(167,139,250,.2)}
+.role.active.famille,
 .role.active.patient{border-color:rgba(0,212,170,.45);background:var(--teal-dim);box-shadow:0 0 0 1px rgba(0,212,170,.2)}
 .role-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
-.role.famille .role-icon{background:var(--purple-dim);color:var(--purple)}
+.role.famille .role-icon,
 .role.patient .role-icon{background:var(--teal-dim);color:var(--teal)}
 .role-icon svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
 .role-title{font-family:var(--font-head);font-size:15px;font-weight:600;color:#fff;margin-bottom:4px}
@@ -100,35 +100,63 @@ h1{font-family:var(--font-head);font-size:22px;font-weight:700;color:#fff;margin
 
 <script>
 let role = null;
+let PROFILS = { famille: [], patient: [] };
 
-const PROFILS = {
-  famille: [
-    {id:'F001', label:'Marie Dupont — proche de Jean Dupont'},
-    {id:'F002', label:'Paul Martin — proche de Marie Martin'},
-    {id:'F003', label:'Julie Simon — proche d’André Simon'},
-  ],
-  patient: [
-    {id:'P001', label:'Jean Dupont — Gombe'},
-    {id:'P002', label:'Marie Martin — Lingwala'},
-    {id:'P008', label:'André Simon — Kalamu'},
-  ],
-};
+async function loadProfils(){
+  try{
+    const [fRes, pRes] = await Promise.all([
+      fetch('/api/family/accounts/'),
+      fetch('/api/patients/'),
+    ]);
+    if(fRes.ok){
+      const d = await fRes.json();
+      PROFILS.famille = (d.accounts||[]).map(a => ({
+        id: a.id,
+        label: a.label || `${a.name} — proche de ${a.patient_label}`,
+      }));
+    }
+    if(pRes.ok){
+      const d = await pRes.json();
+      const list = d.patients || d || [];
+      PROFILS.patient = (Array.isArray(list)?list:[]).map(p => ({
+        id: p.id,
+        label: `${p.prenom||''} ${p.nom||''} — ${p.chambre||p.zone||p.id}`.trim(),
+      }));
+    }
+  }catch(e){}
+  if(!PROFILS.famille.length){
+    PROFILS.famille = [
+      {id:'F001', label:'Marie Kabongo — proche de Jean Kabongo'},
+      {id:'F002', label:'Paul Kadima — proche de Marie Kadima'},
+      {id:'F003', label:'Julie Kabila — proche d’André Kabila'},
+    ];
+  }
+  if(!PROFILS.patient.length){
+    PROFILS.patient = [
+      {id:'P001', label:'Jean Kabongo — Gombe'},
+      {id:'P002', label:'Marie Kadima — Lingwala'},
+      {id:'P008', label:'André Kabila — Kalamu'},
+    ];
+  }
+}
+loadProfils();
 
-function pickRole(r){
+async function pickRole(r){
   role = r;
   document.getElementById('roleFamille').classList.toggle('active', r==='famille');
   document.getElementById('rolePatient').classList.toggle('active', r==='patient');
   document.getElementById('step1').style.display = 'none';
   document.getElementById('step2').classList.add('show');
+  if(!PROFILS.famille.length || !PROFILS.patient.length) await loadProfils();
 
   const sel = document.getElementById('profil');
   sel.innerHTML = PROFILS[r].map(p => `<option value="${p.id}">${p.label}</option>`).join('');
 
   if(r==='famille'){
     document.getElementById('stepTitle').textContent = 'Connexion famille';
-    document.getElementById('stepLead').textContent = 'Suivez l’état de santé de votre proche et recevez les alertes.';
+    document.getElementById('stepLead').textContent = 'Suivez l’état de santé de votre proche et recevez les alertes, SMS et e-mails.';
     document.getElementById('profilLabel').textContent = 'Profil famille';
-    document.getElementById('submitBtn').className = 'btn purple';
+    document.getElementById('submitBtn').className = 'btn';
     document.getElementById('submitBtn').textContent = 'Entrer en tant que famille';
   } else {
     document.getElementById('stepTitle').textContent = 'Connexion patient';

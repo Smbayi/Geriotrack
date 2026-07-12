@@ -46,7 +46,18 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-siz
 .icon-btn{width:34px;height:34px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;color:var(--txt2);position:relative}
 .icon-btn:hover{background:var(--bg);color:var(--txt)}
 .icon-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
-.notif-count{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono)}
+.notif-count{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:700;min-width:14px;height:14px;padding:0 3px;border-radius:50%;display:none;align-items:center;justify-content:center;font-family:var(--font-mono)}
+.notif-wrap{position:relative}
+.notif-panel{position:absolute;top:calc(100% + 8px);right:0;width:320px;max-height:380px;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.45);display:none;flex-direction:column;z-index:200;overflow:hidden}
+.notif-panel.open{display:flex}
+.notif-panel-hdr{padding:12px 14px;border-bottom:1px solid var(--border);font-family:var(--font-head);font-size:13px;font-weight:600}
+.notif-list{overflow-y:auto;max-height:320px}
+.notif-item{display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px}
+.notif-item.unread{background:rgba(255,77,109,.06)}
+.notif-ico{width:28px;height:28px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.notif-title{font-weight:500;color:var(--txt)}
+.notif-sub{font-size:10px;color:var(--txt3);margin-top:2px;font-family:var(--font-mono)}
+.notif-empty{padding:20px;text-align:center;color:var(--txt3);font-size:12px}
 .clock{font-family:var(--font-mono);font-size:12px;color:var(--txt2)}
 .body-row{flex:1;display:flex;overflow:hidden}
 
@@ -100,7 +111,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-siz
 .pp-name{font-size:12px;font-weight:500;color:var(--txt);line-height:1.3}
 .pp-info{font-size:10px;color:var(--txt3);font-family:var(--font-mono);margin-top:2px}
 .pp-right{margin-left:auto;text-align:right}
-.pp-bpm{font-size:12px;font-family:var(--font-mono);color:var(--txt2)}
+.pp-temp{font-size:12px;font-family:var(--font-mono);color:var(--txt2)}
 .pp-status-dot{width:7px;height:7px;border-radius:50%;margin-left:auto;margin-top:4px}
 .selected-card{margin:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;flex-shrink:0}
 .sc-header{padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
@@ -127,10 +138,18 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-siz
 .legend-item{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--txt2);font-family:var(--font-mono)}
 .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .legend-line{width:20px;height:2px;border-radius:1px;flex-shrink:0}
-.marker-wrap{position:relative;width:32px;height:32px;cursor:pointer}
-.marker-pulse{position:absolute;border-radius:50%;border:1.5px solid;animation:map-pulse 1.5s infinite;opacity:0;top:0;left:0;width:32px;height:32px}
-.marker-core{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:Syne,sans-serif;border:2px solid;box-shadow:0 2px 12px rgba(0,0,0,.5)}
-@keyframes map-pulse{0%{width:32px;height:32px;opacity:.6;top:0;left:0}100%{width:56px;height:56px;opacity:0;top:-12px;left:-12px}}
+.marker-wrap{position:relative;width:44px;height:52px;cursor:pointer;display:flex;flex-direction:column;align-items:center}
+.marker-pulse{position:absolute;border-radius:50%;border:2px solid;animation:map-pulse 1.5s infinite;opacity:0;top:0;left:50%;transform:translateX(-50%);width:40px;height:40px}
+.marker-core{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;font-family:Syne,sans-serif;border:2.5px solid;box-shadow:0 3px 14px rgba(0,0,0,.65);background:#111827;letter-spacing:.5px;z-index:2}
+.marker-label{margin-top:2px;font-size:9px;font-weight:700;font-family:Syne,sans-serif;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);white-space:nowrap;max-width:72px;overflow:hidden;text-overflow:ellipsis}
+.fall-marker-wrap{position:relative;width:40px;height:48px;cursor:pointer;display:flex;flex-direction:column;align-items:center}
+.fall-marker-pulse{position:absolute;top:2px;left:50%;transform:translateX(-50%);width:38px;height:38px;border-radius:50%;border:2px solid var(--red);animation:fallPulse 1.4s ease-out infinite;opacity:.55}
+@keyframes fallPulse{0%{transform:translateX(-50%) scale(.85);opacity:.7}100%{transform:translateX(-50%) scale(1.5);opacity:0}}
+.fall-marker-core{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2.5px solid;box-shadow:0 3px 14px rgba(0,0,0,.65);z-index:2}
+.fall-marker-wrap.latest .fall-marker-core{background:rgba(255,77,109,.25);border-color:var(--red);box-shadow:0 0 16px rgba(255,77,109,.55)}
+.fall-marker-wrap.historic .fall-marker-core{background:rgba(245,158,11,.18);border-color:var(--amber);font-size:13px;opacity:.9}
+.fall-marker-label{font-size:8px;color:var(--txt3);font-family:IBM Plex Mono,monospace;margin-top:1px}
+@keyframes map-pulse{0%{width:40px;height:40px;opacity:.55}100%{width:68px;height:68px;opacity:0}}
 </style>
 </head>
 <body>
@@ -156,15 +175,15 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-siz
       <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
       <span class="lbl">Géolocalisation</span>
     </a>
-    <a href="#" class="nav-item">
+    <a href="/alertes/" class="nav-item">
       <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      <span class="lbl">Alertes</span><span class="nav-badge">3</span>
+      <span class="lbl">Alertes</span><span class="nav-badge" data-notif-badge>0</span>
     </a>
   </div>
   <div class="sidebar-bottom">
     <div class="user-card">
       <div class="u-av">Dr</div>
-      <div><div class="u-name">Dr. Martin</div><div class="u-role">Gériatre · Admin</div></div>
+      <div><div class="u-name">Dr. Mutombo</div><div class="u-role">Gériatre · Admin</div></div>
       <div class="u-dot"></div>
     </div>
   </div>
@@ -172,11 +191,20 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-siz
 
 <div class="main">
   <div class="topbar">
-    <div><span class="topbar-title">Géolocalisation</span><span class="topbar-sub">/ Kinshasa · NEO-6M (simulation)</span></div>
+    <div><span class="topbar-title">Géolocalisation</span><span class="topbar-sub">/ Kinshasa · NEO-6M · ESP32</span></div>
     <div class="topbar-right">
       <div class="live-badge"><div class="live-dot"></div>GPS LIVE</div>
       <div class="clock" id="clock">--:--:--</div>
-      <div class="icon-btn"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-count">3</span></div>
+      <div class="notif-wrap" data-notif-wrap onclick="event.stopPropagation()">
+        <div class="icon-btn" data-notif-btn>
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-count" data-notif-badge>0</span>
+        </div>
+        <div class="notif-panel" data-notif-panel>
+          <div class="notif-panel-hdr">Notifications</div>
+          <div class="notif-list" data-notif-list></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -188,9 +216,9 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-siz
         <div class="map-stat-pill"><div class="msp-dot" style="background:var(--amber)"></div><span class="msp-label">Dernière MAJ GPS</span><span class="msp-val" id="stat-update" style="font-size:11px">--:--:--</span></div>
       </div>
 
-      <div class="alert-banner">
+      <div class="alert-banner" id="fallBanner" style="display:none">
         <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <span class="alert-banner-text"><strong>CHUTE DÉTECTÉE</strong> — Marie Martin · Lingwala · Position GPS transmise</span>
+        <span class="alert-banner-text" id="fallBannerText"><strong>CHUTE DÉTECTÉE</strong></span>
       </div>
 
       <div class="map-controls">
@@ -211,7 +239,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-siz
           <div><div class="sc-name" id="scName"></div><div class="sc-meta" id="scMeta"></div></div>
         </div>
         <div class="sc-vitals">
-          <div class="sc-vital"><div class="scv-val" id="scBpm" style="color:var(--teal)">--</div><div class="scv-label">BPM</div></div>
+          <div class="sc-vital"><div class="scv-val" id="scTemp" style="color:var(--amber)">--.-</div><div class="scv-label">Temp.</div></div>
           <div class="sc-vital"><div class="scv-val" id="scRisk" style="color:var(--amber)">--%</div><div class="scv-label">Risque</div></div>
           <div class="sc-vital"><div class="scv-val" id="scPrec" style="color:var(--blue)">--m</div><div class="scv-label">Précision</div></div>
         </div>
@@ -221,7 +249,6 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-siz
           <div class="coord-item">Sats <span>8</span></div>
         </div>
         <div class="sc-actions">
-          <button class="sc-act sc-call" onclick="callPatient()"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Appeler</button>
           <button class="sc-act sc-sms" onclick="sendSMS()"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Message</button>
           <button class="sc-act sc-analyse" onclick="openAnalyse()"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Analyser</button>
           <button class="sc-act sc-center" onclick="centerOnSelected()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>Centrer</button>
@@ -243,10 +270,12 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-siz
       <div class="gps-trail-legend">
         <div class="legend-title">Légende</div>
         <div class="legend-items">
-          <div class="legend-item"><div class="legend-dot" style="background:var(--red);box-shadow:0 0 6px var(--red)"></div>Alerte / Chute détectée</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red);box-shadow:0 0 6px var(--red)"></div>Chute récente (emplacement exact)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Chute antérieure (décalée si même lieu)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red);box-shadow:0 0 6px var(--red)"></div>Alerte patient</div>
           <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>À surveiller</div>
           <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>Stable</div>
-          <div class="legend-item"><div class="legend-line" style="background:var(--teal);opacity:.4"></div>Trajectoire GPS</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#fff;border:1px solid #64748b"></div>Initiales du patient (ex. JK)</div>
         </div>
       </div>
     </div>
@@ -268,37 +297,145 @@ const KINSHASA = {
 
 /* Positions simulées dans les communes de Kinshasa */
 const PATIENTS = [
-  {id:'P001',prenom:'Jean',   nom:'Dupont',  age:78,chambre:'Gombe',     statut:'stable',bpm:72, risk:.18,lat:-4.3050,lon:15.3080,color:'#00d4aa',contact:'Marie Dupont · +243 81 234 5678'},
-  {id:'P002',prenom:'Marie',  nom:'Martin',  age:84,chambre:'Lingwala',  statut:'alert', bpm:91, risk:.82,lat:-4.3180,lon:15.3020,color:'#ff4d6d',contact:'Paul Martin · +243 82 987 6543'},
-  {id:'P003',prenom:'Lucie',  nom:'Bernard', age:71,chambre:'Kintambo',  statut:'warn',  bpm:68, risk:.64,lat:-4.3280,lon:15.2750,color:'#f59e0b',contact:'Alain Bernard · +243 89 112 2334'},
-  {id:'P004',prenom:'Paul',   nom:'Robert',  age:80,chambre:'Barumbu',   statut:'stable',bpm:65, risk:.22,lat:-4.3120,lon:15.3250,color:'#60a5fa',contact:'Léa Robert · +243 81 554 4332'},
-  {id:'P005',prenom:'Claire', nom:'Lambert', age:76,chambre:'Kinshasa',  statut:'stable',bpm:77, risk:.30,lat:-4.3250,lon:15.3150,color:'#a78bfa',contact:'Sophie Lambert · +243 82 778 8990'},
-  {id:'P006',prenom:'Georges',nom:'Petit',   age:88,chambre:'Ngaliema',  statut:'warn',  bpm:58, risk:.71,lat:-4.3350,lon:15.2550,color:'#f59e0b',contact:'Anne Petit · +243 81 345 6789'},
-  {id:'P007',prenom:'Hélène', nom:'Moreau',  age:73,chambre:'Bandalungwa',statut:'stable',bpm:74,risk:.15,lat:-4.3550,lon:15.2850,color:'#34d399',contact:'Marc Moreau · +243 89 998 8776'},
-  {id:'P008',prenom:'André',  nom:'Simon',   age:82,chambre:'Kalamu',    statut:'alert', bpm:102,risk:.88,lat:-4.3480,lon:15.3050,color:'#ff4d6d',contact:'Julie Simon · +243 81 112 2334'},
-  {id:'P009',prenom:'Yvette', nom:'Garnier', age:79,chambre:'Limete',    statut:'stable',bpm:69, risk:.25,lat:-4.3650,lon:15.3350,color:'#34d399',contact:'Pierre Garnier · +243 82 223 3445'},
-  {id:'P010',prenom:'René',   nom:'Leroy',   age:85,chambre:'Lemba',     statut:'warn',  bpm:82, risk:.58,lat:-4.3850,lon:15.3100,color:'#f59e0b',contact:'Nathalie Leroy · +243 89 667 7889'},
-  {id:'P011',prenom:'Odette', nom:'Blanc',   age:74,chambre:'Matete',    statut:'stable',bpm:71, risk:.19,lat:-4.3750,lon:15.3450,color:'#34d399',contact:'Louis Blanc · +243 81 455 6678'},
-  {id:'P012',prenom:'Fernand',nom:'Rousseau',age:91,chambre:'Masina',    statut:'stable',bpm:66, risk:.35,lat:-4.3780,lon:15.3900,color:'#60a5fa',contact:'Camille Rousseau · +243 82 788 9901'},
+  {id:'P001',prenom:'Jean',   nom:'Kabongo',  age:78,chambre:'Gombe',      statut:'stable',risk:.18,temp:null,lat:-4.3050,lon:15.3080,color:'#00d4aa',contact:'Marie Kabongo · +243 81 234 5678'},
+  {id:'P002',prenom:'Marie',  nom:'Kadima',   age:84,chambre:'Lingwala',   statut:'alert', risk:.82,temp:null,lat:-4.3180,lon:15.3020,color:'#ff4d6d',contact:'Paul Kadima · +243 82 987 6543'},
+  {id:'P003',prenom:'Lucie',  nom:'Tshibangi',age:71,chambre:'Kintambo',   statut:'warn',  risk:.64,temp:null,lat:-4.3280,lon:15.2750,color:'#f59e0b',contact:'Alain Tshibangi · +243 89 112 2334'},
+  {id:'P004',prenom:'Paul',   nom:'Mukendi',  age:80,chambre:'Barumbu',    statut:'stable',risk:.22,temp:null,lat:-4.3120,lon:15.3250,color:'#60a5fa',contact:'Léa Mukendi · +243 81 554 4332'},
+  {id:'P005',prenom:'Claire', nom:'Ilunga',   age:76,chambre:'Kinshasa',   statut:'stable',risk:.30,temp:null,lat:-4.3250,lon:15.3150,color:'#a78bfa',contact:'Sophie Ilunga · +243 82 778 8990'},
+  {id:'P006',prenom:'Georges',nom:'Kalala',   age:88,chambre:'Ngaliema',   statut:'warn',  risk:.71,temp:null,lat:-4.3350,lon:15.2550,color:'#f59e0b',contact:'Anne Kalala · +243 81 345 6789'},
+  {id:'P007',prenom:'Hélène', nom:'Mwamba',   age:73,chambre:'Bandalungwa',statut:'stable',risk:.15,temp:null,lat:-4.3550,lon:15.2850,color:'#34d399',contact:'Marc Mwamba · +243 89 998 8776'},
+  {id:'P008',prenom:'André',  nom:'Kabila',   age:82,chambre:'Kalamu',     statut:'alert', risk:.88,temp:null,lat:-4.3480,lon:15.3050,color:'#ff4d6d',contact:'Julie Kabila · +243 81 112 2334'},
+  {id:'P009',prenom:'Yvette', nom:'Ngalula',  age:79,chambre:'Limete',     statut:'stable',risk:.25,temp:null,lat:-4.3650,lon:15.3350,color:'#34d399',contact:'Pierre Ngalula · +243 82 223 3445'},
+  {id:'P010',prenom:'René',   nom:'Lukusa',   age:85,chambre:'Lemba',      statut:'warn',  risk:.58,temp:null,lat:-4.3850,lon:15.3100,color:'#f59e0b',contact:'Nathalie Lukusa · +243 89 667 7889'},
+  {id:'P011',prenom:'Odette', nom:'Mbuyi',    age:74,chambre:'Matete',     statut:'stable',risk:.19,temp:null,lat:-4.3750,lon:15.3450,color:'#34d399',contact:'Louis Mbuyi · +243 81 455 6678'},
+  {id:'P012',prenom:'Fernand',nom:'Kasongo',  age:91,chambre:'Masina',     statut:'stable',risk:.35,temp:null,lat:-4.3780,lon:15.3900,color:'#60a5fa',contact:'Camille Kasongo · +243 82 788 9901'},
 ];
 
 let mapFilter = 'all';
 let selectedId = null;
 let markers = {};
-let trailData = {};
+let fallMarkers = {};
+let CHUTES = [];
 let map;
 let mapReady = false;
 
-const ini = p => (p.prenom[0] + p.nom[0]).toUpperCase();
+const FALL_LOC_EPS = 0.00005; // ~5 m — même lieu
+
+const ini = p => ((p.prenom?.[0] || '') + (p.nom?.[0] || '')).toUpperCase();
 const rc = r => r > .7 ? '#ff4d6d' : r > .4 ? '#f59e0b' : '#00d4aa';
 const sc = s => s === 'alert' ? '#ff4d6d' : s === 'warn' ? '#f59e0b' : '#00d4aa';
 
-function clampToKinshasa(lat, lon) {
-  const [[minLon, minLat], [maxLon, maxLat]] = KINSHASA.maxBounds;
-  return {
-    lat: Math.min(maxLat, Math.max(minLat, lat)),
-    lon: Math.min(maxLon, Math.max(minLon, lon)),
-  };
+/** Si 2+ patients au même GPS → les décale côte à côte sur la carte */
+function computeDisplayCoords(list) {
+  const groups = {};
+  list.forEach(p => {
+    const key = `${Number(p.lat).toFixed(5)},${Number(p.lon).toFixed(5)}`;
+    (groups[key] ||= []).push(p);
+  });
+  const out = {};
+  Object.values(groups).forEach(group => {
+    if (group.length === 1) {
+      out[group[0].id] = { lat: group[0].lat, lon: group[0].lon };
+      return;
+    }
+    const spacing = 0.00042; // ~45 m — visibles côte à côte
+    group.forEach((p, i) => {
+      const offset = (i - (group.length - 1) / 2) * spacing;
+      out[p.id] = { lat: p.lat, lon: p.lon + offset };
+    });
+  });
+  return out;
+}
+
+/** Chute la plus récente à l'emplacement exact ; les anciennes au même GPS sont décalées */
+function computeFallDisplayCoords(falls) {
+  const valid = falls.filter(f => f.lat != null && f.lon != null);
+  const sorted = [...valid].sort((a, b) => new Date(b.detected_at) - new Date(a.detected_at));
+  const groups = [];
+
+  sorted.forEach(f => {
+    let group = groups.find(g =>
+      Math.abs(g[0].lat - f.lat) < FALL_LOC_EPS && Math.abs(g[0].lon - f.lon) < FALL_LOC_EPS
+    );
+    if (!group) { group = []; groups.push(group); }
+    group.push(f);
+  });
+
+  const out = {};
+  groups.forEach(group => {
+    group.sort((a, b) => new Date(b.detected_at) - new Date(a.detected_at));
+    const baseLat = group[0].lat;
+    const baseLon = group[0].lon;
+    group.forEach((f, i) => {
+      if (i === 0) {
+        out[f.id] = { lat: f.lat, lon: f.lon, isLatest: true };
+      } else {
+        const ring = Math.floor((i - 1) / 6) + 1;
+        const idx = (i - 1) % 6;
+        const angle = (idx / 6) * Math.PI * 2;
+        const dist = 0.00035 * ring; // ~35 m par anneau
+        out[f.id] = {
+          lat: baseLat + Math.cos(angle) * dist,
+          lon: baseLon + Math.sin(angle) * dist,
+          isLatest: false,
+        };
+      }
+    });
+  });
+  return out;
+}
+
+function formatFallTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function createFallMarkerElement(fall, isLatest) {
+  const el = document.createElement('div');
+  el.className = `fall-marker-wrap ${isLatest ? 'latest' : 'historic'}`;
+  el.title = `Chute — ${fall.nom || fall.patient_id}`;
+  el.innerHTML = `
+    ${isLatest ? '<div class="fall-marker-pulse"></div>' : ''}
+    <div class="fall-marker-core">${isLatest ? '⚠' : '·'}</div>
+    <div class="fall-marker-label">${fall.patient_id || ''}</div>
+  `;
+  return el;
+}
+
+function renderFallMarkers() {
+  if (!mapReady) return;
+  Object.values(fallMarkers).forEach(m => m.remove());
+  fallMarkers = {};
+
+  const visible = CHUTES.filter(f => {
+    if (f.lat == null || f.lon == null) return false;
+    if (selectedId) return f.patient_id === selectedId;
+    return true;
+  });
+  if (!visible.length) return;
+
+  const coords = computeFallDisplayCoords(visible);
+  visible.forEach(f => {
+    const pos = coords[f.id];
+    if (!pos) return;
+    const popup = new maplibregl.Popup({ offset: 20, closeButton: false }).setHTML(`
+      <div style="font-family:IBM Plex Mono,monospace;font-size:11px">
+        <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:${pos.isLatest ? '#ff4d6d' : '#f59e0b'};margin-bottom:4px">
+          ${pos.isLatest ? '⚠ Chute récente' : 'Chute antérieure'}
+        </div>
+        <div style="color:#e2e8f0">${f.nom || f.patient_id}</div>
+        <div style="color:#94a3b8;margin-top:4px">${f.zone || 'Kinshasa'}</div>
+        <div style="margin-top:6px;color:#94a3b8">${formatFallTime(f.detected_at)}</div>
+        ${!pos.isLatest ? '<div style="margin-top:4px;font-size:10px;color:#64748b">Décalée — même lieu qu\'une chute plus récente</div>' : ''}
+      </div>
+    `);
+    const marker = new maplibregl.Marker({ element: createFallMarkerElement(f, pos.isLatest), anchor: 'bottom' })
+      .setLngLat([pos.lon, pos.lat])
+      .setPopup(popup)
+      .addTo(map);
+    fallMarkers[f.id] = marker;
+  });
 }
 
 function initMap() {
@@ -310,7 +447,7 @@ function initMap() {
     minZoom: KINSHASA.minZoom,
     maxZoom: KINSHASA.maxZoom,
     maxBounds: KINSHASA.maxBounds,
-    maxBoundsViscosity: 1.0, // bloque totalement la sortie de Kinshasa
+    maxBoundsViscosity: 1.0,
     attributionControl: true,
   });
 
@@ -319,50 +456,22 @@ function initMap() {
 
   map.on('load', () => {
     mapReady = true;
-    PATIENTS.forEach(p => {
-      trailData[p.id] = [[p.lon, p.lat]];
-      const sourceId = `trail-${p.id}`;
-      map.addSource(sourceId, {
-        type: 'geojson',
-        data: lineGeoJSON(trailData[p.id]),
-      });
-      map.addLayer({
-        id: `trail-line-${p.id}`,
-        type: 'line',
-        source: sourceId,
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: {
-          'line-color': p.color,
-          'line-width': 2,
-          'line-opacity': 0.45,
-          'line-dasharray': [2, 2],
-        },
-      });
-    });
     renderMarkers();
     renderPanelList();
     centerAll();
   });
 }
 
-function lineGeoJSON(coords) {
-  return {
-    type: 'Feature',
-    properties: {},
-    geometry: {
-      type: 'LineString',
-      coordinates: coords.length >= 2 ? coords : [coords[0], coords[0]],
-    },
-  };
-}
-
 function createMarkerElement(p) {
   const col = sc(p.statut);
+  const initials = ini(p);
   const el = document.createElement('div');
   el.className = 'marker-wrap';
+  el.title = `${p.prenom} ${p.nom} (${initials})`;
   el.innerHTML = `
     ${p.statut === 'alert' ? `<div class="marker-pulse" style="border-color:${col}"></div>` : ''}
-    <div class="marker-core" style="background:${col}20;color:${col};border-color:${col}${p.statut === 'alert' ? `;box-shadow:0 2px 12px rgba(0,0,0,.5),0 0 20px ${col}60` : ''}">${ini(p)}</div>
+    <div class="marker-core" style="background:${col}22;color:${col};border-color:${col}${p.statut === 'alert' ? `;box-shadow:0 2px 14px rgba(0,0,0,.55),0 0 18px ${col}70` : ''}">${initials}</div>
+    <div class="marker-label">${initials}</div>
   `;
   el.addEventListener('click', e => {
     e.stopPropagation();
@@ -372,24 +481,29 @@ function createMarkerElement(p) {
 }
 
 function renderMarkers() {
+  if (!mapReady) return;
   Object.values(markers).forEach(m => m.remove());
   markers = {};
 
-  PATIENTS.filter(p => mapFilter === 'all' || p.statut === mapFilter).forEach(p => {
-    const popup = new maplibregl.Popup({ offset: 18, closeButton: false }).setHTML(`
+  const visible = PATIENTS.filter(p => mapFilter === 'all' || p.statut === mapFilter);
+  const coords = computeDisplayCoords(visible);
+
+  visible.forEach(p => {
+    const pos = coords[p.id] || { lat: p.lat, lon: p.lon };
+    const popup = new maplibregl.Popup({ offset: 22, closeButton: false }).setHTML(`
       <div style="font-family:IBM Plex Mono,monospace;font-size:11px">
-        <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:600;margin-bottom:4px">${p.prenom} ${p.nom}</div>
+        <div style="font-family:Syne,sans-serif;font-size:14px;font-weight:700;margin-bottom:4px">${ini(p)} — ${p.prenom} ${p.nom}</div>
         <div style="color:#94a3b8">${p.chambre} · ${p.age} ans</div>
         <div style="margin-top:6px">
-          <span style="color:${p.bpm > 90 ? '#ff4d6d' : '#00d4aa'}">${p.bpm} bpm</span>
+          <span style="color:var(--amber)">${p.temp ?? '--'}°C</span>
           &nbsp;
           <span style="color:${rc(p.risk)}">${(p.risk * 100).toFixed(0)}% risque</span>
         </div>
       </div>
     `);
 
-    const marker = new maplibregl.Marker({ element: createMarkerElement(p), anchor: 'center' })
-      .setLngLat([p.lon, p.lat])
+    const marker = new maplibregl.Marker({ element: createMarkerElement(p), anchor: 'bottom' })
+      .setLngLat([pos.lon, pos.lat])
       .setPopup(popup)
       .addTo(map);
 
@@ -397,45 +511,60 @@ function renderMarkers() {
   });
 }
 
-function updateTrail(p) {
-  if (!mapReady) return;
-  const sourceId = `trail-${p.id}`;
-  const source = map.getSource(sourceId);
-  if (source) source.setData(lineGeoJSON(trailData[p.id]));
-
-  const layerId = `trail-line-${p.id}`;
-  if (map.getLayer(layerId)) {
-    const visible = mapFilter === 'all' || p.statut === mapFilter;
-    map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
-  }
-}
-
-function updateGPS() {
+async function syncFromAPI() {
   document.getElementById('stat-update').textContent = new Date().toLocaleTimeString('fr-FR');
-  PATIENTS.forEach(p => {
-    const drift = p.statut === 'alert' ? 0.0008 : 0.00015;
-    const next = clampToKinshasa(
-      p.lat + (Math.random() - 0.5) * drift,
-      p.lon + (Math.random() - 0.5) * drift
-    );
-    p.lat = next.lat;
-    p.lon = next.lon;
-    p.bpm = Math.max(50, Math.min(115, Math.round(p.bpm + (Math.random() - 0.5) * 2)));
-
-    trailData[p.id].push([p.lon, p.lat]);
-    if (trailData[p.id].length > 30) trailData[p.id].shift();
-    updateTrail(p);
-
-    if (markers[p.id]) markers[p.id].setLngLat([p.lon, p.lat]);
-  });
-  if (selectedId) {
-    const p = PATIENTS.find(x => x.id === selectedId);
-    if (p) updateSelectedCard(p);
-  }
-  renderPanelList();
+  try {
+    const [gpsRes, chutesRes, monRes] = await Promise.all([
+      fetch('/api/gps/'),
+      fetch('/api/chutes/'),
+      fetch('/api/monitoring/active/'),
+    ]);
+    if (monRes.ok) {
+      const m = await monRes.json();
+      if (m.active_patient && !selectedId) selectedId = m.active_patient;
+    }
+    if (gpsRes.ok) {
+      const data = await gpsRes.json();
+      (data.positions || []).forEach(pos => {
+        const p = PATIENTS.find(x => x.id === pos.id);
+        if (!p) return;
+        if (pos.lat != null) p.lat = pos.lat;
+        if (pos.lon != null) p.lon = pos.lon;
+        if (pos.statut) p.statut = pos.statut;
+        if (pos.temp != null) p.temp = Number(pos.temp);
+      });
+      renderMarkers();
+      const alertCount = PATIENTS.filter(p => p.statut === 'alert').length;
+      const pills = document.querySelectorAll('.map-stat-pill .msp-val');
+      if (pills[0]) pills[0].textContent = String(PATIENTS.length);
+      if (pills[1]) pills[1].textContent = String(alertCount);
+    }
+    if (chutesRes.ok) {
+      const c = await chutesRes.json();
+      CHUTES = c.chutes || [];
+      renderFallMarkers();
+      const latest = CHUTES[0];
+      const banner = document.getElementById('fallBanner');
+      if (latest && !latest.acknowledged) {
+        banner.style.display = 'flex';
+        document.getElementById('fallBannerText').innerHTML =
+          `<strong>CHUTE DÉTECTÉE</strong> — ${latest.nom} · GPS ${latest.lat != null ? Number(latest.lat).toFixed(5) + '°' : '—'} · SMS famille envoyé`;
+        if (!selectedId || selectedId === latest.patient_id) {
+          setTimeout(() => selectPatient(latest.patient_id, { skipFly: true }), 100);
+        }
+      } else {
+        banner.style.display = 'none';
+      }
+    }
+    if (selectedId) {
+      const p = PATIENTS.find(x => x.id === selectedId);
+      if (p) updateSelectedCard(p);
+    }
+    renderPanelList();
+  } catch (e) {}
 }
 
-function selectPatient(id) {
+function selectPatient(id, opts = {}) {
   selectedId = id;
   const p = PATIENTS.find(x => x.id === id);
   if (!p) return;
@@ -444,7 +573,21 @@ function selectPatient(id) {
   if (el) el.classList.add('active');
   document.getElementById('selectedCard').style.display = 'block';
   updateSelectedCard(p);
-  map.flyTo({ center: [p.lon, p.lat], zoom: 14, essential: true, duration: 1000 });
+  renderFallMarkers();
+  if (opts.skipFly) return;
+
+  const patientFalls = CHUTES.filter(f => f.patient_id === id && f.lat != null && f.lon != null);
+  if (patientFalls.length) {
+    const coords = computeFallDisplayCoords(patientFalls);
+    const latest = patientFalls.sort((a, b) => new Date(b.detected_at) - new Date(a.detected_at))[0];
+    const pos = coords[latest.id] || { lat: latest.lat, lon: latest.lon };
+    map.flyTo({ center: [pos.lon, pos.lat], zoom: 15, essential: true, duration: 1000 });
+    return;
+  }
+
+  const coords = computeDisplayCoords(PATIENTS.filter(x => mapFilter === 'all' || x.statut === mapFilter));
+  const pos = coords[id] || { lat: p.lat, lon: p.lon };
+  map.flyTo({ center: [pos.lon, pos.lat], zoom: 14, essential: true, duration: 1000 });
 }
 
 function updateSelectedCard(p) {
@@ -454,8 +597,8 @@ function updateSelectedCard(p) {
   av.style.cssText = `background:${col}18;color:${col};border-color:${col}50;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;font-family:Syne,sans-serif;border:2px solid;flex-shrink:0`;
   document.getElementById('scName').textContent = `${p.prenom} ${p.nom}`;
   document.getElementById('scMeta').textContent = `${p.id} · ${p.chambre} · ${p.age} ans`;
-  document.getElementById('scBpm').textContent = p.bpm;
-  document.getElementById('scBpm').style.color = p.bpm > 90 ? 'var(--red)' : p.bpm < 55 ? 'var(--blue)' : 'var(--teal)';
+  // Temp: on affiche via API (sinon --.-)
+  document.getElementById('scTemp').textContent = p.temp == null ? '--.-' : p.temp.toFixed(1);
   document.getElementById('scRisk').textContent = (p.risk * 100).toFixed(0) + '%';
   document.getElementById('scRisk').style.color = rc(p.risk);
   document.getElementById('scPrec').textContent = Math.floor(Math.random() * 5 + 3) + 'm';
@@ -474,9 +617,9 @@ function renderPanelList(query = '') {
   list.innerHTML = filtered.map(p => {
     const col = sc(p.statut);
     return `<div class="pp-item ${p.statut}${selectedId === p.id ? ' active' : ''}" data-id="${p.id}" onclick="selectPatient('${p.id}')">
-      <div class="pp-av" style="background:${col}18;color:${col};border-color:${col}40">${ini(p)}</div>
-      <div><div class="pp-name">${p.prenom} ${p.nom}</div><div class="pp-info">${p.chambre} · ${p.age} ans</div></div>
-      <div class="pp-right"><div class="pp-bpm" style="color:${p.bpm > 90 ? 'var(--red)' : p.bpm < 55 ? 'var(--blue)' : 'var(--txt2)'}">${p.bpm}<span style="font-size:9px;color:var(--txt3)"> bpm</span></div><div class="pp-status-dot" style="background:${col};margin-left:auto;${p.statut === 'alert' ? 'box-shadow:0 0 6px ' + col : ''}"></div></div>
+      <div class="pp-av" style="background:${col}18;color:${col};border-color:${col}40;font-weight:800">${ini(p)}</div>
+      <div><div class="pp-name">${ini(p)} · ${p.prenom} ${p.nom}</div><div class="pp-info">${p.chambre} · ${p.age} ans</div></div>
+      <div class="pp-right"><div class="pp-temp" style="color:var(--amber)">${p.temp==null?'--.-':Number(p.temp).toFixed(1)}<span style="font-size:9px;color:var(--txt3)"> °C</span></div><div class="pp-status-dot" style="background:${col};margin-left:auto;${p.statut === 'alert' ? 'box-shadow:0 0 6px ' + col : ''}"></div></div>
     </div>`;
   }).join('');
 }
@@ -488,7 +631,6 @@ function setMapFilter(f, btn) {
   document.querySelectorAll('.map-ctrl-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderMarkers();
-  PATIENTS.forEach(updateTrail);
 }
 
 function centerAll() {
@@ -503,14 +645,21 @@ function centerOnSelected() {
   if (p) map.flyTo({ center: [p.lon, p.lat], zoom: 15, essential: true, duration: 800 });
 }
 
-function callPatient() {
-  const p = PATIENTS.find(x => x.id === selectedId);
-  if (p) alert(`Appel GSM (simulation):\n${p.contact}`);
-}
-
 function sendSMS() {
   const p = PATIENTS.find(x => x.id === selectedId);
-  if (p) alert(`Message envoyé (simulation):\n${p.contact}`);
+  if (!p) return;
+  fetch('/api/messages/send/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      patient_id: p.id,
+      channel: 'sms',
+      recipient_type: 'famille',
+      message: `Alerte GérioTrack : ${p.prenom} ${p.nom} — coordonnées GPS : ${p.lat?.toFixed(5)}, ${p.lon?.toFixed(5)}`,
+    }),
+  }).then(r => r.json()).then(d => {
+    alert(d.ok ? `SMS enregistré et envoyé (via Django)` : (d.error || 'Erreur'));
+  });
 }
 
 function openAnalyse() {
@@ -529,12 +678,14 @@ setInterval(() => {
 document.getElementById('clock').textContent = new Date().toLocaleTimeString('fr-FR');
 document.addEventListener('DOMContentLoaded', () => {
   initMap();
-  setInterval(updateGPS, 4000);
+  setInterval(syncFromAPI, 1000);
+  syncFromAPI();
   const pid = new URLSearchParams(location.search).get('patient');
   if (pid && PATIENTS.some(p => p.id === pid)) {
     setTimeout(() => selectPatient(pid), 400);
   }
 });
 </script>
+<script src="/static/js/geriotrack-notify.js"></script>
 </body>
 </html>

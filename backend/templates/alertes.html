@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GérioTrack — Alertes</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--bg3:#1a2235;--bg4:#212d42;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--teal:#00d4aa;--teal-dim:rgba(0,212,170,0.10);--red:#ff4d6d;--red-dim:rgba(255,77,109,0.10);--amber:#f59e0b;--amber-dim:rgba(245,158,11,0.10);--blue:#60a5fa;--blue-dim:rgba(96,165,250,0.10);--purple:#a78bfa;--purple-dim:rgba(167,139,250,0.10);--green:#34d399;--txt:#e2e8f0;--txt2:#94a3b8;--txt3:#475569;--sidebar-w:240px;--font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'IBM Plex Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-size:14px;min-height:100vh;display:flex;overflow-x:hidden}
+.sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid var(--border)}
+.logo-mark{display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;background:var(--teal);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.logo-icon svg{width:18px;height:18px;stroke:#0a0e17;fill:none;stroke-width:2.2;stroke-linecap:round}
+.logo-name{font-family:var(--font-head);font-size:16px;font-weight:700;color:#fff}
+.logo-sub{font-size:10px;color:var(--txt3);margin-top:2px;font-family:var(--font-mono)}
+.sidebar-section{padding:16px 12px 4px}
+.sidebar-label{font-size:10px;font-weight:500;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase;padding:0 8px;margin-bottom:6px;font-family:var(--font-mono)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--txt2);font-size:13px;transition:all .15s;margin-bottom:2px;border:1px solid transparent;text-decoration:none}
+.nav-item:hover{background:var(--bg3);color:var(--txt)}
+.nav-item.active{background:var(--teal-dim);color:var(--teal);border-color:rgba(0,212,170,.2);font-weight:500}
+.nav-item svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;flex-shrink:0}
+.nav-item .lbl{flex:1}
+.nav-badge{background:var(--red);color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;font-family:var(--font-mono);flex-shrink:0;min-width:18px;text-align:center}
+.sidebar-bottom{margin-top:auto;border-top:1px solid var(--border);padding:14px 12px}
+.user-card{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px}
+.u-av{width:32px;height:32px;border-radius:50%;background:var(--purple-dim);border:1.5px solid var(--purple);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--purple);font-family:var(--font-head)}
+.u-name{font-size:12px;font-weight:500}.u-role{font-size:10px;color:var(--txt3)}
+.u-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);margin-left:auto;box-shadow:0 0 6px var(--teal)}
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{height:60px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:50}
+.topbar-title{font-family:var(--font-head);font-size:15px;font-weight:600;color:#fff}
+.topbar-sub{font-size:12px;color:var(--txt3);font-family:var(--font-mono);margin-left:4px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.clock{font-family:var(--font-mono);font-size:12px;color:var(--txt2)}
+.icon-btn{width:34px;height:34px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--txt2);position:relative}
+.icon-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8}
+.nbadge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:700;min-width:14px;height:14px;padding:0 3px;border-radius:50%;display:none;align-items:center;justify-content:center;font-family:var(--font-mono)}
+.notif-wrap{position:relative}
+.notif-panel{position:absolute;top:calc(100% + 8px);right:0;width:320px;max-height:380px;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.45);display:none;flex-direction:column;z-index:200;overflow:hidden}
+.notif-panel.open{display:flex}
+.notif-panel-hdr{padding:12px 14px;border-bottom:1px solid var(--border);font-family:var(--font-head);font-size:13px;font-weight:600}
+.notif-list{overflow-y:auto;max-height:320px}
+.notif-item{display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px}
+.notif-item.unread{background:rgba(255,77,109,.06)}
+.notif-ico{width:28px;height:28px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.notif-title{font-weight:500}.notif-sub{font-size:10px;color:var(--txt3);margin-top:2px;font-family:var(--font-mono)}
+.notif-empty{padding:20px;text-align:center;color:var(--txt3);font-size:12px}
+.content{padding:24px 28px;flex:1}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+.stat .lbl{font-size:11px;color:var(--txt3);font-family:var(--font-mono);margin-bottom:6px}
+.stat .val{font-family:var(--font-head);font-size:28px;font-weight:700;color:#fff}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+@media(max-width:1200px){.three,.two{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.stats{grid-template-columns:1fr}}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.b-mail{background:var(--purple-dim);color:var(--purple)}
+.card-h{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--border)}
+.card-dot{width:8px;height:8px;border-radius:50%}
+.card-title{font-family:var(--font-head);font-size:13px;font-weight:600}
+.card-sub{margin-left:auto;font-size:11px;color:var(--txt3);font-family:var(--font-mono)}
+.list{max-height:520px;overflow-y:auto}
+.item{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);transition:background .15s;cursor:pointer}
+.item:hover{background:var(--bg3)}
+.item.flash{animation:flashRow 1.4s ease}
+@keyframes flashRow{0%,100%{background:transparent}30%{background:rgba(0,212,170,.12)}}
+.ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.ico.red{background:var(--red-dim);color:var(--red)}
+.ico.blue{background:var(--blue-dim);color:var(--blue)}
+.ico.teal{background:var(--teal-dim);color:var(--teal)}
+.item-title{font-size:13px;font-weight:500;margin-bottom:3px}
+.item-meta{font-size:11px;color:var(--txt3);font-family:var(--font-mono)}
+.item-body{font-size:12px;color:var(--txt2);margin-top:6px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:6px;font-family:var(--font-mono);margin-left:6px}
+.b-sms{background:var(--blue-dim);color:var(--blue)}
+.b-call{background:var(--teal-dim);color:var(--teal)}
+.b-fall{background:var(--red-dim);color:var(--red)}
+.b-fam{background:var(--amber-dim);color:var(--amber)}
+.b-med{background:var(--purple-dim);color:var(--purple)}
+.empty{padding:40px;text-align:center;color:var(--txt3);font-size:13px}
+.btn-link{font-size:11px;color:var(--teal);text-decoration:none;font-family:var(--font-mono)}
+.btn-link:hover{text-decoration:underline}
+
+/* Modal lecture */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:800;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px);padding:16px}
+.modal-ov.open{display:flex}
+.modal{width:min(520px,100%);background:var(--bg2);border:1px solid var(--border2);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:pop .2s ease}
+@keyframes pop{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+.modal-hdr{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px}
+.modal-hdr .ico{width:40px;height:40px;font-size:16px}
+.modal-title{font-family:var(--font-head);font-size:15px;font-weight:700;color:#fff}
+.modal-sub{font-size:11px;color:var(--txt3);font-family:var(--font-mono);margin-top:3px}
+.modal-close{margin-left:auto;width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--txt2);cursor:pointer;font-size:16px}
+.modal-body{padding:18px;max-height:55vh;overflow-y:auto}
+.msg-bubble{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--txt)}
+.msg-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.msg-meta .box{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px}
+.msg-meta .lbl{font-size:10px;color:var(--txt3);font-family:var(--font-mono);margin-bottom:4px}
+.msg-meta .val{font-size:12px;font-weight:500}
+.gps-link{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--teal-dim);border:1px solid rgba(0,212,170,.3);color:var(--teal);text-decoration:none;font-size:12px;font-family:var(--font-mono);font-weight:500}
+.gps-link:hover{background:rgba(0,212,170,.18)}
+.modal-foot{padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap}
+.btn{flex:1;min-width:140px;padding:11px 14px;border-radius:10px;border:1px solid var(--border);font-size:12px;font-family:var(--font-head);font-weight:600;cursor:pointer;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn-teal{background:var(--teal);color:#0a0e17;border-color:transparent}
+.btn-teal:hover{background:#00ebb9}
+.btn-red{background:var(--red-dim);color:var(--red);border-color:rgba(255,77,109,.35)}
+.btn-red:hover{background:rgba(255,77,109,.22)}
+.btn-ghost{background:var(--bg3);color:var(--txt2)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid rgba(0,212,170,.4);color:var(--teal);padding:12px 16px;border-radius:10px;font-size:12px;font-family:var(--font-mono);z-index:900;display:none;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.toast.show{display:block;animation:pop .2s ease}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+      <div><div class="logo-name">GérioTrack</div><div class="logo-sub">IoT · Gériatrie</div></div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Navigation</div>
+    <a href="/" class="nav-item"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="lbl">Dashboard</span></a>
+    <a href="/patients/" class="nav-item"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="lbl">Patients</span><span class="nav-badge">12</span></a>
+    <a href="/geolocalisation/" class="nav-item"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="lbl">Géolocalisation</span></a>
+    <a href="/alertes/" class="nav-item active"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="lbl">Alertes</span><span class="nav-badge" data-notif-badge>0</span></a>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="u-av">Dr</div>
+      <div><div class="u-name">Dr. Mutombo</div><div class="u-role">Gériatre · Admin</div></div>
+      <div class="u-dot"></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div><span class="topbar-title">Alertes</span><span class="topbar-sub">/ Chutes · SMS · E-mails</span></div>
+    <div class="topbar-right">
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="notif-wrap" data-notif-wrap onclick="event.stopPropagation()">
+        <div class="icon-btn" data-notif-btn>
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="nbadge" data-notif-badge>0</span>
+        </div>
+        <div class="notif-panel" data-notif-panel>
+          <div class="notif-panel-hdr">Notifications</div>
+          <div class="notif-list" data-notif-list></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="stats">
+      <div class="stat"><div class="lbl">Chutes aujourd'hui</div><div class="val" id="stChutes" style="color:var(--red)">0</div></div>
+      <div class="stat"><div class="lbl">Messages logiciels</div><div class="val" id="stMsg" style="color:var(--blue)">0</div></div>
+      <div class="stat"><div class="lbl">E-mails logiciels</div><div class="val" id="stMail" style="color:var(--purple)">0</div></div>
+      <div class="stat"><div class="lbl">Notifications non lues</div><div class="val" id="stUnread" style="color:var(--amber)">0</div></div>
+    </div>
+
+    <div class="three">
+      <div class="card">
+        <div class="card-h">
+          <div class="card-dot" style="background:var(--red);box-shadow:0 0 6px var(--red)"></div>
+          <span class="card-title">Chutes détectées</span>
+          <span class="card-sub" id="chuteSub">—</span>
+          <a class="btn-link" href="/geolocalisation/" style="margin-left:10px">Voir carte</a>
+        </div>
+        <div class="list" id="chuteList"><div class="empty">Chargement…</div></div>
+      </div>
+      <div class="card">
+        <div class="card-h">
+          <div class="card-dot" style="background:var(--blue)"></div>
+          <span class="card-title">Messages envoyés</span>
+          <span class="card-sub" id="msgSub">Cliquer pour lire</span>
+        </div>
+        <div class="list" id="msgList"><div class="empty">Chargement…</div></div>
+      </div>
+      <div class="card">
+        <div class="card-h">
+          <div class="card-dot" style="background:var(--purple)"></div>
+          <span class="card-title">Mails envoyés (SMTP réel)</span>
+          <span class="card-sub" id="mailSub">→ mbayisoleil10@gmail.com</span>
+        </div>
+        <div class="list" id="mailList"><div class="empty">Chargement…</div></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Modal lecture message / mail -->
+<div class="modal-ov" id="msgModal" onclick="if(event.target===this)closeModals()">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="ico blue" id="msgModalIco">✉</div>
+      <div style="flex:1">
+        <div class="modal-title" id="msgModalTitle">Message</div>
+        <div class="modal-sub" id="msgModalSub">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModals()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="msg-meta">
+        <div class="box"><div class="lbl">Destinataire</div><div class="val" id="msgTo">—</div></div>
+        <div class="box"><div class="lbl">Patient</div><div class="val" id="msgPatient">—</div></div>
+        <div class="box"><div class="lbl">Heure</div><div class="val" id="msgTime">—</div></div>
+        <div class="box"><div class="lbl">Canal</div><div class="val" id="msgChannel">—</div></div>
+      </div>
+      <div class="lbl" style="font-size:10px;color:var(--txt3);font-family:var(--font-mono);margin-bottom:6px">Contenu</div>
+      <div class="msg-bubble" id="msgBody">—</div>
+      <a class="gps-link" id="msgGpsLink" href="/geolocalisation/">📍 Voir l'emplacement exact sur la carte</a>
+    </div>
+    <div class="modal-foot">
+      <a class="btn btn-teal" id="msgGpsBtn" href="/geolocalisation/">Voir position</a>
+      <button class="btn btn-ghost" onclick="closeModals()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal chute -->
+<div class="modal-ov" id="fallModal" onclick="if(event.target===this)closeModals()">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="ico red">⚠</div>
+      <div style="flex:1">
+        <div class="modal-title" id="fallModalTitle">Chute détectée</div>
+        <div class="modal-sub" id="fallModalSub">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModals()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="msg-bubble" id="fallBody">—</div>
+      <div class="msg-meta" style="margin-top:14px">
+        <div class="box"><div class="lbl">Latitude</div><div class="val" id="fallLat">—</div></div>
+        <div class="box"><div class="lbl">Longitude</div><div class="val" id="fallLon">—</div></div>
+      </div>
+      <a class="gps-link" id="fallGpsLink" href="/geolocalisation/">📍 Ouvrir la géolocalisation du patient</a>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-red" id="btnInformFamily" onclick="informFamily()">Informer la famille / proche</button>
+      <a class="btn btn-teal" id="fallGpsBtn" href="/geolocalisation/">Voir la position</a>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let CHUTES=[], MSGS=[], EMAILS=[], currentFall=null;
+
+function fmtTime(iso){
+  try{return new Date(iso).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
+  catch(e){return '—';}
+}
+function fmtCoords(lat,lon){
+  if(lat==null||lon==null) return null;
+  return `${Number(lat).toFixed(6)}, ${Number(lon).toFixed(6)}`;
+}
+function showToast(t){
+  const el=document.getElementById('toast');
+  el.textContent=t; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),3200);
+}
+function closeModals(){
+  document.getElementById('msgModal').classList.remove('open');
+  document.getElementById('fallModal').classList.remove('open');
+  history.replaceState({},'', '/alertes/');
+}
+function flashEl(sel){
+  const el=document.querySelector(sel);
+  if(!el) return;
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  el.classList.remove('flash');
+  void el.offsetWidth;
+  el.classList.add('flash');
+}
+function buildFallText(f){
+  const coords=fmtCoords(f.lat,f.lon);
+  const zone=f.zone?` Zone : ${f.zone}.`:'';
+  return `${f.nom} a eu une chute ${fmtTime(f.detected_at)}.${zone}`
+    + (coords?`\nCoordonnées GPS : ${coords}`:'\nCoordonnées GPS : non disponibles')
+    + `\nSource : ${f.source==='esp32'?'ESP32 / MPU6050':'Simulation'}`
+    + (f.notes?`\n${f.notes}`:'');
+}
+
+function openMessage(id){
+  const msg=MSGS.find(m=>String(m.id)===String(id));
+  if(!msg) return;
+  document.getElementById('msgModalIco').textContent='✉';
+  document.getElementById('msgModalIco').className='ico blue';
+  document.getElementById('msgModalTitle').textContent='Message — '+msg.recipient_name;
+  document.getElementById('msgModalSub').textContent=msg.status+' · '+fmtTime(msg.created_at);
+  document.getElementById('msgTo').textContent=`${msg.recipient_name} · ${msg.recipient_phone}`;
+  document.getElementById('msgPatient').textContent=`${msg.nom||''} (${msg.patient_id})`;
+  document.getElementById('msgTime').textContent=fmtTime(msg.created_at);
+  document.getElementById('msgChannel').textContent=`${msg.channel.toUpperCase()} → ${msg.recipient_type}`;
+  document.getElementById('msgBody').textContent=msg.message;
+  const geo=`/geolocalisation/?patient=${msg.patient_id}`;
+  document.getElementById('msgGpsLink').href=geo;
+  document.getElementById('msgGpsBtn').href=geo;
+  const coords=fmtCoords(msg.lat,msg.lon);
+  document.getElementById('msgGpsLink').textContent=coords
+    ? `📍 GPS ${coords} — voir emplacement exact`
+    : `📍 Voir l'emplacement de ${msg.nom||msg.patient_id}`;
+  document.getElementById('msgModal').classList.add('open');
+  history.replaceState({},'', `/alertes/?msg=${msg.id}`);
+  flashEl(`#msg-item-${msg.id}`);
+}
+
+function openEmail(id){
+  const mail=EMAILS.find(m=>String(m.id)===String(id));
+  if(!mail) return;
+  document.getElementById('msgModalIco').textContent='📧';
+  document.getElementById('msgModalIco').className='ico teal';
+  document.getElementById('msgModalTitle').textContent=mail.subject||('E-mail — '+mail.recipient_name);
+  document.getElementById('msgModalSub').textContent=(mail.status||'sent')+' · '+fmtTime(mail.created_at);
+  document.getElementById('msgTo').textContent=`${mail.recipient_name} · ${mail.recipient_email}`;
+  document.getElementById('msgPatient').textContent=`${mail.nom||''} (${mail.patient_id})`;
+  document.getElementById('msgTime').textContent=fmtTime(mail.created_at);
+  document.getElementById('msgChannel').textContent=`E-MAIL → ${mail.recipient_type}`;
+  document.getElementById('msgBody').textContent=mail.body||'';
+  const geo=mail.geo_url || `/geolocalisation/?patient=${mail.patient_id}`;
+  document.getElementById('msgGpsLink').href=geo;
+  document.getElementById('msgGpsBtn').href=geo;
+  const coords=fmtCoords(mail.lat,mail.lon);
+  document.getElementById('msgGpsLink').textContent=coords
+    ? `📍 GPS ${coords} — ouvrir le lien du mail`
+    : `📍 Lien géolocalisation du mail`;
+  document.getElementById('msgModal').classList.add('open');
+  history.replaceState({},'', `/alertes/?email=${mail.id}`);
+  flashEl(`#mail-item-${mail.id}`);
+}
+
+function openFall(id){
+  const f=CHUTES.find(c=>String(c.id)===String(id));
+  if(!f) return;
+  currentFall=f;
+  document.getElementById('fallModalTitle').textContent=`Chute — ${f.nom}`;
+  document.getElementById('fallModalSub').textContent=`${f.patient_id} · ${fmtTime(f.detected_at)}`;
+  document.getElementById('fallBody').textContent=buildFallText(f);
+  document.getElementById('fallLat').textContent=f.lat!=null?Number(f.lat).toFixed(6):'—';
+  document.getElementById('fallLon').textContent=f.lon!=null?Number(f.lon).toFixed(6):'—';
+  const geo=`/geolocalisation/?patient=${f.patient_id}`;
+  document.getElementById('fallGpsLink').href=geo;
+  document.getElementById('fallGpsBtn').href=geo;
+  document.getElementById('fallModal').classList.add('open');
+  history.replaceState({},'', `/alertes/?chute=${f.id}`);
+  flashEl(`#chute-item-${f.id}`);
+}
+
+async function informFamily(){
+  if(!currentFall) return;
+  const f=currentFall;
+  const coords=fmtCoords(f.lat,f.lon);
+  const body=(
+    `${f.nom} a eu une chute ${fmtTime(f.detected_at)}.`
+    +(coords?` Coordonnées GPS : ${coords}.`:'')
+    +` Voir position : /geolocalisation/?patient=${f.patient_id}`
+  );
+  try{
+    const res=await fetch('/api/messages/send/',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        patient_id:f.patient_id,
+        channel:'sms',
+        recipient_type:'famille',
+        message:body,
+      }),
+    });
+    const d=await res.json();
+    if(d.ok){
+      showToast('SMS envoyé à la famille / proche');
+      await refresh();
+      if(d.message_id) openMessage(d.message_id);
+    } else {
+      showToast(d.error||'Erreur envoi');
+    }
+  }catch(e){ showToast('Erreur réseau'); }
+}
+
+async function refresh(){
+  try{
+    const [cRes,mRes,eRes,nRes]=await Promise.all([
+      fetch('/api/chutes/'),
+      fetch('/api/messages/'),
+      fetch('/api/emails/'),
+      fetch('/api/notifications/'),
+    ]);
+    if(cRes.ok){
+      const c=await cRes.json();
+      CHUTES=c.chutes||[];
+      document.getElementById('stChutes').textContent=c.total_today??0;
+      document.getElementById('chuteSub').textContent=CHUTES.length+' récente(s)';
+      document.getElementById('chuteList').innerHTML=CHUTES.length?CHUTES.map(f=>`
+        <div class="item" id="chute-item-${f.id}" onclick="openFall(${f.id})">
+          <div class="ico red">⚠</div>
+          <div style="flex:1">
+            <div class="item-title">${f.nom} <span class="badge b-fall">${f.source==='esp32'?'ESP32':'Simulée'}</span></div>
+            <div class="item-meta">${fmtTime(f.detected_at)} · ${f.patient_id}${f.zone?` · ${f.zone}`:''}
+              ${f.lat!=null?` · GPS ${Number(f.lat).toFixed(5)}, ${Number(f.lon).toFixed(5)}`:''}
+            </div>
+            <div class="item-body">${f.nom} a eu une chute ${fmtTime(f.detected_at)}. Cliquez pour actions.</div>
+          </div>
+        </div>`).join(''):'<div class="empty">Aucune chute aujourd\'hui</div>';
+    }
+    if(mRes.ok){
+      const m=await mRes.json();
+      MSGS=m.messages||[];
+      document.getElementById('stMsg').textContent=MSGS.length;
+      document.getElementById('msgList').innerHTML=MSGS.length?MSGS.map(msg=>`
+        <div class="item" id="msg-item-${msg.id}" onclick="openMessage(${msg.id})">
+          <div class="ico blue">✉</div>
+          <div style="flex:1">
+            <div class="item-title">${msg.recipient_name}
+              <span class="badge b-sms">MESSAGE</span>
+              <span class="badge ${msg.recipient_type==='famille'?'b-fam':'b-med'}">${msg.recipient_type}</span>
+            </div>
+            <div class="item-meta">${fmtTime(msg.created_at)} · ${msg.recipient_phone} · ${msg.patient_id}</div>
+            <div class="item-body">${msg.message}</div>
+          </div>
+        </div>`).join(''):'<div class="empty">Aucun message envoyé</div>';
+    }
+    if(eRes.ok){
+      const e=await eRes.json();
+      EMAILS=e.emails||[];
+      document.getElementById('stMail').textContent=EMAILS.length;
+      document.getElementById('mailSub').textContent=EMAILS.length+' envoyé(s)';
+      document.getElementById('mailList').innerHTML=EMAILS.length?EMAILS.map(mail=>`
+        <div class="item" id="mail-item-${mail.id}" onclick="openEmail(${mail.id})">
+          <div class="ico teal">📧</div>
+          <div style="flex:1">
+            <div class="item-title">${mail.recipient_name}
+              <span class="badge b-mail">E-MAIL</span>
+              <span class="badge ${mail.recipient_type==='famille'?'b-fam':'b-med'}">${mail.recipient_type}</span>
+            </div>
+            <div class="item-meta">${fmtTime(mail.created_at)} · ${mail.recipient_email} · ${mail.patient_id} · ${mail.status||'—'}</div>
+            <div class="item-body">${mail.subject||''} — ${(mail.body||'').slice(0,120)}</div>
+          </div>
+        </div>`).join(''):'<div class="empty">Aucun e-mail envoyé. Les mails partent automatiquement à chaque chute.</div>';
+    }
+    if(nRes.ok){
+      const n=await nRes.json();
+      document.getElementById('stUnread').textContent=n.unread??0;
+    }
+  }catch(e){}
+}
+
+async function applyDeepLink(){
+  await refresh();
+  const p=new URLSearchParams(location.search);
+  const msg=p.get('msg');
+  const email=p.get('email');
+  const chute=p.get('chute');
+  const notif=p.get('notif');
+  if(msg){ openMessage(msg); return; }
+  if(email){ openEmail(email); return; }
+  if(chute){ openFall(chute); return; }
+  if(notif){
+    try{
+      const res=await fetch('/api/notifications/');
+      const data=await res.json();
+      const n=(data.notifications||[]).find(x=>String(x.id)===String(notif));
+      if(n){
+        if(n.type==='fall' && n.fall_event_id) openFall(n.fall_event_id);
+        else if(n.type==='email'){ /* mail listé à part */ }
+        else if(n.message_id) openMessage(n.message_id);
+        else if(n.fall_event_id) openFall(n.fall_event_id);
+      }
+    }catch(e){}
+  }
+}
+
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModals(); });
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR');},1000);
+document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR');
+applyDeepLink();
+setInterval(refresh,4000);
+</script>
+<script src="/static/js/geriotrack-notify.js"></script>
+</body>
+</html>

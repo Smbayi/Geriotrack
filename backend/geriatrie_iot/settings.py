@@ -12,6 +12,16 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import os
+
+try:
+    from decouple import config
+except ImportError:
+    def config(key, default=None, cast=None):
+        val = os.environ.get(key, default)
+        if cast is not None and val is not None and val != default:
+            return cast(val)
+        return val
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,12 +31,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-v60h(06(!pulgh)shevtjw6zn_e%p98z@f2)qb07*1!m)$%lmt'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-v60h(06(!pulgh)shevtjw6zn_e%p98z@f2)qb07*1!m)$%lmt')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Render définit RENDER=true ; en local DEBUG reste True par défaut
+IS_RENDER = os.environ.get('RENDER') == 'true'
+DEBUG = config('DEBUG', default=not IS_RENDER, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    h.strip() for h in config(
+        'ALLOWED_HOSTS',
+        default='localhost,127.0.0.1,.onrender.com',
+    ).split(',') if h.strip()
+]
 
 
 # Application definition
@@ -53,6 +69,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -85,12 +102,20 @@ WSGI_APPLICATION = 'geriatrie_iot.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Database — SQLite en local, PostgreSQL sur Render (DATABASE_URL)
+_db_url = config('DATABASE_URL', default='')
+if _db_url:
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.parse(_db_url, conn_max_age=600, ssl_require=True),
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -128,6 +153,18 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+CSRF_TRUSTED_ORIGINS = [
+    o.strip() for o in config(
+        'CSRF_TRUSTED_ORIGINS',
+        default='',
+    ).split(',') if o.strip()
+]
+_public_base = config('PUBLIC_BASE_URL', default='').rstrip('/')
+if _public_base.startswith('https://') and _public_base not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(_public_base)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -151,16 +188,14 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
-        'django_filters.rest_framework.DjangoFilterBackend'
     ],
-     'DEFAULT_PERMISSION_CLASSES': [
+    'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
-    
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
 }
+
+# ESP32 / outils de test peuvent poster sans Origin navigateur
+CORS_ALLOW_ALL_ORIGINS = True
 
 # JWT Configuration
 SIMPLE_JWT = {
@@ -172,8 +207,11 @@ SIMPLE_JWT = {
     'ALGORITHM': 'HS256',
 }
 
-# ALLOWED_HOSTS
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '*']
+# ALLOWED_HOSTS (complément local)
+if DEBUG:
+    for _h in ('localhost', '127.0.0.1', '*'):
+        if _h not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(_h)
 
 # TIME_ZONE
 TIME_ZONE = 'Africa/Kinshasa'
@@ -182,3 +220,23 @@ USE_TZ = True
 # Redirection login
 LOGIN_URL = '/admin/login/'
 LOGIN_REDIRECT_URL = '/'
+
+# ------------------------------------------------------------
+# E-mail réel (SMTP Gmail) — alertes famille
+# Destinataire famille : mbayisoleil10@gmail.com
+# Nécessite un « Mot de passe d'application » Google dans .env
+# ------------------------------------------------------------
+PUBLIC_BASE_URL = config('PUBLIC_BASE_URL', default='http://127.0.0.1:8000')
+FAMILY_ALERT_EMAIL = config('FAMILY_ALERT_EMAIL', default='mbayisoleil10@gmail.com')
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='mbayisoleil10@gmail.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config(
+    'DEFAULT_FROM_EMAIL',
+    default=f'GérioTrack <{EMAIL_HOST_USER}>',
+)
+SERVER_EMAIL = DEFAULT_FROM_EMAIL

@@ -15,11 +15,7 @@
   --red:#ff4d6d;--amber:#f59e0b;--txt:#e2e8f0;--txt2:#94a3b8;--txt3:#475569;
   --font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'IBM Plex Mono',monospace;
 }
-body.role-famille{
-  --bg:#0c0a12;--bg2:#16121f;--bg3:#1f1a2b;
-  --border:rgba(167,139,250,.14);
-  --accent:#a78bfa;--accent-dim:rgba(167,139,250,.12);
-}
+body.role-famille,
 body.role-patient{
   --bg:#071410;--bg2:#0d1f1a;--bg3:#132a23;
   --border:rgba(0,212,170,.14);
@@ -48,7 +44,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);display:
 
 .overlay{position:absolute;left:12px;right:12px;bottom:12px;z-index:5;display:flex;flex-direction:column;gap:10px;pointer-events:none}
 .card{pointer-events:auto;background:rgba(17,24,39,.94);border:1px solid var(--border);border-radius:16px;padding:14px;backdrop-filter:blur(10px)}
-body.role-famille .card{background:rgba(22,18,31,.95)}
+body.role-famille .card,
 body.role-patient .card{background:rgba(13,31,26,.95)}
 .row{display:flex;align-items:center;gap:12px}
 .av{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;font-size:14px;border:2px solid;flex-shrink:0}
@@ -121,50 +117,17 @@ if(role !== 'famille' && role !== 'patient'){
   window.location.href = '/portail/';
 }
 
-const FAMILY_LINKS = { F001:'P001', F002:'P002', F003:'P008' };
-const PATIENTS = {
-  P001:{id:'P001',p:'Jean',n:'Dupont',a:78,zone:'Gombe',s:'stable',lat:-4.3050,lon:15.3080,color:'#00d4aa'},
-  P002:{id:'P002',p:'Marie',n:'Martin',a:84,zone:'Lingwala',s:'alert',lat:-4.3180,lon:15.3020,color:'#ff4d6d'},
-  P003:{id:'P003',p:'Lucie',n:'Bernard',a:71,zone:'Kintambo',s:'warn',lat:-4.3280,lon:15.2750,color:'#f59e0b'},
-  P004:{id:'P004',p:'Paul',n:'Robert',a:80,zone:'Barumbu',s:'stable',lat:-4.3120,lon:15.3250,color:'#60a5fa'},
-  P005:{id:'P005',p:'Claire',n:'Lambert',a:76,zone:'Kinshasa',s:'stable',lat:-4.3250,lon:15.3150,color:'#a78bfa'},
-  P006:{id:'P006',p:'Georges',n:'Petit',a:88,zone:'Ngaliema',s:'warn',lat:-4.3350,lon:15.2550,color:'#f59e0b'},
-  P007:{id:'P007',p:'Hélène',n:'Moreau',a:73,zone:'Bandalungwa',s:'stable',lat:-4.3550,lon:15.2850,color:'#34d399'},
-  P008:{id:'P008',p:'André',n:'Simon',a:82,zone:'Kalamu',s:'alert',lat:-4.3480,lon:15.3050,color:'#ff4d6d'},
-  P009:{id:'P009',p:'Yvette',n:'Garnier',a:79,zone:'Limete',s:'stable',lat:-4.3650,lon:15.3350,color:'#34d399'},
-  P010:{id:'P010',p:'René',n:'Leroy',a:85,zone:'Lemba',s:'warn',lat:-4.3850,lon:15.3100,color:'#f59e0b'},
-  P011:{id:'P011',p:'Odette',n:'Blanc',a:74,zone:'Matete',s:'stable',lat:-4.3750,lon:15.3450,color:'#34d399'},
-  P012:{id:'P012',p:'Fernand',n:'Rousseau',a:91,zone:'Masina',s:'stable',lat:-4.3780,lon:15.3900,color:'#60a5fa'},
-};
-
 const profil = sessionStorage.getItem('gerio_profil') || sessionStorage.getItem('gerio_famille');
-let allowedId = null;
-if(role === 'patient'){
-  allowedId = profil;
-} else {
-  allowedId = FAMILY_LINKS[profil] || 'P001';
-}
-
-// Un patient / une famille ne voit QUE son patient lié
 const urlId = new URLSearchParams(location.search).get('patient');
-const patientId = (urlId && urlId === allowedId) ? urlId : allowedId;
-const patient = { ...(PATIENTS[patientId] || PATIENTS.P001) };
+let allowedId = role === 'patient' ? profil : null;
+let patient = {
+  id: 'P001', p: '—', n: '', a: null, zone: 'Kinshasa',
+  s: 'stable', lat: -4.3276, lon: 15.3136,
+};
 
 document.body.classList.add(role === 'famille' ? 'role-famille' : 'role-patient');
 document.getElementById('roleBadge').textContent = role === 'famille' ? 'FAMILLE' : 'PATIENT';
 document.getElementById('backLink').href = role === 'famille' ? '/portail/famille/' : '/portail/patient/';
-
-if(role === 'famille'){
-  document.getElementById('pageTitle').textContent = 'Position de mon proche';
-  document.getElementById('pageSub').textContent = `${patient.p} ${patient.n} · Kinshasa`;
-  document.getElementById('liveText').textContent = 'Position live du proche';
-  document.getElementById('shareBtn').textContent = 'Recevoir par SMS';
-} else {
-  document.getElementById('pageTitle').textContent = 'Ma position';
-  document.getElementById('pageSub').textContent = 'Mon GPS · Kinshasa';
-  document.getElementById('liveText').textContent = 'Ma position live';
-  document.getElementById('shareBtn').textContent = 'Envoyer à ma famille';
-}
 
 const KINSHASA = {
   maxBounds: [[15.15, -4.52], [15.52, -4.22]],
@@ -172,17 +135,37 @@ const KINSHASA = {
   maxZoom: 18,
 };
 
-const col = patient.s === 'alert' ? '#ff4d6d' : patient.s === 'warn' ? '#f59e0b' : (role === 'famille' ? '#a78bfa' : '#00d4aa');
-const ini = (patient.p[0] + patient.n[0]).toUpperCase();
+let col = '#00d4aa';
+let ini = '—';
+let marker = null;
+let mapReady = false;
+
+function statusLabel(s){
+  return s === 'alert' ? 'Alerte' : s === 'warn' ? 'À surveiller' : 'Stable';
+}
+function colorFor(s){
+  return s === 'alert' ? '#ff4d6d' : s === 'warn' ? '#f59e0b' : '#00d4aa';
+}
 
 function updateCard(){
+  col = colorFor(patient.s);
+  ini = ((patient.p||'?')[0] + (patient.n||'?')[0]).toUpperCase();
   document.getElementById('av').textContent = ini;
   document.getElementById('av').style.cssText = `background:${col}22;color:${col};border-color:${col}`;
-  document.getElementById('name').textContent = `${patient.p} ${patient.n}`;
-  document.getElementById('meta').textContent = `${patient.a} ans · ${patient.zone} · ${patient.s === 'alert' ? 'Alerte' : patient.s === 'warn' ? 'À surveiller' : 'Stable'}`;
-  document.getElementById('zone').textContent = patient.zone;
-  document.getElementById('lat').textContent = Math.abs(patient.lat).toFixed(5) + '°S';
-  document.getElementById('lon').textContent = patient.lon.toFixed(5) + '°E';
+  document.getElementById('name').textContent = `${patient.p} ${patient.n}`.trim();
+  document.getElementById('meta').textContent = `${patient.a?patient.a+' ans · ':''}${patient.zone} · ${statusLabel(patient.s)}`;
+  document.getElementById('zone').textContent = patient.zone || '—';
+  document.getElementById('lat').textContent = patient.lat!=null ? (Math.abs(patient.lat).toFixed(5) + '°S') : '—';
+  document.getElementById('lon').textContent = patient.lon!=null ? (Number(patient.lon).toFixed(5) + '°E') : '—';
+  if(marker){
+    const el = marker.getElement();
+    el.className = 'marker' + (patient.s === 'alert' ? ' pulse' : '');
+    el.style.background = col + '30';
+    el.style.color = col;
+    el.style.borderColor = col;
+    el.textContent = ini;
+    if(patient.lat!=null && patient.lon!=null) marker.setLngLat([patient.lon, patient.lat]);
+  }
 }
 
 const map = new maplibregl.Map({
@@ -197,74 +180,109 @@ const map = new maplibregl.Map({
 });
 map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
 
-const el = document.createElement('div');
-el.className = 'marker' + (patient.s === 'alert' ? ' pulse' : '');
-el.style.background = col + '30';
-el.style.color = col;
-el.style.borderColor = col;
-el.textContent = ini;
-
-const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
-  .setLngLat([patient.lon, patient.lat])
-  .addTo(map);
-
-let trail = [[patient.lon, patient.lat]];
 map.on('load', () => {
-  map.addSource('trail', {
-    type: 'geojson',
-    data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: trail } },
-  });
-  map.addLayer({
-    id: 'trail-line',
-    type: 'line',
-    source: 'trail',
-    paint: { 'line-color': col, 'line-width': 3, 'line-opacity': 0.55, 'line-dasharray': [2, 2] },
-  });
+  mapReady = true;
+  const el = document.createElement('div');
+  el.className = 'marker';
+  el.style.background = col + '30';
+  el.style.color = col;
+  el.style.borderColor = col;
+  el.textContent = ini;
+  marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+    .setLngLat([patient.lon, patient.lat])
+    .addTo(map);
+  updateCard();
 });
 
-function clamp(lat, lon){
-  const [[minLon, minLat], [maxLon, maxLat]] = KINSHASA.maxBounds;
-  return {
-    lat: Math.min(maxLat, Math.max(minLat, lat)),
-    lon: Math.min(maxLon, Math.max(minLon, lon)),
-  };
+async function resolveAllowedId(){
+  if(role === 'patient'){
+    allowedId = profil;
+    return allowedId;
+  }
+  try{
+    const res = await fetch(`/api/family/inbox/?family_id=${encodeURIComponent(profil||'F001')}`);
+    if(res.ok){
+      const d = await res.json();
+      if(d.ok && d.patient){
+        allowedId = d.patient.id;
+        patient.p = d.patient.prenom || '';
+        patient.n = d.patient.nom || '';
+        patient.a = d.patient.age;
+        patient.zone = d.patient.chambre || 'Kinshasa';
+        patient.s = d.patient.statut || 'stable';
+        if(d.patient.lat!=null) patient.lat = Number(d.patient.lat);
+        if(d.patient.lon!=null) patient.lon = Number(d.patient.lon);
+        patient.id = allowedId;
+      }
+    }
+  }catch(e){}
+  if(!allowedId) allowedId = 'P001';
+  return allowedId;
 }
 
-function tick(){
-  const drift = patient.s === 'alert' ? 0.0005 : 0.00012;
-  const next = clamp(
-    patient.lat + (Math.random() - 0.5) * drift,
-    patient.lon + (Math.random() - 0.5) * drift
-  );
-  patient.lat = next.lat;
-  patient.lon = next.lon;
-  marker.setLngLat([patient.lon, patient.lat]);
-  trail.push([patient.lon, patient.lat]);
-  if(trail.length > 40) trail.shift();
-  const src = map.getSource('trail');
-  if(src){
-    src.setData({
-      type: 'Feature',
-      properties: {},
-      geometry: { type: 'LineString', coordinates: trail.length > 1 ? trail : [trail[0], trail[0]] },
-    });
+async function refreshGps(){
+  if(!allowedId) return;
+  try{
+    const res = await fetch(`/api/gps/?patient_id=${encodeURIComponent(allowedId)}`);
+    if(!res.ok) return;
+    const d = await res.json();
+    const pos = (d.positions||[])[0];
+    if(!pos) return;
+    const names = (pos.nom||'').split(' ');
+    patient.id = pos.id;
+    patient.p = names[0] || patient.p;
+    patient.n = names.slice(1).join(' ') || patient.n;
+    patient.zone = pos.chambre || patient.zone;
+    patient.s = pos.statut || patient.s;
+    if(pos.lat!=null) patient.lat = Number(pos.lat);
+    if(pos.lon!=null) patient.lon = Number(pos.lon);
+    document.getElementById('liveText').textContent = pos.sensor_online
+      ? 'Position live (bracelet connecté)'
+      : 'Position enregistrée (coordonnées réelles)';
+    updateCard();
+    if(mapReady && patient.lat!=null && patient.lon!=null){
+      marker.setLngLat([patient.lon, patient.lat]);
+    }
+  }catch(e){}
+}
+
+function applyChrome(){
+  if(role === 'famille'){
+    document.getElementById('pageTitle').textContent = 'Position de mon proche';
+    document.getElementById('pageSub').textContent = `${patient.p} ${patient.n} · GPS réel · carte famille`;
+    document.getElementById('shareBtn').textContent = 'Recevoir par SMS';
+  } else {
+    document.getElementById('pageTitle').textContent = 'Ma position';
+    document.getElementById('pageSub').textContent = 'Mon GPS · Kinshasa';
+    document.getElementById('shareBtn').textContent = 'Envoyer à ma famille';
   }
-  updateCard();
 }
 
 function centerOnPatient(){
+  if(patient.lat==null||patient.lon==null) return;
   map.flyTo({ center: [patient.lon, patient.lat], zoom: 15, essential: true, duration: 800 });
 }
 
 function sharePos(){
   const msg = role === 'famille'
-    ? `Position reçue : ${patient.p} ${patient.n} — ${patient.zone} (${Math.abs(patient.lat).toFixed(4)}°S, ${patient.lon.toFixed(4)}°E)`
-    : `Position envoyée à la famille : ${patient.zone} (${Math.abs(patient.lat).toFixed(4)}°S, ${patient.lon.toFixed(4)}°E)`;
+    ? `Position : ${patient.p} ${patient.n} — ${patient.zone} (${Math.abs(patient.lat).toFixed(5)}°S, ${Number(patient.lon).toFixed(5)}°E)`
+    : `Position envoyée à la famille : ${patient.zone} (${Math.abs(patient.lat).toFixed(5)}°S, ${Number(patient.lon).toFixed(5)}°E)`;
   alert(msg + '\n\n(simulation SMS)');
 }
 
-updateCard();
-setInterval(tick, 3500);
+(async function init(){
+  await resolveAllowedId();
+  // Sécurité : ne jamais afficher un autre patient que celui autorisé
+  const patientId = (urlId && urlId === allowedId) ? urlId : allowedId;
+  allowedId = patientId;
+  patient.id = patientId;
+  applyChrome();
+  await refreshGps();
+  if(mapReady && patient.lat!=null){
+    map.jumpTo({ center: [patient.lon, patient.lat], zoom: 14 });
+  }
+  setInterval(refreshGps, 4000);
+})();
 </script>
 </body>
 </html>

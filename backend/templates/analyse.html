@@ -111,6 +111,14 @@ canvas#ecgCanvas{height:130px}
 .ecg-status{font-size:11px;padding:4px 10px;border-radius:6px;font-family:var(--font-mono);background:var(--teal-dim);color:var(--teal);border:1px solid rgba(0,212,170,.2)}
 .ecg-status.warn{background:var(--amber-dim);color:var(--amber);border-color:rgba(245,158,11,.25)}
 .ecg-status.alert{background:var(--red-dim);color:var(--red);border-color:rgba(255,77,109,.25)}
+.gsm-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;align-items:center}
+.gsm-bar-title{font-family:var(--font-head);font-size:12px;font-weight:600;color:#fff;margin-right:auto}
+.gsm-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:10px;border:1px solid;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-body);transition:all .15s}
+.gsm-btn.call{background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.35);color:var(--green)}
+.gsm-btn.sms{background:rgba(96,165,250,.1);border-color:rgba(96,165,250,.35);color:var(--blue)}
+.gsm-btn:hover{filter:brightness(1.15)}
+.gsm-btn:disabled{opacity:.45;cursor:not-allowed}
+.gsm-status{font-size:10px;color:var(--txt3);font-family:var(--font-mono);width:100%}
 </style>
 </head>
 <body>
@@ -149,12 +157,11 @@ canvas#ecgCanvas{height:130px}
     <div class="sidebar-label">Capteurs actifs</div>
     <a href="/analyse/#mouvement" class="nav-item"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="lbl">MPU6050</span></a>
     <a href="/analyse/#temperature" class="nav-item"><svg viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg><span class="lbl">Température</span></a>
-    <a href="/analyse/#ecg" class="nav-item"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span class="lbl">ECG</span></a>
   </div>
   <div class="sidebar-bottom">
     <div class="user-card">
       <div class="u-av">Dr</div>
-      <div><div class="u-name">Dr. Martin</div><div class="u-role">Gériatre · Admin</div></div>
+      <div><div class="u-name">Dr. Mutombo</div><div class="u-role">Gériatre · Admin</div></div>
       <div class="u-dot"></div>
     </div>
   </div>
@@ -162,7 +169,7 @@ canvas#ecgCanvas{height:130px}
 
 <div class="main">
   <div class="topbar">
-    <div><span class="topbar-title">Analyse en temps réel</span><span class="topbar-sub">/ Capteurs embarqués (simulation)</span></div>
+    <div><span class="topbar-title">Analyse en temps réel</span><span class="topbar-sub">/ MPU6050 · ECG · SIM800L</span></div>
     <div class="topbar-right">
       <div class="live-badge"><div class="live-dot"></div>LIVE</div>
       <div class="clock" id="clock">--:--:--</div>
@@ -179,6 +186,13 @@ canvas#ecgCanvas{height:130px}
         <div class="meta-pill">Zone <strong id="metaZone">Gombe</strong></div>
         <div class="meta-pill">Statut <strong id="metaStatut">stable</strong></div>
       </div>
+    </div>
+
+    <div class="gsm-bar">
+      <span class="gsm-bar-title">Communication GSM (SIM800L)</span>
+      <button class="gsm-btn call" id="btnGsmCall" onclick="gsmCallFamily()">📞 Appeler la famille</button>
+      <button class="gsm-btn sms" id="btnGsmSms" onclick="gsmSendAlert()">✉ SMS alerte + lien graphique</button>
+      <span class="gsm-status" id="gsmStatus">SIM800L : commandes mises en file → exécutées par l'ESP32</span>
     </div>
 
     <div class="layout">
@@ -241,8 +255,8 @@ canvas#ecgCanvas{height:130px}
               <span class="tag on">I2C · 100 Hz</span>
               <span class="tag on">Détection chute</span>
               <span class="tag on">Posture</span>
-              <span class="tag off">GSM</span>
-              <span class="tag off">GPS</span>
+              <span class="tag on">GPS NEO-6M</span>
+              <span class="tag on">USB Serial</span>
             </div>
           </div>
         </div>
@@ -252,7 +266,7 @@ canvas#ecgCanvas{height:130px}
           <div class="card-header">
             <div class="card-dot" style="background:var(--amber)"></div>
             <span class="card-title">Température ambiante</span>
-            <span class="card-sub">DHT22 · Environnement</span>
+            <span class="card-sub">DHT11 · Environnement</span>
           </div>
           <div class="sensor-body">
             <div class="temp-gauge">
@@ -274,7 +288,7 @@ canvas#ecgCanvas{height:130px}
               <canvas class="sensor-canvas" id="tempCanvas"></canvas>
             </div>
             <div class="sensor-tags">
-              <span class="tag on">DHT22</span>
+              <span class="tag on">DHT11</span>
               <span class="tag on">Seuil alerte 32°C</span>
               <span class="tag on">Humidité</span>
             </div>
@@ -284,34 +298,34 @@ canvas#ecgCanvas{height:130px}
         <!-- ECG -->
         <div class="sensor-card" id="ecg">
           <div class="card-header">
-            <div class="card-dot" style="background:var(--teal)"></div>
-            <span class="card-title">Suivi ECG</span>
-            <span class="card-sub">AD8232 · Électrocardiogramme</span>
+            <div class="card-dot" style="background:var(--red)"></div>
+            <span class="card-title">Électrocardiogramme (ECG)</span>
+            <span class="card-sub">AD8232 · BPM calibré</span>
           </div>
           <div class="sensor-body">
             <div class="ecg-meta">
               <div>
-                <div class="ecg-bpm" id="bpmVal">72</div>
-                <div class="ecg-unit">BPM · rythme cardiaque</div>
+                <div class="ecg-bpm" id="ecgBpm">--</div>
+                <div class="ecg-unit">battements / min</div>
               </div>
-              <div class="ecg-status" id="ecgStatus">Rythme normal</div>
-              <div class="metric" style="min-width:120px">
-                <div class="metric-label">Intervalle RR</div>
-                <div class="metric-val teal" id="rrVal">833<span>ms</span></div>
+              <div>
+                <div class="metric-label">Signal (mV)</div>
+                <div class="metric-val teal" id="ecgMv">0.00<span> mV</span></div>
               </div>
-              <div class="metric" style="min-width:120px">
-                <div class="metric-label">Qualité signal</div>
-                <div class="metric-val blue" id="sigVal">98<span>%</span></div>
+              <div>
+                <div class="metric-label">ADC brut</div>
+                <div class="metric-val" id="ecgRaw">—</div>
               </div>
+              <span class="ecg-status" id="ecgStatus">En attente</span>
             </div>
             <div class="chart-wrap">
-              <div class="chart-label">Trace ECG live</div>
+              <div class="chart-label">Forme d'onde ECG (calibrée)</div>
               <canvas class="sensor-canvas" id="ecgCanvas"></canvas>
             </div>
             <div class="sensor-tags">
               <span class="tag on">AD8232</span>
-              <span class="tag on">Détection anomalie</span>
-              <span class="tag on">Bradycardie / Tachycardie</span>
+              <span class="tag on">45–130 BPM</span>
+              <span class="tag on">Lissage serveur</span>
             </div>
           </div>
         </div>
@@ -320,37 +334,34 @@ canvas#ecgCanvas{height:130px}
   </div>
 </div>
 
+
 <script>
 const PATIENTS = [
-  {id:'P001',prenom:'Jean',   nom:'Dupont',  age:78,zone:'Gombe',      statut:'stable',bpm:72, risk:.18,temp:27.4,humid:66,activity:'walk'},
-  {id:'P002',prenom:'Marie',  nom:'Martin',  age:84,zone:'Lingwala',   statut:'alert', bpm:91, risk:.82,temp:27.1,humid:68,activity:'idle'},
-  {id:'P003',prenom:'Lucie',  nom:'Bernard', age:71,zone:'Kintambo',   statut:'warn',  bpm:68, risk:.64,temp:27.6,humid:65,activity:'walk'},
-  {id:'P004',prenom:'Paul',   nom:'Robert',  age:80,zone:'Barumbu',    statut:'stable',bpm:65, risk:.22,temp:27.3,humid:67,activity:'walk'},
-  {id:'P005',prenom:'Claire', nom:'Lambert', age:76,zone:'Kinshasa',   statut:'stable',bpm:77, risk:.30,temp:27.8,humid:64,activity:'walk'},
-  {id:'P006',prenom:'Georges',nom:'Petit',   age:88,zone:'Ngaliema',   statut:'warn',  bpm:58, risk:.71,temp:26.9,humid:70,activity:'idle'},
-  {id:'P007',prenom:'Hélène', nom:'Moreau',  age:73,zone:'Bandalungwa',statut:'stable',bpm:74, risk:.15,temp:27.5,humid:66,activity:'walk'},
-  {id:'P008',prenom:'André',  nom:'Simon',   age:82,zone:'Kalamu',     statut:'alert', bpm:102,risk:.88,temp:27.2,humid:69,activity:'idle'},
-  {id:'P009',prenom:'Yvette', nom:'Garnier', age:79,zone:'Limete',     statut:'stable',bpm:69, risk:.25,temp:27.7,humid:63,activity:'walk'},
-  {id:'P010',prenom:'René',   nom:'Leroy',   age:85,zone:'Lemba',      statut:'warn',  bpm:82, risk:.58,temp:27.0,humid:71,activity:'walk'},
-  {id:'P011',prenom:'Odette', nom:'Blanc',   age:74,zone:'Matete',     statut:'stable',bpm:71, risk:.19,temp:27.4,humid:65,activity:'walk'},
-  {id:'P012',prenom:'Fernand',nom:'Rousseau',age:91,zone:'Masina',     statut:'stable',bpm:66, risk:.35,temp:27.3,humid:67,activity:'idle'},
+  {id:'P001',prenom:'Jean',   nom:'Kabongo',  age:78,zone:'Gombe',      statut:'stable',risk:.18,temp:null,humid:null},
+  {id:'P002',prenom:'Marie',  nom:'Kadima',   age:84,zone:'Lingwala',   statut:'alert', risk:.82,temp:null,humid:null},
+  {id:'P003',prenom:'Lucie',  nom:'Tshibangi',age:71,zone:'Kintambo',   statut:'warn',  risk:.64,temp:null,humid:null},
+  {id:'P004',prenom:'Paul',   nom:'Mukendi',  age:80,zone:'Barumbu',    statut:'stable',risk:.22,temp:null,humid:null},
+  {id:'P005',prenom:'Claire', nom:'Ilunga',   age:76,zone:'Kinshasa',   statut:'stable',risk:.30,temp:null,humid:null},
+  {id:'P006',prenom:'Georges',nom:'Kalala',   age:88,zone:'Ngaliema',   statut:'warn',  risk:.71,temp:null,humid:null},
+  {id:'P007',prenom:'Hélène', nom:'Mwamba',   age:73,zone:'Bandalungwa',statut:'stable',risk:.15,temp:null,humid:null},
+  {id:'P008',prenom:'André',  nom:'Kabila',   age:82,zone:'Kalamu',     statut:'alert', risk:.88,temp:null,humid:null},
+  {id:'P009',prenom:'Yvette', nom:'Ngalula',  age:79,zone:'Limete',     statut:'stable',risk:.25,temp:null,humid:null},
+  {id:'P010',prenom:'René',   nom:'Lukusa',   age:85,zone:'Lemba',      statut:'warn',  risk:.58,temp:null,humid:null},
+  {id:'P011',prenom:'Odette', nom:'Mbuyi',    age:74,zone:'Matete',     statut:'stable',risk:.19,temp:null,humid:null},
+  {id:'P012',prenom:'Fernand',nom:'Kasongo',  age:91,zone:'Masina',     statut:'stable',risk:.35,temp:null,humid:null},
 ];
 
 let current = PATIENTS[0];
-let walkSpeed = 1;
-let motionBuf = [], tempBuf = [], humidBuf = [], ecgPhase = 0;
+let walkSpeed = 0.08;
+let motionBuf = [], tempBuf = [], humidBuf = [], ecgBuf = [];
+let lastReading = null, pollTimer = null;
 
-/* ── Patient selector ── */
 const select = document.getElementById('patientSelect');
 PATIENTS.forEach(p => {
   const opt = document.createElement('option');
   opt.value = p.id;
   opt.textContent = `${p.prenom} ${p.nom} · ${p.zone} · ${p.age} ans`;
   select.appendChild(opt);
-});
-select.addEventListener('change', () => {
-  current = PATIENTS.find(p => p.id === select.value) || PATIENTS[0];
-  applyPatient();
 });
 
 function applyPatient() {
@@ -359,305 +370,216 @@ function applyPatient() {
   document.getElementById('metaStatut').textContent = current.statut;
   document.getElementById('actRisk').textContent = Math.round(current.risk * 100) + '%';
   document.getElementById('actRisk').style.color = current.risk > .7 ? 'var(--red)' : current.risk > .4 ? 'var(--amber)' : 'var(--teal)';
-  walkSpeed = current.activity === 'walk' ? (current.statut === 'alert' ? 0.35 : 1) : 0.08;
-  updateActivityLabel();
 }
 
-function updateActivityLabel() {
-  const el = document.getElementById('actLabel');
-  if (current.statut === 'alert' && current.activity === 'idle') {
-    el.textContent = 'Immobile';
-    el.className = 'as-val alert';
-  } else if (current.activity === 'idle') {
-    el.textContent = 'Repos';
-    el.className = 'as-val idle';
+select.addEventListener('change', () => {
+  current = PATIENTS.find(p => p.id === select.value) || PATIENTS[0];
+  lastReading = null; motionBuf = []; tempBuf = []; humidBuf = []; ecgBuf = [];
+  walkSpeed = 0.08;
+  applyPatient();
+  setAnalyseLive('waiting');
+  pollLiveSensors();
+});
+
+function setGsmStatus(msg, ok=true){
+  const el=document.getElementById('gsmStatus');
+  if(el){ el.textContent=msg; el.style.color=ok?'var(--teal)':'var(--red)'; }
+}
+
+async function gsmCallFamily(){
+  const btn=document.getElementById('btnGsmCall');
+  if(btn) btn.disabled=true;
+  setGsmStatus('Appel en file SIM800L…');
+  try{
+    const res=await fetch('/api/messages/send/',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({patient_id:current.id, channel:'call', recipient_type:'famille'}),
+    });
+    const d=await res.json();
+    setGsmStatus(d.ok?`Appel GSM en file → ${d.phone||'famille'}`:(d.error||'Erreur'), d.ok);
+  }catch(e){ setGsmStatus('Erreur réseau', false); }
+  if(btn) btn.disabled=false;
+}
+
+async function gsmSendAlert(){
+  const btn=document.getElementById('btnGsmSms');
+  if(btn) btn.disabled=true;
+  setGsmStatus('SMS + e-mail avec lien graphique…');
+  try{
+    const res=await fetch('/api/messages/send/',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        patient_id:current.id, channel:'sms', recipient_type:'famille',
+        message:`Alerte surveillance ${current.prenom} ${current.nom}. Consultez le graphique ECG en ligne.`,
+      }),
+    });
+    const d=await res.json();
+    setGsmStatus(d.ok?`SMS SIM800L + e-mail envoyé. Lien : ${d.analyse_url||'—'}`:(d.error||'Erreur'), d.ok);
+  }catch(e){ setGsmStatus('Erreur réseau', false); }
+  if(btn) btn.disabled=false;
+}
+
+function applyEcgUI(ecg, online){
+  if(!ecg) return;
+  const bpm=ecg.bpm, mv=ecg.mv, raw=ecg.raw;
+  document.getElementById('ecgBpm').textContent=bpm!=null?bpm:'--';
+  document.getElementById('ecgMv').innerHTML=(mv!=null?Number(mv).toFixed(2):'0.00')+'<span> mV</span>';
+  document.getElementById('ecgRaw').textContent=raw!=null?raw:'—';
+  const st=document.getElementById('ecgStatus');
+  const label=ecg.status_label||'En attente';
+  st.textContent=label;
+  st.className='ecg-status'+(ecg.status==='alert'?' alert':ecg.status==='warn'?' warn':'');
+  const wave=ecg.waveform||[];
+  if(wave.length) drawLineChart(document.getElementById('ecgCanvas'),[wave],['#ff4d6d']);
+  else if(online && mv!=null){ ecgBuf.push(mv); if(ecgBuf.length>80) ecgBuf.shift(); drawLineChart(document.getElementById('ecgCanvas'),[ecgBuf],['#ff4d6d']); }
+}
+
+function setAnalyseLive(mode) {
+  const badge = document.querySelector('.live-badge');
+  if (!badge) return;
+  if (mode === 'live') {
+    badge.innerHTML = '<div class="live-dot"></div>LIVE';
+    badge.style.color = 'var(--teal)';
+  } else if (mode === 'hold') {
+    badge.innerHTML = '<div class="live-dot" style="background:var(--amber);animation:none"></div>DERNIÈRE MESURE';
+    badge.style.color = 'var(--amber)';
   } else {
-    el.textContent = 'Marche';
-    el.className = 'as-val walk';
+    badge.innerHTML = '<div class="live-dot" style="background:var(--txt3);animation:none"></div>EN ATTENTE';
+    badge.style.color = 'var(--txt3)';
   }
 }
 
-/* ── Three.js avatar ── */
 const avatarRoot = document.getElementById('avatarCanvas');
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-camera.position.set(0, 1.4, 4.2);
-camera.lookAt(0, 1.0, 0);
-
+camera.position.set(0, 1.4, 4.2); camera.lookAt(0, 1.0, 0);
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 avatarRoot.appendChild(renderer.domElement);
-
 function resizeAvatar() {
-  const w = avatarRoot.clientWidth;
-  const h = avatarRoot.clientHeight;
-  renderer.setSize(w, h, false);
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
+  const w = avatarRoot.clientWidth, h = avatarRoot.clientHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
 }
-resizeAvatar();
-window.addEventListener('resize', resizeAvatar);
-
-const hemi = new THREE.HemisphereLight(0xb8d4ff, 0x1a2235, 0.9);
-scene.add(hemi);
-const dir = new THREE.DirectionalLight(0x00d4aa, 0.7);
-dir.position.set(3, 5, 2);
-scene.add(dir);
-const back = new THREE.DirectionalLight(0x60a5fa, 0.25);
-back.position.set(-3, 2, -2);
-scene.add(back);
-
-const floor = new THREE.Mesh(
-  new THREE.CircleGeometry(1.6, 48),
-  new THREE.MeshStandardMaterial({ color: 0x1a2235, metalness: 0.2, roughness: 0.8 })
-);
-floor.rotation.x = -Math.PI / 2;
-scene.add(floor);
-
-const ring = new THREE.Mesh(
-  new THREE.RingGeometry(1.55, 1.65, 48),
-  new THREE.MeshBasicMaterial({ color: 0x00d4aa, transparent: true, opacity: 0.35, side: THREE.DoubleSide })
-);
-ring.rotation.x = -Math.PI / 2;
-ring.position.y = 0.01;
-scene.add(ring);
-
-const matBody = new THREE.MeshStandardMaterial({ color: 0x00d4aa, metalness: 0.3, roughness: 0.45 });
-const matDark = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.2, roughness: 0.5 });
-const matHead = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.1, roughness: 0.6 });
-
-const avatar = new THREE.Group();
-scene.add(avatar);
-
-function limb(w, h, d, material) {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
-  m.position.y = -h / 2;
-  const pivot = new THREE.Group();
-  pivot.add(m);
-  return pivot;
-}
-
-const torso = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.85, 0.28), matBody);
-torso.position.y = 1.35;
-avatar.add(torso);
-
-const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), matHead);
-head.position.y = 1.95;
-avatar.add(head);
-
-const leftArm = limb(0.14, 0.55, 0.14, matDark);
-leftArm.position.set(-0.38, 1.7, 0);
-avatar.add(leftArm);
-const rightArm = limb(0.14, 0.55, 0.14, matDark);
-rightArm.position.set(0.38, 1.7, 0);
-avatar.add(rightArm);
-
-const leftLeg = limb(0.16, 0.7, 0.16, matDark);
-leftLeg.position.set(-0.16, 0.95, 0);
-avatar.add(leftLeg);
-const rightLeg = limb(0.16, 0.7, 0.16, matDark);
-rightLeg.position.set(0.16, 0.95, 0);
-avatar.add(rightLeg);
-
-let clock3 = new THREE.Clock();
-
-function animateAvatar() {
+resizeAvatar(); window.addEventListener('resize', resizeAvatar);
+scene.add(new THREE.HemisphereLight(0xb8d4ff, 0x1a2235, 0.9));
+const dir = new THREE.DirectionalLight(0x00d4aa, 0.7); dir.position.set(3,5,2); scene.add(dir);
+const floor = new THREE.Mesh(new THREE.CircleGeometry(1.6,48), new THREE.MeshStandardMaterial({color:0x1a2235, metalness:0.2, roughness:0.8}));
+floor.rotation.x = -Math.PI/2; scene.add(floor);
+const ring = new THREE.Mesh(new THREE.RingGeometry(1.55,1.65,48), new THREE.MeshBasicMaterial({color:0x00d4aa, transparent:true, opacity:0.35, side:THREE.DoubleSide}));
+ring.rotation.x = -Math.PI/2; ring.position.y = 0.01; scene.add(ring);
+const matBody = new THREE.MeshStandardMaterial({color:0x00d4aa, metalness:0.3, roughness:0.45});
+const matDark = new THREE.MeshStandardMaterial({color:0x94a3b8, metalness:0.2, roughness:0.5});
+const matHead = new THREE.MeshStandardMaterial({color:0xe2e8f0, metalness:0.1, roughness:0.6});
+const avatar = new THREE.Group(); scene.add(avatar);
+function limb(w,h,d,mat){ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); m.position.y=-h/2; const piv=new THREE.Group(); piv.add(m); return piv; }
+const torso = new THREE.Mesh(new THREE.BoxGeometry(0.55,0.85,0.28), matBody); torso.position.y=1.35; avatar.add(torso);
+const head = new THREE.Mesh(new THREE.SphereGeometry(0.22,24,24), matHead); head.position.y=1.95; avatar.add(head);
+const leftArm=limb(0.14,0.55,0.14,matDark); leftArm.position.set(-0.38,1.7,0); avatar.add(leftArm);
+const rightArm=limb(0.14,0.55,0.14,matDark); rightArm.position.set(0.38,1.7,0); avatar.add(rightArm);
+const leftLeg=limb(0.16,0.7,0.16,matDark); leftLeg.position.set(-0.16,0.95,0); avatar.add(leftLeg);
+const rightLeg=limb(0.16,0.7,0.16,matDark); rightLeg.position.set(0.16,0.95,0); avatar.add(rightLeg);
+const clock3 = new THREE.Clock();
+function animateAvatar(){
   requestAnimationFrame(animateAvatar);
-  const t = clock3.getElapsedTime();
-  const speed = walkSpeed;
-  const swing = Math.sin(t * 6 * Math.max(speed, 0.15)) * 0.55 * Math.max(speed, 0.12);
-
-  leftLeg.rotation.x = swing;
-  rightLeg.rotation.x = -swing;
-  leftArm.rotation.x = -swing * 0.85;
-  rightArm.rotation.x = swing * 0.85;
-  torso.rotation.y = Math.sin(t * 3 * Math.max(speed, 0.1)) * 0.06 * speed;
-  avatar.position.y = Math.abs(Math.sin(t * 6 * Math.max(speed, 0.15))) * 0.04 * speed;
-  avatar.rotation.y = t * 0.15;
-
-  ring.rotation.z = t * 0.4;
+  const t=clock3.getElapsedTime(), speed=walkSpeed;
+  const swing=Math.sin(t*6*Math.max(speed,0.15))*0.55*Math.max(speed,0.12);
+  leftLeg.rotation.x=swing; rightLeg.rotation.x=-swing;
+  leftArm.rotation.x=-swing*0.85; rightArm.rotation.x=swing*0.85;
+  avatar.position.y=Math.abs(Math.sin(t*6*Math.max(speed,0.15)))*0.04*speed;
+  avatar.rotation.y=t*0.15; ring.rotation.z=t*0.4;
   renderer.render(scene, camera);
 }
 animateAvatar();
 
-/* ── Charts helpers ── */
 function drawLineChart(canvas, series, colors) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
-  const w = canvas.clientWidth;
-  const h = canvas.clientHeight;
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w < 10) return;
+  canvas.width = w * dpr; canvas.height = h * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
-
   ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-  ctx.lineWidth = 1;
-  for (let i = 1; i < 4; i++) {
-    const y = (h / 4) * i;
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-  }
-
+  for (let i = 1; i < 4; i++) { const y=(h/4)*i; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
   series.forEach((data, idx) => {
     if (data.length < 2) return;
-    const min = Math.min(...data);
-    const max = Math.max(...data);
-    const range = max - min || 1;
-    ctx.beginPath();
-    ctx.strokeStyle = colors[idx];
-    ctx.lineWidth = 2;
-    data.forEach((v, i) => {
-      const x = (i / (data.length - 1)) * w;
-      const y = h - ((v - min) / range) * (h - 16) - 8;
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-    });
+    const min=Math.min(...data), max=Math.max(...data), range=max-min||1;
+    ctx.beginPath(); ctx.strokeStyle=colors[idx]; ctx.lineWidth=2;
+    data.forEach((v,i)=>{ const x=(i/(data.length-1))*w; const y=h-((v-min)/range)*(h-16)-8; i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
     ctx.stroke();
   });
 }
 
-function drawECG(canvas, bpm) {
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const w = canvas.clientWidth;
-  const h = canvas.clientHeight;
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, w, h);
-
-  ctx.strokeStyle = 'rgba(0,212,170,0.08)';
-  for (let x = 0; x < w; x += 16) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
-  for (let y = 0; y < h; y += 16) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
-
-  const mid = h / 2;
-  const beatLen = Math.max(40, Math.min(120, 6000 / bpm));
-  ctx.beginPath();
-  ctx.strokeStyle = '#00d4aa';
-  ctx.lineWidth = 2;
-  ctx.shadowColor = '#00d4aa';
-  ctx.shadowBlur = 8;
-
-  for (let x = 0; x < w; x++) {
-    const phase = ((x + ecgPhase) % beatLen) / beatLen;
-    let y = mid;
-    if (phase < 0.08) y = mid - Math.sin(phase / 0.08 * Math.PI) * 8;
-    else if (phase < 0.12) y = mid;
-    else if (phase < 0.16) y = mid + (phase - 0.12) / 0.04 * 12;
-    else if (phase < 0.20) y = mid + 12 - (phase - 0.16) / 0.04 * 52;
-    else if (phase < 0.24) y = mid - 40 + (phase - 0.20) / 0.04 * 48;
-    else if (phase < 0.30) y = mid + 8 - (phase - 0.24) / 0.06 * 8;
-    else if (phase > 0.45 && phase < 0.60) y = mid - Math.sin((phase - 0.45) / 0.15 * Math.PI) * 14;
-    y += (Math.random() - 0.5) * 1.2;
-    if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+function applyLiveReading(r, online) {
+  if (!r || !r.motion) return;
+  const m=r.motion, e=r.env||{};
+  const ax=m.ax??0, ay=m.ay??0, az=m.az??9.81;
+  const gx=m.gx??0, gy=m.gy??0, gz=m.gz??0;
+  const totalG=m.total_g??(Math.sqrt(ax*ax+ay*ay+az*az)/9.81);
+  document.getElementById('ax').innerHTML=Number(ax).toFixed(2)+'<span>m/s²</span>';
+  document.getElementById('ay').innerHTML=Number(ay).toFixed(2)+'<span>m/s²</span>';
+  document.getElementById('az').innerHTML=Number(az).toFixed(2)+'<span>m/s²</span>';
+  document.getElementById('gx').innerHTML=Number(gx).toFixed(2)+'<span>rad/s</span>';
+  document.getElementById('gy').innerHTML=Number(gy).toFixed(2)+'<span>rad/s</span>';
+  document.getElementById('gz').innerHTML=Number(gz).toFixed(2)+'<span>rad/s</span>';
+  document.getElementById('actAccel').innerHTML=Number(totalG).toFixed(2)+' <span style="font-size:11px;color:var(--txt3)">g</span>';
+  const walking=Number(totalG)>1.15;
+  document.getElementById('actCadence').innerHTML=(walking?Math.round(70+totalG*25):0)+' <span style="font-size:11px;color:var(--txt3)">pas/min</span>';
+  const activity=Math.min(100,Math.max(5,walking?40+totalG*30:8));
+  document.getElementById('activityPct').textContent=Math.round(activity)+'%';
+  document.getElementById('activityFill').style.width=activity+'%';
+  const actEl=document.getElementById('actLabel');
+  actEl.textContent=walking?'Marche':'Immobile'; actEl.className=walking?'as-val walk':'as-val alert';
+  walkSpeed=walking?1:0.08;
+  if (online) { motionBuf.push(totalG); if (motionBuf.length>80) motionBuf.shift(); }
+  if (motionBuf.length) drawLineChart(document.getElementById('motionCanvas'),[motionBuf],['#a78bfa']);
+  if (e.temperature!=null) {
+    current.temp=Number(e.temperature);
+    document.getElementById('tempVal').textContent=current.temp.toFixed(1);
+    document.getElementById('tempBig').innerHTML=current.temp.toFixed(1)+'<span>°C</span>';
+    document.getElementById('tempRing').style.setProperty('--pct', Math.max(5, Math.min(100, ((current.temp-20)/20)*100)));
+    if (online) { tempBuf.push(current.temp); if (tempBuf.length>80) tempBuf.shift(); }
   }
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-  ecgPhase += 2.5;
-}
-
-/* ── Simulation capteurs ── */
-function simulate() {
-  const walking = current.activity === 'walk' && current.statut !== 'alert';
-  const t = performance.now() / 1000;
-  const step = walking ? Math.sin(t * 6) : Math.sin(t * 0.8) * 0.1;
-
-  const ax = walking ? step * 2.2 + (Math.random() - 0.5) * 0.3 : (Math.random() - 0.5) * 0.15;
-  const ay = walking ? Math.cos(t * 6) * 1.4 + (Math.random() - 0.5) * 0.2 : (Math.random() - 0.5) * 0.1;
-  const az = 9.81 + (walking ? Math.abs(step) * 1.8 : (Math.random() - 0.5) * 0.05);
-  const gx = walking ? step * 0.8 : (Math.random() - 0.5) * 0.05;
-  const gy = walking ? Math.cos(t * 6) * 0.5 : (Math.random() - 0.5) * 0.04;
-  const gz = (Math.random() - 0.5) * (walking ? 0.3 : 0.05);
-  const totalG = Math.sqrt(ax * ax + ay * ay + az * az) / 9.81;
-
-  document.getElementById('ax').innerHTML = ax.toFixed(2) + '<span>m/s²</span>';
-  document.getElementById('ay').innerHTML = ay.toFixed(2) + '<span>m/s²</span>';
-  document.getElementById('az').innerHTML = az.toFixed(2) + '<span>m/s²</span>';
-  document.getElementById('gx').innerHTML = gx.toFixed(2) + '<span>rad/s</span>';
-  document.getElementById('gy').innerHTML = gy.toFixed(2) + '<span>rad/s</span>';
-  document.getElementById('gz').innerHTML = gz.toFixed(2) + '<span>rad/s</span>';
-  document.getElementById('actAccel').innerHTML = totalG.toFixed(2) + ' <span style="font-size:11px;color:var(--txt3)">g</span>';
-
-  const cadence = walking ? Math.round(85 + Math.abs(step) * 20 + Math.random() * 5) : Math.round(Math.random() * 4);
-  document.getElementById('actCadence').innerHTML = cadence + ' <span style="font-size:11px;color:var(--txt3)">pas/min</span>';
-
-  const activity = walking ? 55 + Math.abs(step) * 35 : 8 + Math.random() * 6;
-  document.getElementById('activityPct').textContent = Math.round(activity) + '%';
-  document.getElementById('activityFill').style.width = activity + '%';
-
-  motionBuf.push(totalG);
-  if (motionBuf.length > 80) motionBuf.shift();
-  drawLineChart(document.getElementById('motionCanvas'), [motionBuf], ['#a78bfa']);
-
-  // Température
-  current.temp += (Math.random() - 0.5) * 0.05;
-  current.humid += (Math.random() - 0.5) * 0.3;
-  current.temp = Math.min(34, Math.max(24, current.temp));
-  current.humid = Math.min(90, Math.max(40, current.humid));
-
-  document.getElementById('tempVal').textContent = current.temp.toFixed(1);
-  document.getElementById('tempBig').innerHTML = current.temp.toFixed(1) + '<span>°C</span>';
-  document.getElementById('humidVal').innerHTML = Math.round(current.humid) + '<span>%</span>';
-  const pct = ((current.temp - 20) / 20) * 100;
-  document.getElementById('tempRing').style.setProperty('--pct', Math.max(5, Math.min(100, pct)));
-
-  let comfort = 'Bon', comfortColor = 'var(--teal)';
-  if (current.temp > 32 || current.humid > 80) { comfort = 'Élevé'; comfortColor = 'var(--red)'; }
-  else if (current.temp > 30 || current.humid > 72) { comfort = 'Moyen'; comfortColor = 'var(--amber)'; }
-  const comfortEl = document.getElementById('comfortVal');
-  comfortEl.textContent = comfort;
-  comfortEl.style.color = comfortColor;
-  document.getElementById('tempTrend').textContent = Math.random() > 0.5 ? 'Stable' : (Math.random() > 0.5 ? '↑ Légère' : '↓ Légère');
-
-  tempBuf.push(current.temp);
-  humidBuf.push(current.humid);
-  if (tempBuf.length > 80) tempBuf.shift();
-  if (humidBuf.length > 80) humidBuf.shift();
-  drawLineChart(document.getElementById('tempCanvas'), [tempBuf, humidBuf], ['#f59e0b', '#60a5fa']);
-
-  // ECG
-  current.bpm += (Math.random() - 0.5) * 1.2;
-  if (current.statut === 'alert') current.bpm = Math.max(88, Math.min(115, current.bpm));
-  else if (current.statut === 'warn') current.bpm = Math.max(55, Math.min(95, current.bpm));
-  else current.bpm = Math.max(58, Math.min(88, current.bpm));
-  current.bpm = Math.round(current.bpm);
-
-  document.getElementById('bpmVal').textContent = current.bpm;
-  document.getElementById('bpmVal').style.color = current.bpm > 90 ? 'var(--red)' : current.bpm < 55 ? 'var(--blue)' : 'var(--teal)';
-  document.getElementById('rrVal').innerHTML = Math.round(60000 / current.bpm) + '<span>ms</span>';
-  document.getElementById('sigVal').innerHTML = (96 + Math.floor(Math.random() * 4)) + '<span>%</span>';
-
-  const statusEl = document.getElementById('ecgStatus');
-  if (current.bpm > 100) {
-    statusEl.textContent = 'Tachycardie';
-    statusEl.className = 'ecg-status alert';
-  } else if (current.bpm < 55) {
-    statusEl.textContent = 'Bradycardie';
-    statusEl.className = 'ecg-status warn';
-  } else if (current.bpm > 90) {
-    statusEl.textContent = 'Rythme élevé';
-    statusEl.className = 'ecg-status warn';
-  } else {
-    statusEl.textContent = 'Rythme normal';
-    statusEl.className = 'ecg-status';
+  if (e.humidity!=null) {
+    current.humid=Number(e.humidity);
+    document.getElementById('humidVal').innerHTML=Math.round(current.humid)+'<span>%</span>';
+    if (online) { humidBuf.push(current.humid); if (humidBuf.length>80) humidBuf.shift(); }
   }
-
-  drawECG(document.getElementById('ecgCanvas'), current.bpm);
+  if (e.temperature!=null || e.humidity!=null) {
+    let comfort='Bon', col='var(--teal)';
+    if (current.temp>32||current.humid>80){comfort='Élevé';col='var(--red)';}
+    else if(current.temp>30||current.humid>72){comfort='Moyen';col='var(--amber)';}
+    const c=document.getElementById('comfortVal'); c.textContent=comfort; c.style.color=col;
+    document.getElementById('tempTrend').textContent=online?'Live':'Hold';
+    if (tempBuf.length||humidBuf.length) drawLineChart(document.getElementById('tempCanvas'),[tempBuf,humidBuf],['#f59e0b','#60a5fa']);
+  }
+  lastReading=r; setAnalyseLive(online?'live':'hold');
+  if(r.ecg) applyEcgUI(r.ecg, online);
 }
 
-function tickECG() {
-  drawECG(document.getElementById('ecgCanvas'), current.bpm);
-  requestAnimationFrame(tickECG);
+async function pollLiveSensors(){
+  try{
+    const res=await fetch('/api/sensors/latest/?patient_id='+encodeURIComponent(current.id));
+    if(!res.ok){ if(lastReading) applyLiveReading(lastReading,false); else setAnalyseLive('waiting'); return; }
+    const data=await res.json();
+    const r=(data.readings||[])[0];
+    if(r) applyLiveReading(r, !!r.online);
+    else if(lastReading) applyLiveReading(lastReading,false);
+    else setAnalyseLive('waiting');
+  }catch(e){
+    if(lastReading) applyLiveReading(lastReading,false); else setAnalyseLive('waiting');
+  }
 }
 
-setInterval(() => {
-  document.getElementById('clock').textContent = new Date().toLocaleTimeString('fr-FR');
-}, 1000);
-document.getElementById('clock').textContent = new Date().toLocaleTimeString('fr-FR');
-
+setInterval(()=>{ document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR'); },1000);
+document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR');
 applyPatient();
-simulate();
-setInterval(simulate, 400);
-tickECG();
+setAnalyseLive('waiting');
+pollLiveSensors();
+pollTimer=setInterval(pollLiveSensors, 1000);
+const urlPid=new URLSearchParams(location.search).get('patient');
+if(urlPid && PATIENTS.some(p=>p.id===urlPid)){ select.value=urlPid; current=PATIENTS.find(p=>p.id===urlPid); applyPatient(); pollLiveSensors(); }
+if(location.hash==='#ecg') setTimeout(()=>document.getElementById('ecg')?.scrollIntoView({behavior:'smooth'}),400);
 </script>
 </body>
 </html>

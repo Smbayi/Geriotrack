@@ -21,6 +21,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from . import views
+from sensors import views as sensor_views
 
 urlpatterns = [
 
@@ -34,6 +35,7 @@ urlpatterns = [
     path('patients/',           views.patient_list,   name='patient_list'),
     path('patients/<str:patient_id>/', views.patient_detail, name='patient_detail'),
     path('geolocalisation/',    views.geolocation,    name='geolocation'),
+    path('alertes/',            views.alertes,        name='alertes'),
     path('analyse/',            views.analyse,        name='analyse'),
     # Portail usagers (famille + patient) — séparé de l'admin médecin
     path('portail/',            views.portail_login,   name='portail_login'),
@@ -49,7 +51,19 @@ urlpatterns = [
     path('api/gps/',            views.api_gps,              name='api_gps'),
     path('api/stats/',          views.api_dashboard_stats,  name='api_stats'),
 
-    # ── Apps séparées (si vous utilisez des apps Django) ─────
-    # path('api/alerts/',  include('alerts.urls')),
-    # path('api/sensors/', include('sensors.urls')),
+    # ── Capteurs réels (ESP32 / Arduino) ──────────────────────
+    path('api/recevoir/',       sensor_views.recevoir_donnees, name='api_recevoir'),
+    path('api/sensors/ingest/', sensor_views.ingest_sensors, name='sensors_ingest'),
+    path('api/sensors/latest/', sensor_views.latest_sensors, name='sensors_latest'),
+    path('api/chutes/',         sensor_views.api_chutes,     name='api_chutes'),
+    path('api/chutes/simulate/', sensor_views.simulate_fall, name='api_simulate_fall'),
+    path('api/monitoring/active/', sensor_views.monitoring_active, name='monitoring_active'),
+    path('api/notifications/',  sensor_views.api_notifications, name='api_notifications'),
+    path('api/notifications/read/', sensor_views.mark_notifications_read, name='notifications_read'),
+    path('api/messages/',       sensor_views.api_messages,   name='api_messages'),
+    path('api/messages/send/',  sensor_views.send_message,   name='api_send_message'),
+    path('api/emails/',         sensor_views.api_emails,     name='api_emails'),
+    path('api/family/inbox/',   sensor_views.api_family_inbox, name='api_family_inbox'),
+    path('api/family/accounts/', sensor_views.api_family_accounts, name='api_family_accounts'),
+    path('api/movements/',      sensor_views.api_movements,  name='api_movements'),
 ]

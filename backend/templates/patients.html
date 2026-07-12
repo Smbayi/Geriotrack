@@ -41,7 +41,25 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-siz
 .icon-btn{width:34px;height:34px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;color:var(--txt2);position:relative}
 .icon-btn:hover{background:var(--bg);color:var(--txt)}
 .icon-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
-.nbadge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono)}
+.nbadge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:700;min-width:14px;height:14px;padding:0 3px;border-radius:50%;display:none;align-items:center;justify-content:center;font-family:var(--font-mono)}
+.notif-wrap{position:relative}
+.notif-panel{position:absolute;top:calc(100% + 8px);right:0;width:320px;max-height:380px;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.45);display:none;flex-direction:column;z-index:200;overflow:hidden}
+.notif-panel.open{display:flex}
+.notif-panel-hdr{padding:12px 14px;border-bottom:1px solid var(--border);font-family:var(--font-head);font-size:13px;font-weight:600}
+.notif-list{overflow-y:auto;max-height:320px}
+.notif-item{display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px}
+.notif-item.unread{background:rgba(255,77,109,.06)}
+.notif-ico{width:28px;height:28px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.notif-title{font-weight:500;color:var(--txt)}
+.notif-sub{font-size:10px;color:var(--txt3);margin-top:2px;font-family:var(--font-mono)}
+.notif-empty{padding:20px;text-align:center;color:var(--txt3);font-size:12px}
+.monitor-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;flex-wrap:wrap}
+.monitor-bar label{font-size:12px;color:var(--txt2);font-family:var(--font-mono)}
+.monitor-select{height:34px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--txt);padding:0 10px;font-size:12px;min-width:200px}
+.btn-warn{display:flex;align-items:center;gap:6px;padding:0 14px;height:34px;background:var(--red-dim);border:1px solid rgba(255,77,109,.35);border-radius:8px;color:var(--red);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-head)}
+.btn-warn:hover{background:rgba(255,77,109,.2)}
+.active-pill{font-size:11px;padding:4px 10px;border-radius:20px;background:var(--teal-dim);color:var(--teal);border:1px solid rgba(0,212,170,.25);font-family:var(--font-mono)}
+tr.row-active td{background:rgba(0,212,170,.04)!important}
 .btn-primary{display:flex;align-items:center;gap:6px;padding:0 14px;height:34px;background:var(--teal);border:none;border-radius:8px;color:#0a0e17;font-size:12px;font-weight:600;font-family:var(--font-head);cursor:pointer;transition:all .15s;white-space:nowrap}
 .btn-primary:hover{background:#00ebb9}
 .btn-primary svg{width:14px;height:14px;stroke:#0a0e17;fill:none;stroke-width:2.5;stroke-linecap:round}
@@ -164,22 +182,22 @@ tbody td{padding:12px 14px;font-size:13px;color:var(--txt2);vertical-align:middl
 /* ANALYSE OVERLAY */
 .analyse-ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;display:flex;align-items:stretch;justify-content:center;backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .25s;padding:12px}
 .analyse-ov.open{opacity:1;pointer-events:all}
-.analyse-panel{width:min(1100px,100%);max-height:100%;background:var(--bg);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;transform:translateY(16px);transition:transform .3s}
+.analyse-panel{width:min(1100px,100%);max-height:100%;background:var(--bg);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;transform:translateY(16px);transition:transform .3s;position:relative}
 .analyse-ov.open .analyse-panel{transform:translateY(0)}
 .analyse-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--bg2);flex-shrink:0}
 .analyse-hdr .modal-av{width:36px;height:36px;font-size:13px}
 .analyse-title{font-family:var(--font-head);font-size:15px;font-weight:700;color:#fff}
 .analyse-sub{font-size:11px;color:var(--txt3);font-family:var(--font-mono);margin-top:2px}
-.analyse-body{flex:1;overflow-y:auto;padding:14px;display:grid;grid-template-columns:280px 1fr;gap:12px;align-items:start}
+.analyse-body{flex:1;overflow-y:auto;padding:14px;display:grid;grid-template-columns:280px 1fr;gap:12px;align-items:start;min-height:0}
 @media(max-width:900px){.analyse-body{grid-template-columns:1fr}}
-.a-left{display:flex;flex-direction:column;gap:12px}
-.a-left .a-card{display:flex;flex-direction:column;min-height:260px}
+.a-left{display:flex;flex-direction:column}
+.a-left .a-card{display:flex;flex-direction:column}
 .a-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
 .a-card-h{display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border);gap:8px;flex-shrink:0}
 .a-card-h .dot{width:7px;height:7px;border-radius:50%}
 .a-card-h .ttl{font-family:var(--font-head);font-size:12px;font-weight:600;color:#fff}
 .a-card-h .sub{font-size:10px;color:var(--txt3);margin-left:auto;font-family:var(--font-mono)}
-#avatarCanvas{width:100%;height:150px;display:block;background:radial-gradient(ellipse at center,#152033 0%,#0a0e17 70%);flex:1}
+#avatarCanvas{width:100%;height:175px;max-height:175px;display:block;background:radial-gradient(ellipse at center,#152033 0%,#0a0e17 70%);flex-shrink:0}
 .a-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px;flex-shrink:0}
 .a-stat{background:var(--bg3);border-radius:8px;padding:6px 8px}
 .a-stat .lbl{font-size:9px;color:var(--txt3);font-family:var(--font-mono);text-transform:uppercase;margin-bottom:2px}
@@ -188,6 +206,19 @@ tbody td{padding:12px 14px;font-size:13px;color:var(--txt2);vertical-align:middl
 .a-sensors{display:flex;flex-direction:column;gap:12px}
 .a-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 12px}
 @media(max-width:700px){.a-metrics{grid-template-columns:repeat(2,1fr)}}
+.orient-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 12px 10px}
+.orient-box{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px}
+.orient-box .olbl{font-size:10px;color:var(--txt3);font-family:var(--font-mono);margin-bottom:4px}
+.orient-box .oval{font-family:var(--font-head);font-size:22px;font-weight:700}
+.orient-box .oval span{font-size:12px;color:var(--txt3);font-weight:500}
+.orient-bar{height:6px;background:var(--bg4);border-radius:4px;overflow:hidden;margin-top:8px}
+.orient-fill{height:100%;border-radius:4px;transition:width .25s,background .25s}
+.risk-live{padding:0 12px 12px}
+.risk-live .rl-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:11px;font-family:var(--font-mono);color:var(--txt3)}
+.risk-live .rl-val{font-size:14px;font-weight:700;font-family:var(--font-head)}
+.risk-warn{margin:0 12px 12px;padding:8px 10px;border-radius:8px;font-size:11px;font-family:var(--font-mono);display:none;border:1px solid rgba(245,158,11,.35);background:var(--amber-dim);color:var(--amber)}
+.risk-warn.show{display:block}
+.risk-warn.crit{border-color:rgba(255,77,109,.4);background:var(--red-dim);color:var(--red)}
 .a-metric{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px}
 .a-metric .lbl{font-size:9px;color:var(--txt3);font-family:var(--font-mono);text-transform:uppercase;margin-bottom:3px}
 .a-metric .val{font-family:var(--font-head);font-size:14px;font-weight:700;color:#fff}
@@ -197,19 +228,35 @@ tbody td{padding:12px 14px;font-size:13px;color:var(--txt2);vertical-align:middl
 .a-chart .clbl{position:absolute;top:5px;left:8px;font-size:9px;color:var(--txt3);font-family:var(--font-mono);z-index:1}
 .a-chart canvas{width:100%;height:72px;display:block}
 .a-left .a-chart{flex:1;margin:0 12px 10px;display:flex;align-items:center}
-.a-left .a-chart canvas#ecgCanvas{height:72px}
 .a-tags{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 10px}
 .a-tag{font-size:10px;font-family:var(--font-mono);padding:3px 8px;border-radius:20px;border:1px solid var(--border);color:var(--txt2);background:var(--bg3)}
 .a-tag.on{border-color:rgba(0,212,170,.3);color:var(--teal);background:var(--teal-dim)}
 .a-tag.off{opacity:.4}
 .a-bar{height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;margin:0 12px 8px}
 .a-bar-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--blue));border-radius:3px}
-.ecg-row{display:flex;align-items:center;gap:10px;padding:10px 12px 6px;flex-wrap:wrap;flex-shrink:0}
-.ecg-bpm{font-family:var(--font-head);font-size:26px;font-weight:700;color:var(--teal);line-height:1}
-.ecg-unit{font-size:10px;color:var(--txt3);font-family:var(--font-mono)}
-.ecg-badge{font-size:10px;padding:3px 8px;border-radius:6px;font-family:var(--font-mono);background:var(--teal-dim);color:var(--teal);border:1px solid rgba(0,212,170,.2)}
-.ecg-badge.warn{background:var(--amber-dim);color:var(--amber);border-color:rgba(245,158,11,.25)}
-.ecg-badge.alert{background:var(--red-dim);color:var(--red);border-color:rgba(255,77,109,.25)}
+.a-gsm{display:flex;gap:8px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg3);align-items:center}
+.a-gsm-t{font-size:10px;color:var(--txt3);font-family:var(--font-mono);margin-right:auto}
+.a-gsm-btn{padding:6px 10px;border-radius:8px;border:1px solid;font-size:11px;cursor:pointer;background:transparent;font-family:var(--font-body)}
+.a-gsm-btn.call{border-color:rgba(52,211,153,.35);color:var(--green)}
+.a-gsm-btn.sms{border-color:rgba(96,165,250,.35);color:var(--blue)}
+.ecg-row{display:flex;align-items:center;gap:14px;padding:10px 12px;flex-wrap:wrap}
+.ecg-bpm-big{font-family:var(--font-head);font-size:28px;font-weight:700;color:var(--teal)}
+.ecg-st{font-size:10px;padding:3px 8px;border-radius:6px;font-family:var(--font-mono);background:var(--teal-dim);color:var(--teal)}
+.ecg-st.warn{background:var(--amber-dim);color:var(--amber)}
+.ecg-st.alert{background:var(--red-dim);color:var(--red)}
+.gsm-toast{position:absolute;top:58px;left:50%;transform:translateX(-50%) translateY(-16px);z-index:700;display:flex;align-items:center;gap:12px;padding:12px 18px;border-radius:14px;background:rgba(17,24,39,.96);border:1px solid var(--border2);box-shadow:0 12px 40px rgba(0,0,0,.55);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .35s,transform .35s;min-width:260px;max-width:90%}
+.gsm-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.gsm-toast.call{border-color:rgba(52,211,153,.45);box-shadow:0 12px 40px rgba(0,0,0,.55),0 0 24px rgba(52,211,153,.15)}
+.gsm-toast.sms{border-color:rgba(96,165,250,.45);box-shadow:0 12px 40px rgba(0,0,0,.55),0 0 24px rgba(96,165,250,.15)}
+.gsm-toast.error{border-color:rgba(255,77,109,.45)}
+.gsm-toast-ico{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.gsm-toast.call .gsm-toast-ico{background:rgba(52,211,153,.15);color:var(--green)}
+.gsm-toast.sms .gsm-toast-ico{background:rgba(96,165,250,.15);color:var(--blue)}
+.gsm-toast.error .gsm-toast-ico{background:var(--red-dim);color:var(--red)}
+.gsm-toast-title{font-family:var(--font-head);font-size:14px;font-weight:600;color:#fff}
+.gsm-toast-sub{font-size:11px;color:var(--txt3);font-family:var(--font-mono);margin-top:2px}
+.gsm-toast.call .gsm-toast-title{color:var(--green)}
+.gsm-toast.sms .gsm-toast-title{color:var(--blue)}
 
 /* FORMULAIRE NOUVEAU PATIENT */
 .form-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:550;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .25s;padding:16px}
@@ -254,12 +301,12 @@ tbody td{padding:12px 14px;font-size:13px;color:var(--txt2);vertical-align:middl
     <a href="/" class="nav-item"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="lbl">Dashboard</span></a>
     <a href="/patients/" class="nav-item active"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="lbl">Patients</span><span class="nav-badge">12</span></a>
     <a href="/geolocalisation/" class="nav-item"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="lbl">Géolocalisation</span></a>
-    <a href="#" class="nav-item"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="lbl">Alertes</span><span class="nav-badge">3</span></a>
+    <a href="/alertes/" class="nav-item"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="lbl">Alertes</span><span class="nav-badge" data-notif-badge>0</span></a>
   </div>
   <div class="sidebar-bottom">
     <div class="user-card">
       <div class="u-av">Dr</div>
-      <div><div class="u-name">Dr. Martin</div><div class="u-role">Gériatre · Admin</div></div>
+      <div><div class="u-name">Dr. Mutombo</div><div class="u-role">Gériatre · Admin</div></div>
       <div class="u-dot"></div>
     </div>
   </div>
@@ -269,12 +316,27 @@ tbody td{padding:12px 14px;font-size:13px;color:var(--txt2);vertical-align:middl
   <div class="topbar">
     <div><span class="topbar-title">Patients</span><span class="topbar-sub">/ Liste complète</span></div>
     <div class="topbar-right">
-      <div class="icon-btn"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="nbadge">3</span></div>
+      <div class="notif-wrap" data-notif-wrap onclick="event.stopPropagation()">
+        <div class="icon-btn" data-notif-btn>
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="nbadge" data-notif-badge>0</span>
+        </div>
+        <div class="notif-panel" data-notif-panel>
+          <div class="notif-panel-hdr">Notifications</div>
+          <div class="notif-list" data-notif-list></div>
+        </div>
+      </div>
       <button class="btn-primary" onclick="openForm()"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouveau patient</button>
     </div>
   </div>
 
   <div class="content">
+    <div class="monitor-bar">
+      <label for="activePatientSel">Patient surveillé (chute / GPS)</label>
+      <select class="monitor-select" id="activePatientSel" onchange="setActivePatient(this.value)"></select>
+      <span class="active-pill" id="activePatientPill">—</span>
+      <span style="font-size:11px;color:var(--txt3);font-family:var(--font-mono)">Temp · humidité · MPU partagés pour tous</span>
+    </div>
     <div class="toolbar">
       <div class="search-wrap">
         <svg class="s-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -298,9 +360,8 @@ tbody td{padding:12px 14px;font-size:13px;color:var(--txt2);vertical-align:middl
         <th onclick="sort('name')" id="th-name">Patient <span class="si">↕</span></th>
         <th onclick="sort('age')"  id="th-age">Âge <span class="si">↕</span></th>
         <th>Chambre</th><th>Statut</th>
-        <th onclick="sort('bpm')"  id="th-bpm">BPM <span class="si">↕</span></th>
         <th onclick="sort('risk')" id="th-risk">Risque <span class="si">↕</span></th>
-        <th>Temp.</th><th>Activité</th><th>Actions</th>
+        <th>Temp.</th><th>Humid.</th><th>Actions</th>
       </tr></thead>
       <tbody id="tbody"></tbody></table>
       <div class="empty-state" id="empty"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p style="font-size:14px;color:var(--txt2);margin-bottom:4px">Aucun patient trouvé</p><small style="font-size:12px;font-family:var(--font-mono)">Modifiez votre recherche</small></div>
@@ -328,38 +389,50 @@ tbody td{padding:12px 14px;font-size:13px;color:var(--txt2);vertical-align:middl
       <div class="modal-av" id="aAv"></div>
       <div style="flex:1">
         <div class="analyse-title" id="aName">Analyse en temps réel</div>
-        <div class="analyse-sub" id="aMeta">Mouvement · Température · ECG</div>
+        <div class="analyse-sub" id="aMeta">Mouvement · Température</div>
       </div>
-      <div class="live-badge" style="display:flex;align-items:center;gap:6px;background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.25);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;color:var(--teal);font-family:var(--font-mono)"><div style="width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pdot 1.5s infinite"></div>LIVE</div>
+      <div class="live-badge" id="liveBadge" style="display:flex;align-items:center;gap:6px;background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.25);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;color:var(--teal);font-family:var(--font-mono)"><div style="width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pdot 1.5s infinite" id="liveDot"></div><span id="liveText">EN ATTENTE</span></div>
       <button class="modal-close" onclick="closeAnalyse()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
+    <div class="a-gsm">
+      <span class="a-gsm-t">SIM800L GSM</span>
+      <button class="a-gsm-btn call" onclick="gsmCallFamily()">📞 Appeler famille</button>
+      <button class="a-gsm-btn sms" onclick="gsmSendAlert()">✉ SMS alerte</button>
+    </div>
+    <div class="gsm-toast" id="gsmToast" aria-live="polite"></div>
     <div class="analyse-body">
       <div class="a-left">
         <div class="a-card">
           <div class="a-card-h"><div class="dot" style="background:var(--purple)"></div><span class="ttl">Avatar biomécanique</span><span class="sub">Three.js</span></div>
           <div id="avatarCanvas"></div>
           <div class="a-stats">
-            <div class="a-stat"><div class="lbl">Activité</div><div class="val walk" id="actLabel">Marche</div></div>
-            <div class="a-stat"><div class="lbl">Cadence</div><div class="val" id="actCadence">92 pas/min</div></div>
-            <div class="a-stat"><div class="lbl">Accél. totale</div><div class="val" id="actAccel">1.02 g</div></div>
+            <div class="a-stat"><div class="lbl">Activité</div><div class="val" id="actLabel">—</div></div>
+            <div class="a-stat"><div class="lbl">Cadence</div><div class="val" id="actCadence">—</div></div>
+            <div class="a-stat"><div class="lbl">Accél. totale</div><div class="val" id="actAccel">—</div></div>
             <div class="a-stat"><div class="lbl">Risque chute</div><div class="val" id="actRisk">18%</div></div>
           </div>
-        </div>
-        <div class="a-card" id="ecg">
-          <div class="a-card-h"><div class="dot" style="background:var(--teal)"></div><span class="ttl">Suivi ECG</span><span class="sub">AD8232</span></div>
-          <div class="ecg-row">
-            <div><div class="ecg-bpm" id="bpmVal">72</div><div class="ecg-unit">BPM</div></div>
-            <div class="ecg-badge" id="ecgStatus">Rythme normal</div>
-            <div class="a-metric" style="min-width:90px;padding:6px 8px"><div class="lbl">RR</div><div class="val teal" id="rrVal">833<span> ms</span></div></div>
-            <div class="a-metric" style="min-width:90px;padding:6px 8px"><div class="lbl">Signal</div><div class="val blue" id="sigVal">98<span> %</span></div></div>
-          </div>
-          <div class="a-chart"><div class="clbl">Trace ECG live</div><canvas id="ecgCanvas"></canvas></div>
-          <div class="a-tags"><span class="a-tag on">AD8232</span><span class="a-tag on">Anomalie</span><span class="a-tag on">Brady / Tachy</span></div>
         </div>
       </div>
       <div class="a-sensors">
         <div class="a-card" id="mouvement">
-          <div class="a-card-h"><div class="dot" style="background:var(--purple)"></div><span class="ttl">Suivi du mouvement</span><span class="sub">MPU6050</span></div>
+          <div class="a-card-h"><div class="dot" style="background:var(--purple)"></div><span class="ttl">Suivi du mouvement</span><span class="sub">MPU6050 · temps réel</span></div>
+          <div class="orient-row">
+            <div class="orient-box">
+              <div class="olbl">Orientation X (inclinaison)</div>
+              <div class="oval" id="angleXVal">0.0<span> °</span></div>
+              <div class="orient-bar"><div class="orient-fill" id="angleXFill" style="width:0%;background:var(--purple)"></div></div>
+            </div>
+            <div class="orient-box">
+              <div class="olbl">Orientation Y (inclinaison)</div>
+              <div class="oval" id="angleYVal">0.0<span> °</span></div>
+              <div class="orient-bar"><div class="orient-fill" id="angleYFill" style="width:0%;background:var(--blue)"></div></div>
+            </div>
+          </div>
+          <div class="risk-live">
+            <div class="rl-top"><span>Proximité seuil chute (50°)</span><span class="rl-val" id="riskLiveVal" style="color:var(--teal)">18%</span></div>
+            <div class="a-bar"><div class="a-bar-fill" id="riskLiveFill" style="width:18%;background:var(--teal)"></div></div>
+          </div>
+          <div class="risk-warn" id="riskWarn">⚠ Orientation proche du seuil — risque en hausse</div>
           <div class="a-metrics">
             <div class="a-metric"><div class="lbl">Accel X</div><div class="val purple" id="ax">0.00<span> m/s²</span></div></div>
             <div class="a-metric"><div class="lbl">Accel Y</div><div class="val purple" id="ay">0.00<span> m/s²</span></div></div>
@@ -368,20 +441,31 @@ tbody td{padding:12px 14px;font-size:13px;color:var(--txt2);vertical-align:middl
             <div class="a-metric"><div class="lbl">Gyro Y</div><div class="val blue" id="gy">0.00<span> rad/s</span></div></div>
             <div class="a-metric"><div class="lbl">Gyro Z</div><div class="val blue" id="gz">0.00<span> rad/s</span></div></div>
           </div>
-          <div class="a-chart"><div class="clbl">Accélération totale (g)</div><canvas id="motionCanvas"></canvas></div>
+          <div class="a-chart"><div class="clbl">Accélération totale (g) · angles</div><canvas id="motionCanvas"></canvas></div>
           <div style="display:flex;justify-content:space-between;padding:0 12px 4px;font-size:10px;font-family:var(--font-mono);color:var(--txt3)"><span>Niveau d'activité</span><span id="activityPct">64%</span></div>
           <div class="a-bar"><div class="a-bar-fill" id="activityFill" style="width:64%"></div></div>
-          <div class="a-tags"><span class="a-tag on">I2C · 100 Hz</span><span class="a-tag on">Détection chute</span><span class="a-tag on">Posture</span><span class="a-tag off">GSM</span><span class="a-tag off">GPS</span></div>
+          <div class="a-tags"><span class="a-tag on">I2C · MPU6050</span><span class="a-tag on">Seuil 50°</span><span class="a-tag on">GPS NEO-6M</span><span class="a-tag on">DHT11</span></div>
         </div>
         <div class="a-card" id="temperature">
-          <div class="a-card-h"><div class="dot" style="background:var(--amber)"></div><span class="ttl">Température ambiante</span><span class="sub">DHT22</span></div>
+          <div class="a-card-h"><div class="dot" style="background:var(--amber)"></div><span class="ttl">Température ambiante</span><span class="sub">DHT11</span></div>
           <div class="a-metrics">
-            <div class="a-metric"><div class="lbl">Température</div><div class="val amber" id="tempBig">27.4<span> °C</span></div></div>
-            <div class="a-metric"><div class="lbl">Humidité</div><div class="val blue" id="humidVal">66<span> %</span></div></div>
-            <div class="a-metric"><div class="lbl">Confort</div><div class="val teal" id="comfortVal">Bon</div></div>
+            <div class="a-metric"><div class="lbl">Température</div><div class="val amber" id="tempBig">--.<span> °C</span></div></div>
+            <div class="a-metric"><div class="lbl">Humidité</div><div class="val blue" id="humidVal">--<span> %</span></div></div>
+            <div class="a-metric"><div class="lbl">Confort</div><div class="val teal" id="comfortVal">—</div></div>
           </div>
           <div class="a-chart"><div class="clbl">Température / humidité</div><canvas id="tempCanvas"></canvas></div>
-          <div class="a-tags"><span class="a-tag on">DHT22</span><span class="a-tag on">Seuil 32°C</span><span class="a-tag on">Humidité</span></div>
+          <div class="a-tags"><span class="a-tag on">DHT11</span><span class="a-tag on">Seuil 32°C</span><span class="a-tag on">Humidité</span></div>
+        </div>
+        <div class="a-card" id="ecg">
+          <div class="a-card-h"><div class="dot" style="background:var(--red)"></div><span class="ttl">ECG · Fréquence cardiaque</span><span class="sub">AD8232 live</span></div>
+          <div class="ecg-row">
+            <div><div class="ecg-bpm-big" id="ecgBpm">--</div><div style="font-size:10px;color:var(--txt3);font-family:var(--font-mono)">bpm</div></div>
+            <div class="a-metric" style="flex:1;min-width:80px"><div class="lbl">Signal</div><div class="val teal" id="ecgMv">0.00<span> mV</span></div></div>
+            <div class="a-metric" style="flex:1;min-width:80px"><div class="lbl">ADC</div><div class="val" id="ecgRaw">—</div></div>
+            <span class="ecg-st" id="ecgStatus">En attente</span>
+          </div>
+          <div class="a-chart"><div class="clbl">Forme d'onde ECG</div><canvas id="ecgCanvas"></canvas></div>
+          <div class="a-tags"><span class="a-tag on">ECG AD8232</span><span class="a-tag on">Calibré serveur</span></div>
         </div>
       </div>
     </div>
@@ -401,18 +485,18 @@ tbody td{padding:12px 14px;font-size:13px;color:var(--txt2);vertical-align:middl
     <form class="form-body" id="patientForm" onsubmit="return submitPatient(event)">
       <div class="form-grid">
         <div class="form-field"><label for="fPrenom">Prénom *</label><input id="fPrenom" name="prenom" required placeholder="Ex: Jean"></div>
-        <div class="form-field"><label for="fNom">Nom *</label><input id="fNom" name="nom" required placeholder="Ex: Dupont"></div>
+        <div class="form-field"><label for="fNom">Nom *</label><input id="fNom" name="nom" required placeholder="Ex: Kabongo"></div>
         <div class="form-field"><label for="fAge">Âge *</label><input id="fAge" name="age" type="number" min="50" max="120" required placeholder="78"></div>
         <div class="form-field"><label for="fChambre">Chambre / Zone *</label><input id="fChambre" name="chambre" required placeholder="Ex: Gombe · Ch.4"></div>
         <div class="form-field"><label for="fGenre">Genre</label>
           <select id="fGenre" name="genre"><option value="M">Masculin</option><option value="F">Féminin</option><option value="O">Autre</option></select>
         </div>
         <div class="form-field"><label for="fMed">Médecin</label>
-          <select id="fMed" name="medecin"><option>Dr. Martin</option><option>Dr. Leroux</option><option>Dr. Kabongo</option></select>
+          <select id="fMed" name="medecin"><option>Dr. Mutombo</option><option>Dr. Tshimanga</option><option>Dr. Kabongo</option></select>
         </div>
         <div class="form-field"><label for="fTel">Téléphone patient</label><input id="fTel" name="tel" placeholder="+243 81 000 0000"></div>
         <div class="form-field"><label for="fDevice">ID dispositif ESP32</label><input id="fDevice" name="device" placeholder="ESP32-013"></div>
-        <div class="form-field"><label for="fContact">Contact d'urgence *</label><input id="fContact" name="contact" required placeholder="Marie Dupont"></div>
+        <div class="form-field"><label for="fContact">Contact d'urgence *</label><input id="fContact" name="contact" required placeholder="Marie Kabongo"></div>
         <div class="form-field"><label for="fContactTel">Tél. urgence *</label><input id="fContactTel" name="contactTel" required placeholder="+243 82 000 0000"></div>
         <div class="form-field"><label for="fPoids">Poids</label><input id="fPoids" name="poids" placeholder="70kg"></div>
         <div class="form-field"><label for="fTaille">Taille</label><input id="fTaille" name="taille" placeholder="170cm"></div>
@@ -430,18 +514,18 @@ tbody td{padding:12px 14px;font-size:13px;color:var(--txt2);vertical-align:middl
 
 <script>
 const PT=[
-  {id:'P001',p:'Jean',   n:'Dupont',  a:78,ch:'Ch.4', s:'stable',bpm:72, r:.18,t:22.4,h:56,po:'74kg',ta:'172cm',med:'Dr. Martin', ct:'Marie Dupont · 06 12 34 56 78',   pa:['Hypertension','Arthrose'],          note:'Patient coopératif, suit bien son traitement.',       last:'Il y a 2 min', c:'#00d4aa',hist:[{t:'ok',m:'ECG normal',     tm:'14:00'},{t:'ok',m:'Médicaments pris',tm:'09:30'}]},
-  {id:'P002',p:'Marie',  n:'Martin',  a:84,ch:'Ch.7', s:'alert', bpm:91, r:.82,t:22.1,h:58,po:'58kg',ta:'160cm',med:'Dr. Leroux',  ct:'Paul Martin · 06 98 76 54 32',    pa:['Tachycardie','Ostéoporose'],        note:'Surveiller le rythme cardiaque. Risque de chute élevé.',last:'CHUTE 14:32',color:'#ff4d6d',c:'#ff4d6d',hist:[{t:'alert',m:'CHUTE DÉTECTÉE',tm:'14:32'},{t:'alert',m:'Tachycardie 91bpm',tm:'14:30'}]},
-  {id:'P003',p:'Lucie',  n:'Bernard', a:71,ch:'Ch.2', s:'warn',  bpm:68, r:.64,t:22.6,h:55,po:'62kg',ta:'165cm',med:'Dr. Martin', ct:'Alain Bernard · 07 11 22 33 44',  pa:['BPCO','Dépression'],                note:'Fragilité motrice détectée. Kiné recommandé.',         last:'Il y a 8 min', c:'#f59e0b',hist:[{t:'warn',m:'Score fragilité: 0.64',tm:'13:15'},{t:'ok',m:'Kiné effectuée',tm:'Hier'}]},
-  {id:'P004',p:'Paul',   n:'Robert',  a:80,ch:'Ch.9', s:'stable',bpm:65, r:.22,t:22.3,h:57,po:'80kg',ta:'178cm',med:'Dr. Leroux',  ct:'Léa Robert · 06 55 44 33 22',    pa:['Parkinson (stade 1)'],               note:'Bon état général. Traitement dopaminergique en cours.', last:'Il y a 5 min', c:'#60a5fa',hist:[{t:'ok',m:'Bilan neuro positif',tm:'11:00'}]},
-  {id:'P005',p:'Claire', n:'Lambert', a:76,ch:'Ch.1', s:'stable',bpm:77, r:.30,t:22.8,h:54,po:'66kg',ta:'163cm',med:'Dr. Martin', ct:'Sophie Lambert · 06 77 88 99 00', pa:['Insuf. cardiaque légère'],            note:'Contrôle cardiaque mensuel. Médicaments ajustés.',      last:'Il y a 12min',c:'#a78bfa',hist:[{t:'ok',m:'ECG normal',tm:'10:00'}]},
-  {id:'P006',p:'Georges',n:'Petit',   a:88,ch:'Ch.11',s:'warn',  bpm:58, r:.71,t:21.9,h:60,po:'68kg',ta:'170cm',med:'Dr. Leroux',  ct:'Anne Petit · 06 34 56 78 90',    pa:['Alzheimer stade 2','HTA'],          note:'Confusion fréquente. Risque de déambulation nocturne.', last:'Il y a 3 min', c:'#f59e0b',hist:[{t:'warn',m:'Déambulation nocturne',tm:'02:15'}]},
-  {id:'P007',p:'Hélène', n:'Moreau',  a:73,ch:'Ch.5', s:'stable',bpm:74, r:.15,t:22.5,h:56,po:'60kg',ta:'161cm',med:'Dr. Martin', ct:'Marc Moreau · 07 99 88 77 66',   pa:['Arthrite rhumatoïde'],               note:'Patient autonome. Bonne observance thérapeutique.',     last:'Il y a 20min',c:'#34d399',hist:[{t:'ok',m:'Consultation OK',tm:'Aujourd\'hui'}]},
-  {id:'P008',p:'André',  n:'Simon',   a:82,ch:'Ch.8', s:'alert', bpm:102,r:.88,t:22.2,h:59,po:'72kg',ta:'175cm',med:'Dr. Leroux',  ct:'Julie Simon · 06 11 22 33 44',   pa:['FA chronique','IC sévère'],         note:'URGENT: arythmie en cours. Cardiologue contacté.',      last:'Il y a 1 min', c:'#ff4d6d',hist:[{t:'alert',m:'FA rapide 102bpm',tm:'14:45'}]},
-  {id:'P009',p:'Yvette', n:'Garnier', a:79,ch:'Ch.3', s:'stable',bpm:69, r:.25,t:22.7,h:53,po:'55kg',ta:'158cm',med:'Dr. Martin', ct:'Pierre Garnier · 06 22 33 44 55', pa:['Glaucome','HTA modérée'],            note:'Bonne stabilité. Gouttes oculaires 3x/jour.',           last:'Il y a 18min',c:'#34d399',hist:[{t:'ok',m:'Tension normale',tm:'Aujourd\'hui'}]},
-  {id:'P010',p:'René',   n:'Leroy',   a:85,ch:'Ch.12',s:'warn',  bpm:82, r:.58,t:22.0,h:61,po:'78kg',ta:'176cm',med:'Dr. Leroux',  ct:'Nathalie Leroy · 07 66 77 88 99', pa:['BPCO sévère'],                      note:'SpO2 à surveiller. Oxygénothérapie nocturne.',          last:'Il y a 7 min', c:'#f59e0b',hist:[{t:'warn',m:'SpO2 à 91%',tm:'13:00'}]},
-  {id:'P011',p:'Odette', n:'Blanc',   a:74,ch:'Ch.6', s:'stable',bpm:71, r:.19,t:22.4,h:55,po:'58kg',ta:'162cm',med:'Dr. Martin', ct:'Louis Blanc · 06 45 56 67 78',    pa:['Hypothyroïdie'],                    note:'Thyroïde stabilisée. TSH dans les normes.',             last:'Il y a 25min',c:'#34d399',hist:[{t:'ok',m:'TSH normale',tm:'Aujourd\'hui'}]},
-  {id:'P012',p:'Fernand',n:'Rousseau',a:91,ch:'Ch.10',s:'stable',bpm:66, r:.35,t:22.3,h:57,po:'65kg',ta:'168cm',med:'Dr. Leroux',  ct:'Camille Rousseau · 06 78 89 90 01',pa:['Dégén. maculaire','Arthrose'],     note:'Plus âgé du service. Suivi quotidien.',                  last:'Il y a 30min',c:'#60a5fa',hist:[{t:'ok',m:'Bonne nuit 7h',tm:'Aujourd\'hui'}]},
+  {id:'P001',p:'Jean',   n:'Kabongo',  a:78,ch:'Ch.4', s:'stable', r:.18,t:27.4,h:66,po:'74kg',ta:'172cm',med:'Dr. Mutombo', ct:'Marie Kabongo · +243 81 234 5678',   pa:['Hypertension','Arthrose'],          note:'Patient coopératif, suit bien son traitement.',       last:'Il y a 2 min', c:'#00d4aa',hist:[{t:'ok',m:'Bilan normal',     tm:'14:00'},{t:'ok',m:'Médicaments pris',tm:'09:30'}]},
+  {id:'P002',p:'Marie',  n:'Kadima',   a:84,ch:'Ch.7', s:'alert',  r:.82,t:27.1,h:68,po:'58kg',ta:'160cm',med:'Dr. Tshimanga',ct:'Paul Kadima · +243 82 987 6543',     pa:['Ostéoporose'],                     note:'Risque de chute élevé. Surveillance renforcée.',last:'CHUTE 14:32',c:'#ff4d6d',hist:[{t:'alert',m:'CHUTE DÉTECTÉE',tm:'14:32'},{t:'warn',m:'Immobilité prolongée',tm:'14:30'}]},
+  {id:'P003',p:'Lucie',  n:'Tshibangi',a:71,ch:'Ch.2', s:'warn',   r:.64,t:27.6,h:65,po:'62kg',ta:'165cm',med:'Dr. Mutombo', ct:'Alain Tshibangi · +243 89 112 2334', pa:['BPCO','Dépression'],                note:'Kiné recommandée.',                                  last:'Il y a 8 min', c:'#f59e0b',hist:[{t:'warn',m:'Surveillance recommandée',tm:'13:15'},{t:'ok',m:'Kiné effectuée',tm:'Hier'}]},
+  {id:'P004',p:'Paul',   n:'Mukendi',  a:80,ch:'Ch.9', s:'stable', r:.22,t:27.3,h:67,po:'80kg',ta:'178cm',med:'Dr. Tshimanga',ct:'Léa Mukendi · +243 81 554 4332',     pa:['Parkinson (stade 1)'],               note:'Bon état général. Traitement dopaminergique en cours.', last:'Il y a 5 min', c:'#60a5fa',hist:[{t:'ok',m:'Bilan neuro positif',tm:'11:00'}]},
+  {id:'P005',p:'Claire', n:'Ilunga',   a:76,ch:'Ch.1', s:'stable', r:.30,t:27.8,h:64,po:'66kg',ta:'163cm',med:'Dr. Mutombo', ct:'Sophie Ilunga · +243 82 778 8990',   pa:['HTA légère'],                        note:'Bonne observance. Contrôle mensuel.',                last:'Il y a 12min',c:'#a78bfa',hist:[{t:'ok',m:'Consultation OK',tm:'10:00'}]},
+  {id:'P006',p:'Georges',n:'Kalala',   a:88,ch:'Ch.11',s:'warn',   r:.71,t:26.9,h:70,po:'68kg',ta:'170cm',med:'Dr. Tshimanga',ct:'Anne Kalala · +243 81 345 6789',     pa:['Alzheimer stade 2','HTA'],          note:'Confusion fréquente. Risque de déambulation nocturne.', last:'Il y a 3 min', c:'#f59e0b',hist:[{t:'warn',m:'Déambulation nocturne',tm:'02:15'}]},
+  {id:'P007',p:'Hélène', n:'Mwamba',   a:73,ch:'Ch.5', s:'stable', r:.15,t:27.5,h:66,po:'60kg',ta:'161cm',med:'Dr. Mutombo', ct:'Marc Mwamba · +243 89 998 8776',     pa:['Arthrite rhumatoïde'],               note:'Patient autonome. Bonne observance thérapeutique.',     last:'Il y a 20min',c:'#34d399',hist:[{t:'ok',m:'Consultation OK',tm:'Aujourd\'hui'}]},
+  {id:'P008',p:'André',  n:'Kabila',   a:82,ch:'Ch.8', s:'alert',  r:.88,t:27.2,h:69,po:'72kg',ta:'175cm',med:'Dr. Tshimanga',ct:'Julie Kabila · +243 81 112 2334',    pa:['Chutes'],                           note:'URGENT: chute récente. Surveillance continue.',        last:'Il y a 1 min', c:'#ff4d6d',hist:[{t:'alert',m:'Chute détectée',tm:'14:45'}]},
+  {id:'P009',p:'Yvette', n:'Ngalula',  a:79,ch:'Ch.3', s:'stable', r:.25,t:27.7,h:63,po:'55kg',ta:'158cm',med:'Dr. Mutombo', ct:'Pierre Ngalula · +243 82 223 3445',  pa:['Glaucome','HTA modérée'],            note:'Bonne stabilité. Gouttes oculaires 3x/jour.',           last:'Il y a 18min',c:'#34d399',hist:[{t:'ok',m:'Tension normale',tm:'Aujourd\'hui'}]},
+  {id:'P010',p:'René',   n:'Lukusa',   a:85,ch:'Ch.12',s:'warn',   r:.58,t:27.0,h:71,po:'78kg',ta:'176cm',med:'Dr. Tshimanga',ct:'Nathalie Lukusa · +243 89 667 7889', pa:['BPCO sévère'],                      note:'SpO2 à surveiller. Oxygénothérapie nocturne.',          last:'Il y a 7 min', c:'#f59e0b',hist:[{t:'warn',m:'SpO2 à 91%',tm:'13:00'}]},
+  {id:'P011',p:'Odette', n:'Mbuyi',    a:74,ch:'Ch.6', s:'stable', r:.19,t:27.4,h:65,po:'58kg',ta:'162cm',med:'Dr. Mutombo', ct:'Louis Mbuyi · +243 81 455 6678',     pa:['Hypothyroïdie'],                    note:'Thyroïde stabilisée. TSH dans les normes.',             last:'Il y a 25min',c:'#34d399',hist:[{t:'ok',m:'TSH normale',tm:'Aujourd\'hui'}]},
+  {id:'P012',p:'Fernand',n:'Kasongo',  a:91,ch:'Ch.10',s:'stable', r:.35,t:27.3,h:67,po:'65kg',ta:'168cm',med:'Dr. Tshimanga',ct:'Camille Kasongo · +243 82 788 9901', pa:['Dégén. maculaire','Arthrose'],     note:'Plus âgé du service. Suivi quotidien.',                  last:'Il y a 30min',c:'#60a5fa',hist:[{t:'ok',m:'Bonne nuit 7h',tm:'Aujourd\'hui'}]},
 ];
 
 let filt='all',sk=null,sa=true,view='table';
@@ -449,6 +533,45 @@ const ini=p=>(p.p[0]+p.n[0]).toUpperCase();
 const rc=r=>r>.7?'var(--red)':r>.4?'var(--amber)':'var(--teal)';
 const badge=s=>s==='alert'?'<span class="badge balert">Alerte</span>':s==='warn'?'<span class="badge bwarn">Surveiller</span>':'<span class="badge bok">Stable</span>';
 const hc=t=>t==='alert'?'var(--red)':t==='warn'?'var(--amber)':'var(--teal)';
+
+let activePatientId='P001';
+
+async function loadActivePatient(){
+  try{
+    const res=await fetch('/api/monitoring/active/');
+    if(res.ok){
+      const d=await res.json();
+      activePatientId=d.active_patient||'P001';
+      updateActiveUI();
+    }
+  }catch(e){}
+}
+
+function initActiveSelect(){
+  const sel=document.getElementById('activePatientSel');
+  if(!sel) return;
+  sel.innerHTML=PT.map(p=>`<option value="${p.id}">${p.p} ${p.n} (${p.id})</option>`).join('');
+  sel.value=activePatientId;
+  updateActiveUI();
+}
+
+async function setActivePatient(id){
+  activePatientId=id;
+  try{
+    await fetch('/api/monitoring/active/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({patient_id:id})});
+  }catch(e){}
+  updateActiveUI();
+  render();
+}
+
+function updateActiveUI(){
+  const p=PT.find(x=>x.id===activePatientId);
+  const pill=document.getElementById('activePatientPill');
+  if(pill) pill.textContent=p?`Surveillance : ${p.p} ${p.n}`:'—';
+  const sel=document.getElementById('activePatientSel');
+  if(sel) sel.value=activePatientId;
+}
+
 
 function getF(){
   const q=document.getElementById('sInput').value.toLowerCase().trim();
@@ -469,18 +592,17 @@ function renderTable(){
   if(!data.length){tb.innerHTML='';em.style.display='flex';return;}
   em.style.display='none';
   tb.innerHTML=data.map((p,i)=>`
-    <tr style="animation-delay:${i*.04}s" onclick="openP('${p.id}')">
+    <tr class="${p.id===activePatientId?'row-active':''}" style="animation-delay:${i*.04}s" onclick="openP('${p.id}')">
       <td><div class="pc"><div class="pav" style="background:${p.c}18;color:${p.c};border-color:${p.c}40">${ini(p)}</div><div><div class="pname">${p.p} ${p.n}</div><div class="pid">${p.id} · ${p.med}</div></div></div></td>
       <td style="font-family:var(--font-mono);font-size:12px">${p.a} ans</td>
       <td style="font-family:var(--font-mono);font-size:12px;color:var(--txt)">${p.ch}</td>
       <td>${badge(p.s)}</td>
-      <td style="font-family:var(--font-mono);font-size:13px;color:${p.bpm>90?'var(--red)':p.bpm<55?'var(--blue)':'var(--txt)'}">${p.bpm}<span style="font-size:10px;color:var(--txt3)"> bpm</span></td>
       <td><div style="display:flex;align-items:center;gap:5px"><div class="rbw"><div class="rbb" style="width:${p.r*100}%;background:${rc(p.r)}"></div></div><span style="font-size:11px;font-family:var(--font-mono);color:${rc(p.r)}">${(p.r*100).toFixed(0)}%</span></div></td>
       <td style="font-family:var(--font-mono);font-size:12px;color:var(--amber)">${p.t}°C</td>
+      <td style="font-family:var(--font-mono);font-size:12px;color:var(--blue)">${p.h}%</td>
       <td style="font-size:11px;color:var(--txt3);font-family:var(--font-mono)">${p.last}</td>
       <td onclick="event.stopPropagation()"><div class="ac">
         <button class="abt av" onclick="openP('${p.id}')" title="Fiche"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-        <button class="abt ac2" onclick="alert('GSM: ${p.ct}')" title="Appeler"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></button>
         <button class="abt al" onclick="alert('Alerte: ${p.p} ${p.n}')" title="Alerte"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg></button>
       </div></td>
     </tr>`).join('');
@@ -501,14 +623,13 @@ function renderGrid(){
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${badge(p.s)}<span style="font-size:10px;font-family:var(--font-mono);color:var(--txt3)">${p.last}</span></div>
       </div>
       <div class="pcard-vitals">
-        <div><div class="cvl">BPM</div><div class="cvv" style="color:${p.bpm>90?'var(--red)':p.bpm<55?'var(--blue)':'var(--teal)'}">${p.bpm}</div></div>
         <div><div class="cvl">Risque</div><div class="cvv" style="color:${rc(p.r)}">${(p.r*100).toFixed(0)}%</div></div>
         <div><div class="cvl">Temp.</div><div class="cvv" style="color:var(--amber)">${p.t}°</div></div>
         <div><div class="cvl">Humid.</div><div class="cvv" style="color:var(--blue)">${p.h}%</div></div>
+        <div><div class="cvl">Device</div><div class="cvv" style="color:var(--txt)">${p.id.replace('P','ESP32-')}</div></div>
       </div>
       <div class="pcard-actions" onclick="event.stopPropagation()">
         <button class="pca cv" onclick="openP('${p.id}')"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Fiche</button>
-        <button class="pca cc" onclick="alert('GSM: ${p.ct}')"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Appeler</button>
         <button class="pca ca" onclick="alert('Alerte: ${p.p}')"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>Alerte</button>
       </div>
     </div>`).join('');
@@ -555,7 +676,7 @@ function submitPatient(e){
   const id='P'+String(nextNum).padStart(3,'0');
   const device=document.getElementById('fDevice').value.trim()||`ESP32-${String(nextNum).padStart(3,'0')}`;
   PT.unshift({
-    id,p:prenom,n:nom,a:age,ch:chambre,s:'stable',bpm:72,r:0.2,t:27.2,h:65,
+    id,p:prenom,n:nom,a:age,ch:chambre,s:'stable',r:0.2,t:27.2,h:65,
     po:poids,ta:taille,med,ct:`${contact} · ${contactTel}`,
     pa:patho.length?patho:['Aucun antécédent saisi'],
     note,last:'À l\'instant',c:COLORS[nextNum%COLORS.length],
@@ -582,20 +703,19 @@ function openP(id){
   document.getElementById('mMeta').textContent=`${p.id} · ${p.a} ans · ${p.ch} · ${p.med}`;
   document.getElementById('mBody').innerHTML=`
     <div class="macts">
-      <button class="mact mc1" onclick="alert('Appel GSM SIM900:\\n${p.ct}')"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Appeler</button>
-      <button class="mact mc2" onclick="alert('SMS envoyé à:\\n${p.ct}')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Message</button>
+      <button class="mact mc2" onclick="alert('Message envoyé à:\\n${p.ct}')"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Message</button>
       <button class="mact mc3" onclick="alert('Alerte créée pour ${p.p} ${p.n}')"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>Alerte</button>
       <button class="mact mc4" onclick="openAnalyse('${p.id}')"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Analyse</button>
     </div>
-    <div class="sec-title">Signes vitaux</div>
+    <div class="sec-title">Environnement</div>
     <div class="vrow">
-      <div class="vbox"><div class="vbv" style="color:${p.bpm>90?'var(--red)':p.bpm<55?'var(--blue)':'var(--teal)'}">${p.bpm}</div><div class="vbl">BPM</div></div>
       <div class="vbox"><div class="vbv" style="color:var(--amber)">${p.t}°C</div><div class="vbl">Température</div></div>
       <div class="vbox"><div class="vbv" style="color:var(--blue)">${p.h}%</div><div class="vbl">Humidité</div></div>
+      <div class="vbox"><div class="vbv" style="color:var(--txt)">${p.id.replace('P','ESP32-')}</div><div class="vbl">Device</div></div>
     </div>
     <div class="sec-title">Risque de chute</div>
     <div class="rsec">
-      <div class="rh"><span style="font-size:13px;font-weight:500;color:var(--txt)">Score fragilité motrice</span><span class="rscore" style="color:${rc(p.r)}">${(p.r*100).toFixed(0)}%</span></div>
+      <div class="rh"><span style="font-size:13px;font-weight:500;color:var(--txt)">Niveau de risque</span><span class="rscore" style="color:${rc(p.r)}">${(p.r*100).toFixed(0)}%</span></div>
       <div class="rbar"><div class="rfill" style="width:${p.r*100}%;background:${rc(p.r)}"></div></div>
       <div class="rtags"><span class="rtag">${p.r>.7?'Risque élevé':p.r>.4?'Risque modéré':'Risque faible'}</span>${p.pa.map(x=>`<span class="rtag">${x}</span>`).join('')}</div>
     </div>
@@ -620,37 +740,123 @@ function openP(id){
 function closeM(){document.getElementById('mOv').classList.remove('open');}
 
 /* ── Analyse en temps réel (par patient) ── */
-let analysePatient=null, walkSpeed=1, motionBuf=[], tempBuf=[], humidBuf=[], ecgPhase=0;
-let simTimer=null, avatarReady=false, avatarRAF=null, ecgRAF=null;
+let analysePatient=null, walkSpeed=0.08, motionBuf=[], angleBuf=[], tempBuf=[], humidBuf=[], ecgBuf=[];
+let pollTimer=null, avatarReady=false, avatarRAF=null;
+let lastReading=null, hasSensorData=false;
+const FALL_THRESHOLD=50, WARN_THRESHOLD=30;
 let scene, camera, renderer, avatar, leftArm, rightArm, leftLeg, rightLeg, ring, clock3;
 
 function isWalking(p){ return p.s!=='alert'; }
 
+function applyRiskToUI(risk){
+  const pct=Math.round(Math.max(0,Math.min(1,risk))*100);
+  const col=rc(risk);
+  const riskEl=document.getElementById('actRisk');
+  riskEl.textContent=pct+'%';
+  riskEl.style.color=col;
+  document.getElementById('riskLiveVal').textContent=pct+'%';
+  document.getElementById('riskLiveVal').style.color=col;
+  document.getElementById('riskLiveFill').style.width=pct+'%';
+  document.getElementById('riskLiveFill').style.background=col;
+  const warn=document.getElementById('riskWarn');
+  if(risk>=0.85){
+    warn.className='risk-warn show crit';
+    warn.textContent='🚨 Seuil chute atteint / dépassé — alerte critique';
+  } else if(risk>=0.42){
+    warn.className='risk-warn show';
+    warn.textContent='⚠ Orientation proche du seuil (50°) — risque en hausse';
+  } else {
+    warn.className='risk-warn';
+  }
+  // Propager le risque à TOUS les patients (même ESP partagé)
+  PT.forEach(p=>{ p.r=risk; });
+  if(analysePatient) analysePatient.r=risk;
+}
+
+function updateOrientationUI(angX, angY){
+  const ax=Number(angX)||0, ay=Number(angY)||0;
+  document.getElementById('angleXVal').innerHTML=ax.toFixed(1)+'<span> °</span>';
+  document.getElementById('angleYVal').innerHTML=ay.toFixed(1)+'<span> °</span>';
+  const px=Math.min(100,(Math.abs(ax)/FALL_THRESHOLD)*100);
+  const py=Math.min(100,(Math.abs(ay)/FALL_THRESHOLD)*100);
+  const fillX=document.getElementById('angleXFill');
+  const fillY=document.getElementById('angleYFill');
+  fillX.style.width=px+'%';
+  fillY.style.width=py+'%';
+  fillX.style.background=Math.abs(ax)>=WARN_THRESHOLD?(Math.abs(ax)>=FALL_THRESHOLD?'var(--red)':'var(--amber)'):'var(--purple)';
+  fillY.style.background=Math.abs(ay)>=WARN_THRESHOLD?(Math.abs(ay)>=FALL_THRESHOLD?'var(--red)':'var(--amber)'):'var(--blue)';
+}
+
 function openAnalyse(id){
   const p=PT.find(x=>x.id===id); if(!p) return;
-  analysePatient={...p, temp:p.t, humid:p.h, bpm:p.bpm};
+  // Définir ce patient comme surveillé pour la chute / GPS
+  setActivePatient(id);
+  analysePatient={...p, temp:p.t, humid:p.h};
   const av=document.getElementById('aAv');
   av.textContent=ini(p);
   av.style.cssText=`background:${p.c}18;color:${p.c};border-color:${p.c}50;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;font-family:var(--font-head);flex-shrink:0;border:2px solid`;
   document.getElementById('aName').textContent=`${p.p} ${p.n}`;
-  document.getElementById('aMeta').textContent=`${p.id} · ${p.ch} · Mouvement · Température · ECG`;
-  document.getElementById('actRisk').textContent=Math.round(p.r*100)+'%';
-  document.getElementById('actRisk').style.color=rc(p.r);
-  walkSpeed=isWalking(p)?(p.s==='warn'?0.7:1):0.08;
-  updateActivityLabel();
-  motionBuf=[]; tempBuf=[]; humidBuf=[];
+  document.getElementById('aMeta').textContent=`${p.id} · ${p.ch} · MPU6050 · ECG · SIM800L`;
+  applyRiskToUI(p.r);
+  updateOrientationUI(0,0);
+  walkSpeed=0.08;
+  motionBuf=[]; angleBuf=[]; tempBuf=[]; humidBuf=[]; ecgBuf=[];
+  lastReading=null; hasSensorData=false;
+  motionBuf=[]; angleBuf=[]; tempBuf=[]; humidBuf=[];
+  setLiveStatus('waiting');
+  document.getElementById('actLabel').textContent='En attente';
+  document.getElementById('actLabel').className='val';
+  document.getElementById('actCadence').textContent='—';
+  document.getElementById('actAccel').textContent='—';
+  document.getElementById('tempBig').innerHTML='--.<span> °C</span>';
+  document.getElementById('humidVal').innerHTML='--<span> %</span>';
+  document.getElementById('comfortVal').textContent='—';
+  document.getElementById('activityPct').textContent='0%';
+  document.getElementById('activityFill').style.width='0%';
+  ['ax','ay','az','gx','gy','gz'].forEach(id=>{
+    const unit=id.startsWith('g')?' rad/s':' m/s²';
+    document.getElementById(id).innerHTML='0.00<span>'+unit+'</span>';
+  });
   document.getElementById('analyseOv').classList.add('open');
   document.getElementById('mOv').classList.remove('open');
   requestAnimationFrame(()=>{
     initAvatar();
     resizeAvatar();
-    startSim();
+    startSensorPoll();
   });
 }
 
 function closeAnalyse(){
   document.getElementById('analyseOv').classList.remove('open');
-  stopSim();
+  stopSensorPoll();
+}
+
+function setLiveStatus(mode){
+  const badge=document.getElementById('liveBadge');
+  const text=document.getElementById('liveText');
+  const dot=document.getElementById('liveDot');
+  if(mode==='live'){
+    text.textContent='LIVE';
+    badge.style.background='rgba(0,212,170,.1)';
+    badge.style.borderColor='rgba(0,212,170,.25)';
+    badge.style.color='var(--teal)';
+    dot.style.background='var(--teal)';
+    dot.style.animation='pdot 1.5s infinite';
+  } else if(mode==='hold'){
+    text.textContent='DERNIÈRE MESURE';
+    badge.style.background='var(--amber-dim)';
+    badge.style.borderColor='rgba(245,158,11,.35)';
+    badge.style.color='var(--amber)';
+    dot.style.background='var(--amber)';
+    dot.style.animation='none';
+  } else {
+    text.textContent='EN ATTENTE';
+    badge.style.background='rgba(148,163,184,.1)';
+    badge.style.borderColor='rgba(148,163,184,.25)';
+    badge.style.color='var(--txt3)';
+    dot.style.background='var(--txt3)';
+    dot.style.animation='none';
+  }
 }
 
 function updateActivityLabel(){
@@ -740,108 +946,159 @@ function drawLineChart(canvas,series,colors){
   });
 }
 
-function drawECG(canvas,bpm){
-  const ctx=canvas.getContext('2d');
-  const dpr=window.devicePixelRatio||1;
-  const w=canvas.clientWidth, h=canvas.clientHeight;
-  if(w<10) return;
-  canvas.width=w*dpr; canvas.height=h*dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,w,h);
-  ctx.strokeStyle='rgba(0,212,170,0.08)';
-  for(let x=0;x<w;x+=16){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
-  for(let y=0;y<h;y+=16){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
-  const mid=h/2, beatLen=Math.max(40,Math.min(120,6000/bpm));
-  ctx.beginPath(); ctx.strokeStyle='#00d4aa'; ctx.lineWidth=2; ctx.shadowColor='#00d4aa'; ctx.shadowBlur=8;
-  for(let x=0;x<w;x++){
-    const phase=((x+ecgPhase)%beatLen)/beatLen;
-    let y=mid;
-    if(phase<0.08) y=mid-Math.sin(phase/0.08*Math.PI)*8;
-    else if(phase<0.12) y=mid;
-    else if(phase<0.16) y=mid+(phase-0.12)/0.04*12;
-    else if(phase<0.20) y=mid+12-(phase-0.16)/0.04*52;
-    else if(phase<0.24) y=mid-40+(phase-0.20)/0.04*48;
-    else if(phase<0.30) y=mid+8-(phase-0.24)/0.06*8;
-    else if(phase>0.45&&phase<0.60) y=mid-Math.sin((phase-0.45)/0.15*Math.PI)*14;
-    y+=(Math.random()-0.5)*1.2;
-    if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-  }
-  ctx.stroke(); ctx.shadowBlur=0;
-  ecgPhase+=2.5;
+function applyEcgUI(ecg, online){
+  if(!ecg) return;
+  document.getElementById('ecgBpm').textContent=ecg.bpm!=null?ecg.bpm:'--';
+  document.getElementById('ecgMv').innerHTML=(ecg.mv!=null?Number(ecg.mv).toFixed(2):'0.00')+'<span> mV</span>';
+  document.getElementById('ecgRaw').textContent=ecg.raw!=null?ecg.raw:'—';
+  const st=document.getElementById('ecgStatus');
+  st.textContent=ecg.status_label||'En attente';
+  st.className='ecg-st'+(ecg.status==='alert'?' alert':ecg.status==='warn'?' warn':'');
+  const wave=ecg.waveform||[];
+  if(wave.length) drawLineChart(document.getElementById('ecgCanvas'),[wave],['#ff4d6d']);
+  else if(online && ecg.mv!=null){ ecgBuf.push(ecg.mv); if(ecgBuf.length>80) ecgBuf.shift(); drawLineChart(document.getElementById('ecgCanvas'),[ecgBuf],['#ff4d6d']); }
 }
 
-function simulateSensors(){
+let gsmToastTimer=null;
+function showGsmToast(type,title,sub){
+  const t=document.getElementById('gsmToast');
+  if(!t) return;
+  clearTimeout(gsmToastTimer);
+  const icon=type==='call'?'📞':type==='sms'?'✉':'⚠';
+  t.className='gsm-toast show '+type;
+  t.innerHTML=`<div class="gsm-toast-ico">${icon}</div><div><div class="gsm-toast-title">${title}</div><div class="gsm-toast-sub">${sub||''}</div></div>`;
+  gsmToastTimer=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+async function gsmCallFamily(){
   if(!analysePatient) return;
-  const p=analysePatient;
-  const walking=isWalking(p);
-  const t=performance.now()/1000;
-  const step=walking?Math.sin(t*6):Math.sin(t*0.8)*0.1;
-  const ax=walking?step*2.2+(Math.random()-0.5)*0.3:(Math.random()-0.5)*0.15;
-  const ay=walking?Math.cos(t*6)*1.4+(Math.random()-0.5)*0.2:(Math.random()-0.5)*0.1;
-  const az=9.81+(walking?Math.abs(step)*1.8:(Math.random()-0.5)*0.05);
-  const gx=walking?step*0.8:(Math.random()-0.5)*0.05;
-  const gy=walking?Math.cos(t*6)*0.5:(Math.random()-0.5)*0.04;
-  const gz=(Math.random()-0.5)*(walking?0.3:0.05);
-  const totalG=Math.sqrt(ax*ax+ay*ay+az*az)/9.81;
-  document.getElementById('ax').innerHTML=ax.toFixed(2)+'<span> m/s²</span>';
-  document.getElementById('ay').innerHTML=ay.toFixed(2)+'<span> m/s²</span>';
-  document.getElementById('az').innerHTML=az.toFixed(2)+'<span> m/s²</span>';
-  document.getElementById('gx').innerHTML=gx.toFixed(2)+'<span> rad/s</span>';
-  document.getElementById('gy').innerHTML=gy.toFixed(2)+'<span> rad/s</span>';
-  document.getElementById('gz').innerHTML=gz.toFixed(2)+'<span> rad/s</span>';
-  document.getElementById('actAccel').textContent=totalG.toFixed(2)+' g';
-  const cadence=walking?Math.round(85+Math.abs(step)*20+Math.random()*5):Math.round(Math.random()*4);
-  document.getElementById('actCadence').textContent=cadence+' pas/min';
-  const activity=walking?55+Math.abs(step)*35:8+Math.random()*6;
+  showGsmToast('call','Appel en cours…','Connexion SIM800L vers la famille');
+  try{
+    const res=await fetch('/api/messages/send/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({patient_id:analysePatient.id,channel:'call',recipient_type:'famille'})});
+    const d=await res.json();
+    if(d.ok) showGsmToast('call','Appel en cours','Le module GSM compose le numéro famille');
+    else showGsmToast('error','Échec appel',d.error||'Erreur');
+  }catch(e){ showGsmToast('error','Erreur réseau','Vérifiez que Django tourne'); }
+}
+
+async function gsmSendAlert(){
+  if(!analysePatient) return;
+  showGsmToast('sms','Envoi en cours…','SMS SIM800L + e-mail avec lien graphique');
+  try{
+    const res=await fetch('/api/messages/send/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({patient_id:analysePatient.id,channel:'sms',recipient_type:'famille',message:`Alerte ${analysePatient.p} ${analysePatient.n}. Voir graphique ECG en ligne.`})});
+    const d=await res.json();
+    if(d.ok) showGsmToast('sms','Message envoyé avec succès','SMS et e-mail transmis à la famille');
+    else showGsmToast('error','Échec envoi',d.error||'Erreur');
+  }catch(e){ showGsmToast('error','Erreur réseau','Vérifiez que Django tourne'); }
+}
+
+function applyLiveReading(r, online){
+  if(!r||!r.motion) return false;
+  const m=r.motion, e=r.env||{};
+  const ax=m.ax??0, ay=m.ay??0, az=m.az??9.81;
+  const gx=m.gx??0, gy=m.gy??0, gz=m.gz??0;
+  const totalG=m.total_g??(Math.sqrt(ax*ax+ay*ay+az*az)/9.81);
+  const angX=Number(m.angle_x??0), angY=Number(m.angle_y??0);
+  const fallRisk=Number(m.fall_risk!=null?m.fall_risk:(r.fall_risk!=null?r.fall_risk:0));
+
+  document.getElementById('ax').innerHTML=Number(ax).toFixed(2)+'<span> m/s²</span>';
+  document.getElementById('ay').innerHTML=Number(ay).toFixed(2)+'<span> m/s²</span>';
+  document.getElementById('az').innerHTML=Number(az).toFixed(2)+'<span> m/s²</span>';
+  document.getElementById('gx').innerHTML=Number(gx).toFixed(2)+'<span> rad/s</span>';
+  document.getElementById('gy').innerHTML=Number(gy).toFixed(2)+'<span> rad/s</span>';
+  document.getElementById('gz').innerHTML=Number(gz).toFixed(2)+'<span> rad/s</span>';
+  document.getElementById('actAccel').textContent=Number(totalG).toFixed(2)+' g';
+
+  updateOrientationUI(angX, angY);
+  applyRiskToUI(fallRisk || (()=>{
+    const maxA=Math.max(Math.abs(angX),Math.abs(angY));
+    if(maxA>=FALL_THRESHOLD) return 0.95;
+    if(maxA>=WARN_THRESHOLD) return 0.42+((maxA-WARN_THRESHOLD)/(FALL_THRESHOLD-WARN_THRESHOLD))*0.53;
+    return 0.08+(maxA/WARN_THRESHOLD)*0.32;
+  })());
+
+  // Avatar : inclinaison selon orientation X/Y
+  if(avatar){
+    avatar.rotation.z = (angX/FALL_THRESHOLD)*0.55;
+    avatar.rotation.x = (angY/FALL_THRESHOLD)*0.45;
+  }
+
+  const walking=Number(totalG)>1.15 && fallRisk<0.85;
+  document.getElementById('actCadence').textContent=(walking?Math.round(70+totalG*25):0)+' pas/min';
+  const activity=Math.min(100,Math.max(5,walking?40+totalG*30:8));
   document.getElementById('activityPct').textContent=Math.round(activity)+'%';
   document.getElementById('activityFill').style.width=activity+'%';
-  motionBuf.push(totalG); if(motionBuf.length>80) motionBuf.shift();
-  drawLineChart(document.getElementById('motionCanvas'),[motionBuf],['#a78bfa']);
+  const actEl=document.getElementById('actLabel');
+  if(fallRisk>=0.85){ actEl.textContent='Chute / Déséquilibre'; actEl.className='val alert'; walkSpeed=0.05; }
+  else if(walking){ actEl.textContent='Marche'; actEl.className='val walk'; walkSpeed=1; }
+  else { actEl.textContent='Immobile'; actEl.className='val alert'; walkSpeed=0.08; }
 
-  p.temp+=(Math.random()-0.5)*0.05; p.humid+=(Math.random()-0.5)*0.3;
-  p.temp=Math.min(34,Math.max(24,p.temp)); p.humid=Math.min(90,Math.max(40,p.humid));
-  document.getElementById('tempBig').innerHTML=p.temp.toFixed(1)+'<span> °C</span>';
-  document.getElementById('humidVal').innerHTML=Math.round(p.humid)+'<span> %</span>';
-  let comfort='Bon', col='var(--teal)';
-  if(p.temp>32||p.humid>80){ comfort='Élevé'; col='var(--red)'; }
-  else if(p.temp>30||p.humid>72){ comfort='Moyen'; col='var(--amber)'; }
-  const cEl=document.getElementById('comfortVal'); cEl.textContent=comfort; cEl.style.color=col;
-  tempBuf.push(p.temp); humidBuf.push(p.humid);
-  if(tempBuf.length>80) tempBuf.shift(); if(humidBuf.length>80) humidBuf.shift();
-  drawLineChart(document.getElementById('tempCanvas'),[tempBuf,humidBuf],['#f59e0b','#60a5fa']);
+  if(online){
+    motionBuf.push(totalG); if(motionBuf.length>80) motionBuf.shift();
+    angleBuf.push(Math.max(Math.abs(angX),Math.abs(angY))); if(angleBuf.length>80) angleBuf.shift();
+    drawLineChart(document.getElementById('motionCanvas'),[motionBuf,angleBuf],['#a78bfa','#f59e0b']);
+  } else if(motionBuf.length){
+    drawLineChart(document.getElementById('motionCanvas'),[motionBuf,angleBuf.length?angleBuf:motionBuf],['#a78bfa','#f59e0b']);
+  }
 
-  p.bpm+=(Math.random()-0.5)*1.2;
-  if(p.s==='alert') p.bpm=Math.max(88,Math.min(115,p.bpm));
-  else if(p.s==='warn') p.bpm=Math.max(55,Math.min(95,p.bpm));
-  else p.bpm=Math.max(58,Math.min(88,p.bpm));
-  p.bpm=Math.round(p.bpm);
-  document.getElementById('bpmVal').textContent=p.bpm;
-  document.getElementById('bpmVal').style.color=p.bpm>90?'var(--red)':p.bpm<55?'var(--blue)':'var(--teal)';
-  document.getElementById('rrVal').innerHTML=Math.round(60000/p.bpm)+'<span> ms</span>';
-  document.getElementById('sigVal').innerHTML=(96+Math.floor(Math.random()*4))+'<span> %</span>';
-  const statusEl=document.getElementById('ecgStatus');
-  if(p.bpm>100){ statusEl.textContent='Tachycardie'; statusEl.className='ecg-badge alert'; }
-  else if(p.bpm<55){ statusEl.textContent='Bradycardie'; statusEl.className='ecg-badge warn'; }
-  else if(p.bpm>90){ statusEl.textContent='Rythme élevé'; statusEl.className='ecg-badge warn'; }
-  else { statusEl.textContent='Rythme normal'; statusEl.className='ecg-badge'; }
+  if(e.temperature!=null){
+    analysePatient.temp=Number(e.temperature);
+    document.getElementById('tempBig').innerHTML=analysePatient.temp.toFixed(1)+'<span> °C</span>';
+    if(online){ tempBuf.push(analysePatient.temp); if(tempBuf.length>80) tempBuf.shift(); }
+  }
+  if(e.humidity!=null){
+    analysePatient.humid=Number(e.humidity);
+    document.getElementById('humidVal').innerHTML=Math.round(analysePatient.humid)+'<span> %</span>';
+    if(online){ humidBuf.push(analysePatient.humid); if(humidBuf.length>80) humidBuf.shift(); }
+  }
+  if(e.temperature!=null||e.humidity!=null){
+    let comfort='Bon', col='var(--teal)';
+    if(analysePatient.temp>32||analysePatient.humid>80){ comfort='Élevé'; col='var(--red)'; }
+    else if(analysePatient.temp>30||analysePatient.humid>72){ comfort='Moyen'; col='var(--amber)'; }
+    const cEl=document.getElementById('comfortVal'); cEl.textContent=comfort; cEl.style.color=col;
+    if(tempBuf.length||humidBuf.length){
+      drawLineChart(document.getElementById('tempCanvas'),[tempBuf,humidBuf],['#f59e0b','#60a5fa']);
+    }
+  }
+  hasSensorData=true;
+  lastReading=r;
+  setLiveStatus(online?'live':'hold');
+  if(r.ecg) applyEcgUI(r.ecg, online);
+  return true;
 }
 
-function tickECG(){
-  ecgRAF=requestAnimationFrame(tickECG);
-  if(!document.getElementById('analyseOv').classList.contains('open')||!analysePatient) return;
-  drawECG(document.getElementById('ecgCanvas'), analysePatient.bpm);
+async function pollLiveSensors(){
+  if(!analysePatient) return;
+  try{
+    const res=await fetch('/api/sensors/latest/?patient_id='+encodeURIComponent(analysePatient.id));
+    if(!res.ok){
+      if(lastReading) applyLiveReading(lastReading, false);
+      else setLiveStatus('waiting');
+      return;
+    }
+    const data=await res.json();
+    const r=(data.readings||[])[0];
+    if(r){
+      applyLiveReading(r, !!r.online);
+    } else if(lastReading){
+      applyLiveReading(lastReading, false);
+    } else {
+      setLiveStatus('waiting');
+    }
+  }catch(e){
+    if(lastReading) applyLiveReading(lastReading, false);
+    else setLiveStatus('waiting');
+  }
 }
 
-function startSim(){
-  stopSim();
-  simulateSensors();
-  simTimer=setInterval(simulateSensors,400);
-  tickECG();
+function startSensorPoll(){
+  stopSensorPoll();
+  pollLiveSensors();
+  pollTimer=setInterval(pollLiveSensors, 1000);
 }
 
-function stopSim(){
-  if(simTimer){ clearInterval(simTimer); simTimer=null; }
-  if(ecgRAF){ cancelAnimationFrame(ecgRAF); ecgRAF=null; }
+function stopSensorPoll(){
+  if(pollTimer){ clearInterval(pollTimer); pollTimer=null; }
 }
 
 document.addEventListener('keydown',e=>{
@@ -853,9 +1110,27 @@ document.addEventListener('keydown',e=>{
 });
 window.addEventListener('resize',()=>{ if(document.getElementById('analyseOv').classList.contains('open')) resizeAvatar(); });
 
-render();
+async function syncFromAPI(){
+  try{
+    const res=await fetch('/api/patients/');
+    if(!res.ok) return;
+    const data=await res.json();
+    (data.patients||[]).forEach(ap=>{
+      const p=PT.find(x=>x.id===ap.id);
+      if(!p) return;
+      if(ap.temp!=null) p.t=Number(ap.temp);
+      if(ap.humid!=null) p.h=Number(ap.humid);
+      if(ap.statut) p.s=ap.statut;
+      if(ap.risk!=null) p.r=Number(ap.risk);
+      if(ap.angle_x!=null) p.angle_x=ap.angle_x;
+      if(ap.angle_y!=null) p.angle_y=ap.angle_y;
+      if(ap.is_active_monitoring) activePatientId=ap.id;
+    });
+    updateActiveUI();
+  }catch(e){}
+}
 
-/* Interconnexion : ?analyse=P001 ou ?patient=P001 */
+loadActivePatient().then(()=>{ initActiveSelect(); render(); });
 const urlParams=new URLSearchParams(location.search);
 const autoAnalyse=urlParams.get('analyse');
 const autoPatient=urlParams.get('patient');
@@ -865,11 +1140,12 @@ if(autoAnalyse && PT.some(p=>p.id===autoAnalyse)){
   setTimeout(()=>openP(autoPatient),200);
 }
 
-setInterval(()=>{
+setInterval(async ()=>{
   if(document.getElementById('analyseOv').classList.contains('open')) return;
-  PT.forEach(p=>{p.bpm=Math.max(50,Math.min(115,Math.round(p.bpm+(Math.random()-.5)*2)));});
+  await syncFromAPI();
   render();
-},3000);
+},1000);
 </script>
+<script src="/static/js/geriotrack-notify.js"></script>
 </body>
 </html>
