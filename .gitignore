@@ -33,6 +33,7 @@ desktop.ini
 # Cursor
 .cursor/
 
-# Temp
+# Temp Cursor / Claude
+tmpclaude-*
 tmpclaude-*/
 *.tmp

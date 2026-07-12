@@ -1,5 +1,5 @@
-# Déploiement Render — GérioTrack
-# Dashboard Render → New → Blueprint → connecter ce dépôt (dossier racine : backend)
+# Déploiement Render — GérioTrack (racine du dépôt)
+# Blueprint Path : laisser vide ou render.yaml
 
 databases:
   - name: geriotrack-db
