@@ -35,7 +35,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);display:
 .titles p{font-size:11px;color:var(--txt3);font-family:var(--font-mono);margin-top:2px}
 .badge{padding:5px 10px;border-radius:20px;font-size:10px;font-weight:700;font-family:var(--font-mono);background:var(--accent-dim);color:var(--accent);border:1px solid rgba(255,255,255,.06)}
 
-.map-wrap{flex:1;position:relative;min-height:0}
+.map-wrap{flex:1;position:relative;min-height:0;min-height:45vh}
 #map{width:100%;height:100%;background:var(--bg)}
 .maplibregl-ctrl-group{background:var(--bg2)!important;border:1px solid var(--border)!important;box-shadow:none!important}
 .maplibregl-ctrl-group button{background:var(--bg2)!important}
@@ -43,33 +43,32 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);display:
 .maplibregl-ctrl-attrib{background:rgba(0,0,0,.55)!important;color:var(--txt3)!important;font-size:10px!important}
 .maplibregl-ctrl-attrib a{color:var(--txt2)!important}
 
-.overlay{position:absolute;left:12px;right:12px;bottom:12px;z-index:5;display:flex;flex-direction:column;gap:10px;pointer-events:none}
-.card{pointer-events:auto;background:rgba(17,24,39,.94);border:1px solid var(--border);border-radius:16px;padding:14px;backdrop-filter:blur(10px)}
-body.role-famille .card,
-body.role-patient .card{background:rgba(13,31,26,.95)}
-.row{display:flex;align-items:center;gap:12px}
-.av{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;font-size:14px;border:2px solid;flex-shrink:0}
-.name{font-family:var(--font-head);font-size:16px;font-weight:700;color:#fff}
-.meta{font-size:11px;color:var(--txt3);font-family:var(--font-mono);margin-top:3px}
-.coords{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
-.coord{background:rgba(255,255,255,.04);border-radius:10px;padding:8px;text-align:center}
-.coord .l{font-size:9px;color:var(--txt3);font-family:var(--font-mono);text-transform:uppercase}
-.coord .v{font-size:12px;font-family:var(--font-mono);color:var(--accent);margin-top:3px;font-weight:600}
-.live{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-family:var(--font-mono);color:var(--accent)}
-.live i{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;animation:p 1.2s infinite}
+.info-panel{flex-shrink:0;background:var(--bg2);border-top:1px solid var(--border);padding:10px 12px;max-height:38vh;overflow-y:auto}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:12px}
+.row{display:flex;align-items:center;gap:10px}
+.av{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;font-size:13px;border:2px solid;flex-shrink:0}
+.name{font-family:var(--font-head);font-size:15px;font-weight:700;color:#fff}
+.meta{font-size:10px;color:var(--txt3);font-family:var(--font-mono);margin-top:2px}
+.coords{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}
+.coord{background:rgba(255,255,255,.04);border-radius:8px;padding:6px;text-align:center}
+.coord .l{font-size:8px;color:var(--txt3);font-family:var(--font-mono);text-transform:uppercase}
+.coord .v{font-size:11px;font-family:var(--font-mono);color:var(--accent);margin-top:2px;font-weight:600;word-break:break-word}
+.live{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-family:var(--font-mono);color:var(--accent)}
+.live i{width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block;animation:p 1.2s infinite}
 @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-.actions button{padding:11px;border-radius:10px;border:1px solid var(--border);background:var(--accent-dim);color:var(--accent);font-family:var(--font-mono);font-size:11px;cursor:pointer}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.actions button{padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--accent-dim);color:var(--accent);font-family:var(--font-mono);font-size:10px;cursor:pointer}
 .actions button:hover{filter:brightness(1.1)}
-.marker{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;font-size:12px;border:3px solid;box-shadow:0 4px 16px rgba(0,0,0,.45);position:relative}
+.marker{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;font-size:11px;border:3px solid;box-shadow:0 4px 16px rgba(0,0,0,.45);position:relative}
 .marker.pulse::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2px solid currentColor;animation:pulse 1.5s infinite;opacity:0}
 @keyframes pulse{0%{transform:scale(.8);opacity:.6}100%{transform:scale(1.4);opacity:0}}
-.city{position:absolute;top:12px;right:12px;z-index:5;background:rgba(0,0,0,.55);border:1px solid var(--border);border-radius:10px;padding:7px 10px;font-size:10px;font-family:var(--font-mono);color:var(--txt2)}
-.city strong{color:var(--accent)}
+.city{position:absolute;top:8px;left:8px;z-index:5;background:rgba(0,0,0,.5);border:1px solid var(--border);border-radius:8px;padding:5px 8px;font-size:9px;font-family:var(--font-mono);color:var(--txt2);max-width:55%}
+.city strong{color:var(--accent);display:block;font-size:10px}
 @media(max-width:520px){
   .coords{grid-template-columns:1fr}
   .actions{grid-template-columns:1fr}
   .titles h1{font-size:14px}
+  .info-panel{max-height:42vh}
 }
 </style>
 </head>
@@ -88,38 +87,41 @@ body.role-patient .card{background:rgba(13,31,26,.95)}
 
 <div class="map-wrap">
   <div id="map"></div>
-  <div class="city">Zone · <strong>Kinshasa</strong></div>
-  <div class="overlay">
-    <div class="card">
-      <div class="row">
-        <div class="av" id="av">—</div>
-        <div style="flex:1;min-width:0">
-          <div class="name" id="name">—</div>
-          <div class="meta" id="meta">—</div>
-          <div class="live" style="margin-top:6px"><i></i><span id="liveText">Position live</span></div>
-        </div>
+  <div class="city">Lieu<br><strong id="cityZone">Kinshasa</strong></div>
+</div>
+<div class="info-panel">
+  <div class="card">
+    <div class="row">
+      <div class="av" id="av">—</div>
+      <div style="flex:1;min-width:0">
+        <div class="name" id="name">—</div>
+        <div class="meta" id="meta">—</div>
+        <div class="live" style="margin-top:4px"><i></i><span id="liveText">Position live</span></div>
       </div>
-      <div class="coords">
-        <div class="coord"><div class="l">Zone</div><div class="v" id="zone">—</div></div>
-        <div class="coord"><div class="l">Latitude</div><div class="v" id="lat">—</div></div>
-        <div class="coord"><div class="l">Longitude</div><div class="v" id="lon">—</div></div>
-      </div>
-      <div class="actions">
-        <button type="button" onclick="centerOnPatient()">Centrer</button>
-        <button type="button" id="shareBtn" onclick="sharePos()">Partager</button>
-      </div>
+    </div>
+    <div class="coords">
+      <div class="coord"><div class="l">Lieu</div><div class="v" id="zone">—</div></div>
+      <div class="coord"><div class="l">Latitude</div><div class="v" id="lat">—</div></div>
+      <div class="coord"><div class="l">Longitude</div><div class="v" id="lon">—</div></div>
+    </div>
+    <div class="actions">
+      <button type="button" onclick="centerOnPatient()">Centrer carte</button>
+      <button type="button" id="shareBtn" onclick="sharePos()">Partager</button>
     </div>
   </div>
 </div>
 
 <script>
 const role = sessionStorage.getItem('gerio_role');
+const urlId = new URLSearchParams(location.search).get('patient');
 if(role !== 'famille' && role !== 'patient'){
-  window.location.href = '/portail/';
+  const next = location.pathname + location.search;
+  const q = new URLSearchParams({ next, role: 'famille' });
+  if (urlId) q.set('patient', urlId);
+  window.location.href = '/portail/?' + q.toString();
 }
 
 const profil = sessionStorage.getItem('gerio_profil') || sessionStorage.getItem('gerio_famille');
-const urlId = new URLSearchParams(location.search).get('patient');
 let allowedId = role === 'patient' ? profil : null;
 let patient = {
   id: 'P001', p: '—', n: '', a: null, zone: 'Kinshasa',
@@ -156,6 +158,7 @@ function updateCard(){
   document.getElementById('name').textContent = `${patient.p} ${patient.n}`.trim();
   document.getElementById('meta').textContent = `${patient.a?patient.a+' ans · ':''}${patient.zone} · ${statusLabel(patient.s)}`;
   document.getElementById('zone').textContent = patient.zone || '—';
+  document.getElementById('cityZone').textContent = patient.zone || 'Kinshasa';
   document.getElementById('lat').textContent = patient.lat!=null ? (Math.abs(patient.lat).toFixed(5) + '°S') : '—';
   document.getElementById('lon').textContent = patient.lon!=null ? (Number(patient.lon).toFixed(5) + '°E') : '—';
   if(marker){
@@ -233,7 +236,7 @@ async function refreshGps(){
     patient.id = pos.id;
     patient.p = names[0] || patient.p;
     patient.n = names.slice(1).join(' ') || patient.n;
-    patient.zone = pos.chambre || patient.zone;
+    patient.zone = pos.zone_label || pos.chambre || patient.zone;
     patient.s = pos.statut || patient.s;
     if(pos.lat!=null) patient.lat = Number(pos.lat);
     if(pos.lon!=null) patient.lon = Number(pos.lon);
@@ -250,12 +253,13 @@ async function refreshGps(){
 function applyChrome(){
   if(role === 'famille'){
     document.getElementById('pageTitle').textContent = 'Position de mon proche';
-    document.getElementById('pageSub').textContent = `${patient.p} ${patient.n} · GPS réel · carte famille`;
-    document.getElementById('shareBtn').textContent = 'Recevoir par SMS';
+    document.getElementById('pageSub').textContent = `${patient.p} ${patient.n} · GPS réel`;
+    document.getElementById('shareBtn').style.display = 'none';
   } else {
     document.getElementById('pageTitle').textContent = 'Ma position';
-    document.getElementById('pageSub').textContent = 'Mon GPS · Kinshasa';
+    document.getElementById('pageSub').textContent = 'Carte dégagée · lieu réel';
     document.getElementById('shareBtn').textContent = 'Envoyer à ma famille';
+    document.getElementById('shareBtn').style.display = '';
   }
 }
 
@@ -264,11 +268,20 @@ function centerOnPatient(){
   map.flyTo({ center: [patient.lon, patient.lat], zoom: 15, essential: true, duration: 800 });
 }
 
-function sharePos(){
-  const msg = role === 'famille'
-    ? `Position : ${patient.p} ${patient.n} — ${patient.zone} (${Math.abs(patient.lat).toFixed(5)}°S, ${Number(patient.lon).toFixed(5)}°E)`
-    : `Position envoyée à la famille : ${patient.zone} (${Math.abs(patient.lat).toFixed(5)}°S, ${Number(patient.lon).toFixed(5)}°E)`;
-  alert(msg + '\n\n(simulation SMS)');
+async function sharePos(){
+  if(role !== 'patient') return;
+  try{
+    const res=await fetch('/api/messages/send/',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({patient_id:patient.id,alert_type:'location'}),
+    });
+    const d=await res.json();
+    if(!res.ok||!d.ok) throw new Error(d.error||'Échec');
+    alert(`Position envoyée à la famille.\nLieu : ${d.zone||patient.zone}`);
+  }catch(e){
+    alert('Erreur envoi : '+e.message);
+  }
 }
 
 (async function init(){

@@ -240,3 +240,11 @@ DEFAULT_FROM_EMAIL = config(
     default=f'GérioTrack <{EMAIL_HOST_USER}>',
 )
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+# ------------------------------------------------------------
+# SMS — API HTTP externe (optionnel) + file SIM800L ESP32
+# Si SMS_API_URL est vide : envoi via module GSM de l'ESP32 uniquement
+# ------------------------------------------------------------
+SMS_API_URL = config('SMS_API_URL', default='')
+SMS_API_KEY = config('SMS_API_KEY', default='')
+SMS_API_SENDER = config('SMS_API_SENDER', default='GerioTrack')

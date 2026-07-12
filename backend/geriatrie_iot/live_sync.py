@@ -34,6 +34,12 @@ def merge_patients_with_live():
             if st.latitude is not None and st.longitude is not None:
                 p['lat'] = st.latitude
                 p['lon'] = st.longitude
+            from .patient_data import resolve_location_from_gps
+            if p.get('lat') is not None and p.get('lon') is not None:
+                loc = resolve_location_from_gps(p['lat'], p['lon'])
+                p['chambre'] = loc['label']
+                p['zone_label'] = loc['label']
+                p['zone_street'] = loc.get('street')
             age = (now - st.updated_at).total_seconds()
             p['sensor_online'] = age < ONLINE_THRESHOLD_SEC
             p['sensor_age'] = round(age, 1)

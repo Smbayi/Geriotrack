@@ -664,17 +664,17 @@ function centerOnSelected() {
 function sendSMS() {
   const p = PATIENTS.find(x => x.id === selectedId);
   if (!p) return;
-  fetch('/api/messages/send/', {
+  fetch('/api/sms/send/', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       patient_id: p.id,
-      channel: 'sms',
       recipient_type: 'famille',
       message: `Alerte GérioTrack : ${p.prenom} ${p.nom} — coordonnées GPS : ${p.lat?.toFixed(5)}, ${p.lon?.toFixed(5)}`,
     }),
   }).then(r => r.json()).then(d => {
-    alert(d.ok ? `SMS enregistré et envoyé (via Django)` : (d.error || 'Erreur'));
+    const via = d.sms_api ? 'API SMS' : (d.gsm_queued ? 'SIM800L' : 'file');
+    alert(d.ok ? `SMS envoyé (${via})` : (d.error || 'Erreur'));
   });
 }
 

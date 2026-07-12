@@ -6,6 +6,8 @@
 <title>GérioTrack — Espace famille</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/css/geriotrack-responsive.css">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <style>
 :root{
   --bg:#071410;--bg2:#0d1f1a;--bg3:#132a23;--bg4:#1a342c;
@@ -113,6 +115,15 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:ra
 .vbox{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
 .vbv{font-family:var(--font-head);font-size:18px;font-weight:700;margin-bottom:3px}
 .vbl{font-size:10px;color:var(--txt3);font-family:var(--font-mono);text-transform:uppercase}
+.loc-map-wrap{position:relative;height:min(52vh,400px);min-height:220px;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:10px;background:var(--bg3)}
+#famMap{width:100%;height:100%}
+.loc-city{position:absolute;top:8px;left:8px;z-index:2;background:rgba(0,0,0,.5);border:1px solid var(--border);border-radius:8px;padding:5px 8px;font-size:9px;font-family:var(--font-mono);color:var(--txt2);max-width:60%;pointer-events:none}
+.loc-city strong{color:var(--accent);display:block;font-size:10px}
+.loc-info{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px}
+.loc-marker{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;font-size:11px;border:3px solid;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.maplibregl-ctrl-group{background:var(--bg2)!important;border:1px solid var(--border)!important}
+.maplibregl-ctrl-group button span{filter:invert(1)}
+.panel-loc-active .content{padding-top:10px}
 .toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));right:16px;left:16px;max-width:360px;margin-left:auto;z-index:700;background:var(--bg2);border:1px solid var(--border2);color:var(--accent);padding:12px 14px;border-radius:12px;font-size:12px;font-family:var(--font-mono);opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}
 .logout{color:var(--txt3)!important}
@@ -269,18 +280,19 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:ra
     </div>
 
     <div class="panel" id="panel-localisation">
-      <div class="card">
-        <div class="card-h"><div class="dot" style="background:var(--teal)"></div><span class="ttl">Position de mon proche</span><span class="sub">Kinshasa</span></div>
-        <div class="card-b">
-          <div class="vrow" style="margin-bottom:14px">
-            <div class="vbox"><div class="vbv" id="locZone" style="color:var(--accent)">—</div><div class="vbl">Zone</div></div>
-            <div class="vbox"><div class="vbv" id="locLat" style="font-size:13px">—</div><div class="vbl">Lat</div></div>
-            <div class="vbox"><div class="vbv" id="locLon" style="font-size:13px">—</div><div class="vbl">Lon</div></div>
-          </div>
-          <div class="actions">
-            <button class="btn btn-gps" onclick="goMap()">Ouvrir la carte</button>
-            <button class="btn btn-sms" onclick="shareLocation()">Recevoir par SMS</button>
-          </div>
+      <div class="loc-map-wrap">
+        <div id="famMap"></div>
+        <div class="loc-city">Lieu<br><strong id="mapCityZone">—</strong></div>
+      </div>
+      <div class="loc-info">
+        <div class="vrow" style="margin-bottom:10px">
+          <div class="vbox"><div class="vbv" id="locZone" style="color:var(--accent);font-size:14px">—</div><div class="vbl">Lieu</div></div>
+          <div class="vbox"><div class="vbv" id="locLat" style="font-size:12px">—</div><div class="vbl">Lat</div></div>
+          <div class="vbox"><div class="vbv" id="locLon" style="font-size:12px">—</div><div class="vbl">Lon</div></div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-gps" onclick="centerFamMap()">Centrer carte</button>
+          <button class="btn btn-sms" onclick="shareLocation()">Recevoir par SMS</button>
         </div>
       </div>
     </div>
@@ -370,8 +382,10 @@ function renderAll(){
   document.getElementById('docName').textContent=p.med||'—';
   document.getElementById('patContact').textContent=`${p.p} ${p.n} (${p.id})`;
   document.getElementById('locZone').textContent=p.zone||'—';
+  document.getElementById('mapCityZone').textContent=p.zone||'Kinshasa';
   document.getElementById('locLat').textContent=p.lat!=null?(Math.abs(p.lat).toFixed(5)+'°S'):'—';
   document.getElementById('locLon').textContent=p.lon!=null?(Number(p.lon).toFixed(5)+'°E'):'—';
+  updateFamMapMarker();
   document.getElementById('homeAlerts').innerHTML=alertHtml(ui.home);
   document.getElementById('allAlerts').innerHTML=alertHtml(ui.sms);
   document.getElementById('fallAlerts').innerHTML=alertHtml(ui.falls);
@@ -413,34 +427,119 @@ function showPanel(id){
   document.getElementById('panel-'+id).classList.add('active');
   document.querySelectorAll('.nav-item[data-panel]').forEach(n=>n.classList.remove('active'));
   document.querySelectorAll(`.nav-item[data-panel="${id}"]`).forEach(n=>n.classList.add('active'));
+  document.querySelector('.content').classList.toggle('panel-loc-active', id==='localisation');
   const titles={
     accueil:['Surveillance','Suivi de mon proche · Kinshasa'],
     alertes:['Alertes / SMS','SMS, appels GSM & chutes'],
     mails:['Mails reçus','E-mails logiciels avec lien GPS'],
     comm:['Contacter l’équipe','Appels & messages'],
-    localisation:['Où est mon proche','GPS réel · carte dédiée famille'],
+    localisation:['Où est mon proche','Carte libre · GPS temps réel'],
   };
   document.getElementById('pageTitle').textContent=titles[id][0];
   document.getElementById('pageSub').textContent=titles[id][1];
+  if(id==='localisation'){initFamMap();setTimeout(()=>famMap&&famMap.resize(),120);}
+}
+
+let famMap=null,famMarker=null,famMapReady=false;
+const KINSHASA_BOUNDS=[[15.15,-4.52],[15.52,-4.22]];
+
+function famMapColor(){
+  return patient.s==='alert'?'#ff4d6d':patient.s==='warn'?'#f59e0b':'#00d4aa';
+}
+
+function initFamMap(){
+  if(famMap||typeof maplibregl==='undefined') return;
+  const col=famMapColor();
+  const ini=((patient.p||'?')[0]+(patient.n||'?')[0]).toUpperCase();
+  famMap=new maplibregl.Map({
+    container:'famMap',
+    style:'https://tiles.openfreemap.org/styles/dark',
+    center:[patient.lon||15.31,patient.lat||-4.32],
+    zoom:14,
+    minZoom:11,maxZoom:18,
+    maxBounds:KINSHASA_BOUNDS,
+    maxBoundsViscosity:1,
+  });
+  famMap.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+  famMap.on('load',()=>{
+    famMapReady=true;
+    const el=document.createElement('div');
+    el.className='loc-marker';
+    el.style.cssText=`background:${col}30;color:${col};border-color:${col}`;
+    el.textContent=ini;
+    famMarker=new maplibregl.Marker({element:el,anchor:'center'})
+      .setLngLat([patient.lon||15.31,patient.lat||-4.32]).addTo(famMap);
+    updateFamMapMarker();
+  });
+}
+
+function updateFamMapMarker(){
+  if(!famMapReady||!famMarker||patient.lat==null||patient.lon==null) return;
+  const col=famMapColor();
+  const ini=((patient.p||'?')[0]+(patient.n||'?')[0]).toUpperCase();
+  const el=famMarker.getElement();
+  el.style.background=col+'30'; el.style.color=col; el.style.borderColor=col;
+  el.textContent=ini;
+  famMarker.setLngLat([patient.lon,patient.lat]);
+}
+
+function centerFamMap(){
+  if(!famMap||patient.lat==null||patient.lon==null) return;
+  famMap.flyTo({center:[patient.lon,patient.lat],zoom:15,duration:700,essential:true});
+}
+
+async function apiSms(body){
+  const res=await fetch('/api/sms/send/',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(body),
+  });
+  const d=await res.json().catch(()=>({}));
+  if(!res.ok||!d.ok) throw new Error(d.error||'Échec SMS');
+  return d;
 }
 
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 function logComm(m){commLog.unshift({m,tm:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})});renderAll();}
-function smsPatient(){toast('Message envoyé au proche — logiciel');logComm('Message → proche');}
-function smsDoctor(){toast('Message envoyé au médecin — logiciel');logComm(`Message → ${patient.med}`);}
-function goMap(){window.location.href=`/portail/carte/?patient=${patient.id}`;}
-function shareLocation(){
-  const coords=patient.lat!=null?`${Math.abs(patient.lat).toFixed(5)}°S, ${Number(patient.lon).toFixed(5)}°E`:'—';
-  toast(`Position ${patient.zone} (${coords}) — SMS simulation`);
-  logComm(`GPS ${patient.zone} · ${coords}`);
+
+async function smsPatient(){
+  try{
+    await apiSms({patient_id:patient.id,family_id:familyId,action:'message_patient',message:'Votre famille pense à vous.'});
+    toast('Message envoyé à votre proche');
+    logComm('Message → proche');
+  }catch(e){toast('Erreur : '+e.message);}
 }
+
+async function smsDoctor(){
+  try{
+    await apiSms({patient_id:patient.id,family_id:familyId,action:'message_medecin',message:`Nouvelles de ${patient.p} ${patient.n} demandées par la famille.`});
+    toast(`Message envoyé à ${patient.med} (plateforme)`);
+    logComm(`Message → ${patient.med}`);
+  }catch(e){toast('Erreur : '+e.message);}
+}
+
+function goMap(){showPanel('localisation');}
+
+async function shareLocation(){
+  try{
+    const d=await apiSms({patient_id:patient.id,family_id:familyId,action:'location_sms'});
+    const via=d.sms_api?'API SMS':'SIM800L';
+    toast(`Position envoyée par SMS (${via}) · ${d.zone||patient.zone}`);
+    logComm(`SMS GPS ${patient.zone}`);
+  }catch(e){toast('Erreur SMS : '+e.message);}
+}
+
 function quickMsg(t){document.getElementById('msgText').value=t;}
-function sendMessage(){
+
+async function sendMessage(){
   const t=document.getElementById('msgText').value.trim();
   if(!t){toast('Écrivez un message');return;}
-  toast('Message envoyé à l’équipe — simulation');
-  logComm(`Message → équipe : « ${t.slice(0,50)}${t.length>50?'…':''} »`);
-  document.getElementById('msgText').value='';
+  try{
+    await apiSms({patient_id:patient.id,family_id:familyId,action:'message_medecin',message:t});
+    toast('Message envoyé à l’équipe médicale');
+    logComm(`Message → équipe : « ${t.slice(0,50)}${t.length>50?'…':''} »`);
+    document.getElementById('msgText').value='';
+  }catch(e){toast('Erreur : '+e.message);}
 }
 function logout(){
   sessionStorage.removeItem('gerio_famille');

@@ -278,13 +278,14 @@ def api_messages(request):
 @csrf_exempt
 @require_http_methods(['POST'])
 def send_message(request):
-    """POST /api/messages/send/ — SMS / appel via SIM800L + e-mail avec lien graphique."""
+    """POST /api/messages/send/ — alertes portail patient ou SMS admin."""
     try:
         payload = json.loads(request.body.decode('utf-8') or '{}')
     except json.JSONDecodeError:
         return JsonResponse({'ok': False, 'error': 'JSON invalide'}, status=400)
 
     patient_id = str(payload.get('patient_id', '')).strip()
+    alert_type = str(payload.get('alert_type', '')).strip()
     channel = str(payload.get('channel', 'sms')).strip()
     recipient_type = str(payload.get('recipient_type', 'famille')).strip()
     body = str(payload.get('message', '')).strip()
@@ -293,6 +294,13 @@ def send_message(request):
     patient = get_patient(patient_id)
     if not patient:
         return JsonResponse({'ok': False, 'error': 'Patient inconnu'}, status=404)
+
+    if alert_type:
+        result = services.dispatch_patient_portal_alert(
+            patient_id, alert_type, body or None, device_id,
+        )
+        status = 201 if result.get('ok') else 400
+        return JsonResponse(result, status=status)
 
     nom = NOMS.get(patient_id, patient_id)
     analyse_url = services.build_analyse_url(patient_id)
@@ -340,9 +348,19 @@ def send_message(request):
     gsm_sms = (
         f'GérioTrack: {nom}. {body[:120]}. Graphique: {analyse_url}'
     )[:160]
-    gsm = services.queue_gsm_command(
-        device_id, 'sms', rphone, gsm_sms,
+    sms_result = services.send_sms(
+        rphone, gsm_sms, patient_code=patient_id, device_id=device_id,
+        recipient_type=recipient_type, recipient_name=rname,
+        log=False,
+    )
+    msg = OutboundMessage.objects.create(
         patient_code=patient_id,
+        channel=sms_result.get('channel', 'sms'),
+        recipient_type=recipient_type,
+        recipient_name=rname,
+        recipient_phone=rphone or '—',
+        message_body=body + ' [SMS API/GSM]',
+        status=sms_result.get('status', 'failed'),
     )
 
     from geriatrie_iot.family_data import FAMILY_ALERT_EMAIL, get_family_for_patient
@@ -352,32 +370,100 @@ def send_message(request):
         or FAMILY_ALERT_EMAIL
         or (family_acc['email'] if family_acc else 'mbayisoleil10@gmail.com')
     )
-    mail_subject = f'GérioTrack — Alerte {nom}'
-    mail_body = f'{body}\n\nGraphique ECG / analyse : {analyse_url}'
-    mail_status = services._send_real_email(mail_subject, mail_body, famille_email)
+    mail_status = 'skipped'
+    if recipient_type == 'famille':
+        mail_subject = f'GérioTrack — Alerte {nom}'
+        mail_body = f'{body}\n\nGraphique ECG / analyse : {analyse_url}'
+        mail_status = services._send_real_email(mail_subject, mail_body, famille_email)
 
-    msg = OutboundMessage.objects.create(
-        patient_code=patient_id,
-        channel='sms',
-        recipient_type=recipient_type,
-        recipient_name=rname,
-        recipient_phone=rphone or '—',
-        message_body=body + ' [SIM800L + e-mail]',
-        status='queued' if gsm else 'failed',
-    )
     AppNotification.objects.create(
         patient_code=patient_id,
         notif_type='message',
-        title=f"SMS GSM → {rname}",
+        title=f"SMS → {rname}",
         body=body[:500],
     )
     return JsonResponse({
-        'ok': True,
+        'ok': sms_result.get('ok', True),
         'message_id': msg.id,
-        'gsm_queued': bool(gsm),
+        'gsm_queued': sms_result.get('gsm_queued', False),
+        'sms_api': sms_result.get('http_sent', False),
+        'channel': sms_result.get('channel', 'sms'),
         'email_status': mail_status,
         'analyse_url': analyse_url,
     }, status=201)
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def api_sms_send(request):
+    """
+    POST /api/sms/send/
+    Envoi SMS unifié : API HTTP (si SMS_API_URL) + repli SIM800L ESP32.
+
+    Corps JSON :
+      patient_id, message, recipient_type (famille|medecin|patient),
+      phone (optionnel), action (location_sms|message_medecin|message_patient)
+    """
+    try:
+        payload = json.loads(request.body.decode('utf-8') or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'ok': False, 'error': 'JSON invalide'}, status=400)
+
+    patient_id = str(payload.get('patient_id', '')).strip()
+    message = str(payload.get('message', '')).strip()
+    recipient_type = str(payload.get('recipient_type', 'famille')).strip()
+    phone = str(payload.get('phone', '')).strip()
+    action = str(payload.get('action', '')).strip()
+    device_id = str(payload.get('device_id', 'ESP32-001')).strip()
+    family_id = str(payload.get('family_id', '')).strip()
+
+    if not patient_id:
+        return JsonResponse({'ok': False, 'error': 'patient_id requis'}, status=400)
+
+    if action in ('location_sms', 'message_medecin', 'message_patient'):
+        result = services.dispatch_family_portal_message(
+            patient_id, action, message or None, family_id=family_id, device_id=device_id,
+        )
+        status = 201 if result.get('ok') else 400
+        return JsonResponse(result, status=status)
+
+    rname, rphone, nom = services.resolve_sms_recipient(patient_id, recipient_type, phone)
+    if not rphone and recipient_type != 'patient':
+        return JsonResponse({'ok': False, 'error': 'Numéro destinataire introuvable'}, status=400)
+
+    if not message:
+        lat, lon = services.get_patient_gps(patient_id)
+        from geriatrie_iot.patient_data import resolve_location_from_gps
+        loc = resolve_location_from_gps(lat, lon)
+        geo = services.build_carte_url(patient_id)
+        message = f'GérioTrack — {nom} · {loc["label"]}. Carte: {geo}'
+
+    if recipient_type == 'medecin':
+        AppNotification.objects.create(
+            patient_code=patient_id,
+            notif_type='message',
+            title=f'SMS / message — {nom}',
+            body=message[:500],
+        )
+
+    if recipient_type == 'patient':
+        OutboundMessage.objects.create(
+            patient_code=patient_id,
+            channel='app',
+            recipient_type='patient',
+            recipient_name=nom,
+            recipient_phone='—',
+            message_body=message,
+            status='delivered',
+        )
+        return JsonResponse({'ok': True, 'status': 'delivered', 'channel': 'app'}, status=201)
+
+    result = services.send_sms(
+        rphone, message, patient_code=patient_id, device_id=device_id,
+        recipient_type=recipient_type, recipient_name=rname,
+    )
+    status = 201 if result.get('ok') else 400
+    return JsonResponse(result, status=status)
 
 
 @require_GET
@@ -517,15 +603,113 @@ def api_family_inbox(request):
 def api_family_accounts(request):
     """GET /api/family/accounts/ — liste des profils famille (login)."""
     from geriatrie_iot.family_data import FAMILY_ACCOUNTS
+    from geriatrie_iot.portail_credentials import family_password
     data = [{
         'id': f['id'],
         'name': f['name'],
         'patient_id': f['patient_id'],
         'patient_label': f"{f['patient_prenom']} {f['patient_nom']}",
         'email': f['email'],
+        'initial_password': family_password(f['id']),
         'label': f"{f['name']} — proche de {f['patient_prenom']} {f['patient_nom']}",
     } for f in FAMILY_ACCOUNTS]
     return JsonResponse({'accounts': data})
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def api_portail_login(request):
+    """POST /api/portail/login/ — authentification famille ou patient."""
+    from geriatrie_iot.portail_credentials import verify_portail_login
+    try:
+        payload = json.loads(request.body.decode('utf-8') or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'ok': False, 'error': 'JSON invalide'}, status=400)
+
+    role = str(payload.get('role', '')).strip()
+    profil_id = str(payload.get('profil_id', '')).strip()
+    password = str(payload.get('password', '')).strip()
+
+    if role not in ('famille', 'patient'):
+        return JsonResponse({'ok': False, 'error': 'Rôle invalide'}, status=400)
+    if not verify_portail_login(role, profil_id, password):
+        return JsonResponse({'ok': False, 'error': 'Identifiants incorrects'}, status=401)
+
+    return JsonResponse({'ok': True, 'role': role, 'profil_id': profil_id})
+
+
+@require_GET
+def api_portail_credentials(request):
+    """GET /api/portail/credentials/ — liste médecin famille ↔ patient + mots de passe."""
+    from geriatrie_iot.portail_credentials import list_portail_credentials
+    return JsonResponse({'credentials': list_portail_credentials(), 'total': len(list_portail_credentials())})
+
+
+@require_GET
+def api_patient_inbox(request):
+    """
+    GET /api/patient/inbox/?patient_id=P001
+    Données portail patient : état live, alertes, contacts.
+    """
+    from geriatrie_iot.live_sync import merge_patients_with_live
+    from geriatrie_iot.family_data import get_family_for_patient
+    from sensors.models import PatientLiveState, AppNotification
+
+    patient_id = request.GET.get('patient_id', '').strip() or 'P001'
+    patient = get_patient(patient_id)
+    if not patient:
+        return JsonResponse({'ok': False, 'error': 'Patient inconnu'}, status=404)
+
+    live = next((p for p in merge_patients_with_live() if p['id'] == patient_id), None)
+    st = PatientLiveState.objects.filter(patient_code=patient_id).first()
+    fam = get_family_for_patient(patient_id)
+    famille_nom, famille_phone = parse_contact(patient.get('contact', ''))
+    medecin = patient.get('medecin', 'Médecin')
+    medecin_phone = MEDECIN_PHONES.get(medecin, '+243 81 000 0000')
+
+    alerts = []
+    for f in FallEvent.objects.filter(patient_code=patient_id).order_by('-detected_at')[:10]:
+        alerts.append({
+            'type': 'red',
+            'm': f'Chute détectée — {f.notes or "alerte"}',
+            'tm': f.detected_at.astimezone().strftime('%d/%m/%Y %H:%M'),
+            'geo_url': f'/portail/carte/?patient={patient_id}',
+        })
+    for n in AppNotification.objects.filter(patient_code=patient_id).order_by('-created_at')[:5]:
+        alerts.append({
+            'type': 'blue' if n.notif_type == 'message' else 'red',
+            'm': n.title,
+            'tm': n.created_at.astimezone().strftime('%d/%m/%Y %H:%M'),
+            'geo_url': f'/portail/carte/?patient={patient_id}',
+        })
+
+    lat = st.latitude if st and st.latitude is not None else patient.get('lat')
+    lon = st.longitude if st and st.longitude is not None else patient.get('lon')
+    zone = live.get('chambre') if live else patient.get('chambre', 'Kinshasa')
+
+    return JsonResponse({
+        'ok': True,
+        'patient': {
+            'id': patient_id,
+            'prenom': patient['prenom'],
+            'nom': patient['nom'],
+            'age': patient.get('age'),
+            'zone': zone,
+            'chambre': zone,
+            'statut': live.get('statut') if live else 'stable',
+            'lat': lat,
+            'lon': lon,
+            'sensor_online': live.get('sensor_online') if live else False,
+            'medecin': medecin,
+            'medecin_tel': medecin_phone,
+            'famille': famille_nom or (fam['name'] if fam else 'Famille'),
+            'famille_tel': famille_phone or (fam['phone'] if fam else ''),
+            'note': patient.get('notes', patient.get('note', 'Suivi en cours.')),
+            'hist': patient.get('historique', []),
+            'alerts': alerts,
+            'geo_url': f'/portail/carte/?patient={patient_id}',
+        },
+    })
 
 
 @require_GET

@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from geriatrie_iot.patient_data import (
     PATIENTS_BASE, PATIENT_IDS, NOMS, get_patient,
-    parse_contact, MEDECIN_PHONES, resolve_zone_from_gps,
+    parse_contact, MEDECIN_PHONES, resolve_zone_from_gps, resolve_location_from_gps,
     KINSHASA_LAT_MIN, KINSHASA_LAT_MAX, KINSHASA_LON_MIN, KINSHASA_LON_MAX,
 )
 from .models import (
@@ -48,6 +48,37 @@ def _absolute_url(path):
 def build_analyse_url(patient_code):
     """Lien public vers le graphique ECG / analyse du patient."""
     return _absolute_url(f'/analyse/?patient={patient_code}#ecg')
+
+
+def build_portail_login_url(target_path, patient_code=None, role='famille'):
+    """
+    Lien e-mail / alerte : page connexion portail puis redirection (carte, etc.).
+    Ex. /portail/?next=/portail/carte/?patient=P001&role=famille&patient=P001
+    """
+    from urllib.parse import urlencode
+    if not target_path.startswith('/'):
+        target_path = '/' + target_path
+    params = {'next': target_path, 'role': role or 'famille'}
+    if patient_code:
+        params['patient'] = patient_code
+    return _absolute_url('/portail/?' + urlencode(params))
+
+
+def build_carte_url(patient_code, portail=True, via_login=False):
+    """Lien carte GPS. via_login=True pour e-mails famille (connexion puis carte)."""
+    path = f'/portail/carte/?patient={patient_code}' if portail else f'/geolocalisation/?patient={patient_code}'
+    if via_login and portail:
+        return build_portail_login_url(path, patient_code=patient_code, role='famille')
+    return _absolute_url(path)
+
+
+def get_patient_gps(patient_code):
+    """Coordonnées live ou position d'origine du patient."""
+    st = PatientLiveState.objects.filter(patient_code=patient_code).first()
+    home = get_patient(patient_code) or {}
+    lat = st.latitude if st and st.latitude is not None else home.get('lat')
+    lon = st.longitude if st and st.longitude is not None else home.get('lon')
+    return lat, lon
 
 
 def normalize_phone(phone):
@@ -137,6 +168,210 @@ def queue_gsm_command(device_id, channel, phone, message='', patient_code='', fa
     )
     logger.info('GSM en file → %s %s (%s)', channel, phone, patient_code)
     return cmd
+
+
+def _send_sms_via_http_api(phone, message):
+    """
+    Envoi SMS via API HTTP (passerelle SMS).
+    Retourne 'sent' | 'failed' | 'skipped' (non configuré).
+    """
+    url = (getattr(settings, 'SMS_API_URL', '') or '').strip()
+    if not url:
+        return 'skipped'
+    api_key = (getattr(settings, 'SMS_API_KEY', '') or '').strip()
+    sender = getattr(settings, 'SMS_API_SENDER', 'GerioTrack')
+    try:
+        import json
+        import urllib.request
+        payload = {
+            'to': phone,
+            'message': message,
+            'sender': sender,
+            'api_key': api_key,
+        }
+        data = json.dumps(payload).encode('utf-8')
+        headers = {'Content-Type': 'application/json', 'User-Agent': 'GerioTrack/1.0'}
+        if api_key:
+            headers['Authorization'] = f'Bearer {api_key}'
+        req = urllib.request.Request(url, data=data, headers=headers, method='POST')
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if 200 <= resp.status < 300:
+                logger.info('SMS API HTTP envoyé → %s', phone)
+                return 'sent'
+            logger.warning('SMS API HTTP code %s → %s', resp.status, phone)
+            return 'failed'
+    except Exception as exc:
+        logger.warning('SMS API HTTP échec → %s : %s', phone, exc)
+        return 'failed'
+
+
+def _deliver_sms(phone, message, device_id=None, patient_code='', fall_event=None):
+    """Transport SMS : API HTTP si configurée, sinon file SIM800L."""
+    phone = normalize_phone(phone)
+    msg = (message or '').strip()
+    if not phone or not msg:
+        return {
+            'ok': False,
+            'status': 'failed',
+            'channel': 'sms',
+            'http_sent': False,
+            'gsm_queued': False,
+            'error': 'Numéro ou message vide',
+        }
+
+    http_status = _send_sms_via_http_api(phone, msg[:480])
+    if http_status == 'sent':
+        return {
+            'ok': True,
+            'status': 'sent',
+            'channel': 'sms_api',
+            'http_sent': True,
+            'gsm_queued': False,
+            'phone': phone,
+        }
+
+    gsm = queue_gsm_command(
+        device_id or DEFAULT_DEVICE_ID, 'sms', phone, msg[:160],
+        patient_code=patient_code, fall_event=fall_event,
+    )
+    return {
+        'ok': bool(gsm) or http_status == 'skipped',
+        'status': 'queued' if gsm else 'failed',
+        'channel': 'sms_gsm',
+        'http_sent': False,
+        'gsm_queued': bool(gsm),
+        'phone': phone,
+        'http_skipped': http_status == 'skipped',
+    }
+
+
+def send_sms(
+    phone, message, patient_code='', device_id=None, fall_event=None,
+    recipient_type='famille', recipient_name='', log=True,
+):
+    """
+    Envoi SMS unifié — API HTTP + repli SIM800L ESP32.
+    POST /api/sms/send/ utilise cette fonction.
+    """
+    delivery = _deliver_sms(
+        phone, message, device_id=device_id,
+        patient_code=patient_code, fall_event=fall_event,
+    )
+    msg_record_id = None
+    if log and delivery.get('phone'):
+        rec = OutboundMessage.objects.create(
+            patient_code=patient_code or '',
+            fall_event=fall_event,
+            channel=delivery.get('channel', 'sms'),
+            recipient_type=recipient_type,
+            recipient_name=recipient_name or recipient_type,
+            recipient_phone=delivery['phone'],
+            message_body=(message or '').strip(),
+            status=delivery.get('status', 'failed'),
+        )
+        msg_record_id = rec.id
+        delivery['message_id'] = msg_record_id
+    return delivery
+
+
+def resolve_sms_recipient(patient_code, recipient_type, phone_override=''):
+    """Résout nom + téléphone pour un envoi SMS."""
+    patient = get_patient(patient_code)
+    if not patient:
+        return None, None, None
+    nom = NOMS.get(patient_code, patient_code)
+    if phone_override:
+        phone = normalize_phone(phone_override)
+        if recipient_type == 'medecin':
+            return patient.get('medecin', 'Médecin'), phone, nom
+        if recipient_type == 'famille':
+            fname, _ = parse_contact(patient.get('contact', ''))
+            return fname or 'Famille', phone, nom
+        return 'Patient', phone, nom
+
+    if recipient_type == 'medecin':
+        rname = patient.get('medecin', 'Médecin')
+        rphone = MEDECIN_PHONES.get(rname, '+243 81 000 0000')
+        return rname, rphone, nom
+
+    if recipient_type == 'famille':
+        from geriatrie_iot.family_data import get_family_for_patient
+        fname, fphone = parse_contact(patient.get('contact', ''))
+        fam = get_family_for_patient(patient_code)
+        if fam and fam.get('phone'):
+            fphone = fam['phone']
+        return fname or (fam['name'] if fam else 'Famille'), fphone, nom
+
+    return nom, '', nom
+
+
+def dispatch_family_portal_message(patient_code, action, message=None, family_id=None, device_id=None):
+    """
+    Messages portail famille : SMS réel + notification médecin sur plateforme.
+    action: location_sms | message_medecin | message_patient
+    """
+    patient = get_patient(patient_code)
+    if not patient:
+        return {'ok': False, 'error': 'Patient inconnu'}
+
+    nom = NOMS.get(patient_code, patient_code)
+    lat, lon = get_patient_gps(patient_code)
+    loc = resolve_location_from_gps(lat, lon)
+    zone = loc['label'] or patient.get('chambre', 'Kinshasa')
+    heure = timezone.now().astimezone().strftime('%d/%m/%Y à %H:%M')
+    geo_url = build_carte_url(patient_code, portail=True, via_login=True)
+    geo_carte_sms = build_carte_url(patient_code, portail=True, via_login=False)
+    gps_line = f'GPS {lat:.5f}, {lon:.5f}' if lat is not None and lon is not None else ''
+    dev = device_id or DEFAULT_DEVICE_ID
+    text = (message or '').strip()
+
+    if action == 'location_sms':
+        body = (
+            f'Position {nom} ({heure}) — {zone}. {gps_line}\n'
+            f'Carte : {geo_url}'
+        )
+        rname, rphone, _ = resolve_sms_recipient(patient_code, 'famille')
+        sms = send_sms(rphone, body[:480], patient_code=patient_code, device_id=dev,
+                       recipient_type='famille', recipient_name=rname)
+        sms['zone'] = zone
+        sms['geo_url'] = geo_url
+        return sms
+
+    if action == 'message_medecin':
+        body = text or f'La famille demande des nouvelles de {nom} ({heure}).'
+        medecin = patient.get('medecin', 'Médecin')
+        med_phone = MEDECIN_PHONES.get(medecin, '+243 81 000 0000')
+        AppNotification.objects.create(
+            patient_code=patient_code,
+            notif_type='message',
+            title=f'Famille — {nom}',
+            body=f'{body} · {zone}'[:500],
+        )
+        OutboundMessage.objects.create(
+            patient_code=patient_code,
+            channel='app',
+            recipient_type='medecin',
+            recipient_name=medecin,
+            recipient_phone=med_phone or '—',
+            message_body=body,
+            status='delivered',
+        )
+        return {'ok': True, 'status': 'delivered', 'channel': 'app', 'zone': zone}
+
+    if action == 'message_patient':
+        body = text or f'Votre famille vous envoie un message ({heure}).'
+        OutboundMessage.objects.create(
+            patient_code=patient_code,
+            channel='app',
+            recipient_type='patient',
+            recipient_name=nom,
+            recipient_phone='—',
+            message_body=body,
+            status='delivered',
+        )
+        return {'ok': True, 'status': 'delivered', 'channel': 'app', 'zone': zone}
+
+    return {'ok': False, 'error': f'Action inconnue : {action}'}
 
 
 def pop_pending_gsm_commands(device_id, limit=5):
@@ -410,10 +645,11 @@ def _register_fall(patient_code, device_id, lat, lon, source='esp32', angle_x=No
     if recent:
         return None
 
-    zone = resolve_zone_from_gps(lat, lon)
+    loc = resolve_location_from_gps(lat, lon)
+    zone = loc['label']
     notes = 'Détection MPU6050'
     if zone:
-        notes += f' · Zone : {zone}'
+        notes += f' · Lieu : {zone}'
     if angle_x is not None and angle_y is not None:
         notes += f' · X={angle_x:.1f}° Y={angle_y:.1f}°'
     if source == 'simulated':
@@ -444,38 +680,42 @@ def _dispatch_fall_messages(fall_event, patient_code, device_id=None):
     nom = NOMS.get(patient_code, patient_code)
     lat = fall_event.latitude
     lon = fall_event.longitude
-    zone = resolve_zone_from_gps(lat, lon) or patient.get('chambre', 'Kinshasa')
+    loc = resolve_location_from_gps(lat, lon)
+    zone = loc['label'] or patient.get('chambre', 'Kinshasa')
+    street = loc.get('street') or ''
     heure = fall_event.detected_at.astimezone().strftime('%d/%m/%Y à %H:%M')
     gps_line = ''
-    geo_famille_path = f'/portail/carte/?patient={patient_code}'
-    geo_medecin_path = f'/geolocalisation/?patient={patient_code}'
     analyse_url = build_analyse_url(patient_code)
-    geo_famille = _absolute_url(geo_famille_path)
-    geo_medecin = _absolute_url(geo_medecin_path)
+    geo_famille = build_carte_url(patient_code, portail=True, via_login=True)
+    geo_carte_sms = build_carte_url(patient_code, portail=True, via_login=False)
+    geo_medecin = build_carte_url(patient_code, portail=False)
     espace_famille = _absolute_url('/portail/famille/')
     if lat is not None and lon is not None:
         gps_line = f'Coordonnées GPS : {lat:.6f}, {lon:.6f}'
 
+    lieu_line = f'Lieu : {zone}'
+    if street and street not in zone:
+        lieu_line += f' ({street})'
     base_msg = (
         f'{nom} a eu une chute le {heure} ({patient_code}).\n'
-        f'Zone détectée : {zone}.\n'
+        f'{lieu_line}.\n'
         f'{gps_line}\n'
-        f'Voir position (médecin) : {geo_medecin}\n'
+        f'Voir position : {geo_medecin}\n'
         f'Graphique ECG : {analyse_url}\n'
         f'Intervention immédiate requise. Médecin : {patient.get("medecin", "")}.'
     )
     famille_msg = (
         f'ALERTE FAMILLE — {nom} a eu une chute le {heure}.\n'
-        f'Zone : {zone}.\n'
+        f'{lieu_line}.\n'
         f'{gps_line}\n'
-        f'Voir la position : {geo_famille}\n'
+        f'Voir la position sur la carte (après connexion) : {geo_famille}\n'
         f'Suivi ECG : {analyse_url}\n'
-        f'Le médecin {patient.get("medecin", "")} a été prévenu via GérioTrack.'
+        f'Le médecin {patient.get("medecin", "")} a été prévenu sur la plateforme.'
     )
     gsm_sms_short = (
         f'ALERTE GérioTrack: {nom} chute {heure}. Zone {zone}. '
-        f'Suivi: {analyse_url}'
-    )
+        f'Carte: {geo_carte_sms}'
+    )[:160]
 
     famille_nom, famille_phone = parse_contact(patient.get('contact', ''))
     family_acc = get_family_for_patient(patient_code)
@@ -488,9 +728,9 @@ def _dispatch_fall_messages(fall_event, patient_code, device_id=None):
     medecin_phone = MEDECIN_PHONES.get(medecin, '+243 81 000 0000')
     dev = device_id or DEFAULT_DEVICE_ID
 
-    # SIM800L : SMS réel vers la famille
-    queue_gsm_command(
-        dev, 'sms', famille_phone, gsm_sms_short,
+    # SMS réel : API HTTP ou file SIM800L
+    _deliver_sms(
+        famille_phone, gsm_sms_short, device_id=dev,
         patient_code=patient_code, fall_event=fall_event,
     )
 
@@ -518,7 +758,7 @@ def _dispatch_fall_messages(fall_event, patient_code, device_id=None):
         f'{famille_msg}\n\n'
         f'—\n'
         f'Graphique ECG / analyse : {analyse_url}\n'
-        f'Lien géolocalisation : {geo_famille}\n'
+        f'Lien carte / position (mot de passe puis carte) : {geo_famille}\n'
         f'Espace famille : {espace_famille}\n'
         f'Ce message a été envoyé automatiquement par GérioTrack.'
     )
@@ -531,7 +771,7 @@ def _dispatch_fall_messages(fall_event, patient_code, device_id=None):
         recipient_email=famille_email,
         subject=subject,
         body_text=mail_body,
-        geo_url=analyse_url,
+        geo_url=geo_famille,
         status=send_status,
     )
 
@@ -549,6 +789,161 @@ def _dispatch_fall_messages(fall_event, patient_code, device_id=None):
         fall_event=fall_event,
     )
     return created
+
+
+def dispatch_patient_portal_alert(patient_code, alert_type, custom_message=None, device_id=None):
+    """
+    Alertes portail patient (bouton urgence, messages, position).
+    Famille : SMS + e-mail avec lien carte et zone réelle.
+    Médecin : notification plateforme GérioTrack uniquement (pas d'e-mail).
+    """
+    from geriatrie_iot.family_data import get_family_for_patient, FAMILY_ALERT_EMAIL
+
+    patient = get_patient(patient_code)
+    if not patient:
+        return {'ok': False, 'error': 'Patient inconnu'}
+
+    nom = NOMS.get(patient_code, patient_code)
+    lat, lon = get_patient_gps(patient_code)
+    loc = resolve_location_from_gps(lat, lon)
+    zone = loc['label'] or patient.get('chambre', 'Kinshasa')
+    heure = timezone.now().astimezone().strftime('%d/%m/%Y à %H:%M')
+    analyse_url = build_analyse_url(patient_code)
+    geo_famille = build_carte_url(patient_code, portail=True, via_login=True)
+    geo_carte_sms = build_carte_url(patient_code, portail=True, via_login=False)
+    gps_line = f'GPS : {lat:.6f}, {lon:.6f}' if lat is not None and lon is not None else ''
+
+    famille_nom, famille_phone = parse_contact(patient.get('contact', ''))
+    family_acc = get_family_for_patient(patient_code)
+    famille_email = (
+        getattr(settings, 'FAMILY_ALERT_EMAIL', None)
+        or FAMILY_ALERT_EMAIL
+        or (family_acc['email'] if family_acc else 'mbayisoleil10@gmail.com')
+    )
+    medecin = patient.get('medecin', 'Médecin')
+    medecin_phone = MEDECIN_PHONES.get(medecin, '+243 81 000 0000')
+    dev = device_id or DEFAULT_DEVICE_ID
+    result = {'ok': True, 'alert_type': alert_type, 'zone': zone, 'geo_url': geo_famille}
+
+    def _notify_medecin_platform(title, body, notif_type='urgence'):
+        AppNotification.objects.create(
+            patient_code=patient_code,
+            notif_type=notif_type,
+            title=title[:120],
+            body=body[:500],
+        )
+        OutboundMessage.objects.create(
+            patient_code=patient_code,
+            channel='app',
+            recipient_type='medecin',
+            recipient_name=medecin,
+            recipient_phone=medecin_phone or '—',
+            message_body=body,
+            status='delivered',
+        )
+
+    def _notify_famille_sms_email(sms_short, full_body, subject, notif_type='message'):
+        delivery = _deliver_sms(
+            famille_phone, sms_short, device_id=dev, patient_code=patient_code,
+        )
+        OutboundMessage.objects.create(
+            patient_code=patient_code,
+            channel=delivery.get('channel', 'sms'),
+            recipient_type='famille',
+            recipient_name=famille_nom or 'Famille',
+            recipient_phone=famille_phone or '—',
+            message_body=full_body,
+            status=delivery.get('status', 'failed'),
+        )
+        mail_body = (
+            f'{full_body}\n\n'
+            f'—\n'
+            f'Carte / position : {geo_famille}\n'
+            f'Analyse ECG : {analyse_url}\n'
+            f'GérioTrack — alerte automatique.'
+        )
+        mail_status = _send_real_email(subject, mail_body, famille_email)
+        OutboundEmail.objects.create(
+            patient_code=patient_code,
+            recipient_type='famille',
+            recipient_name=famille_nom or (family_acc['name'] if family_acc else 'Famille'),
+            recipient_email=famille_email,
+            subject=subject,
+            body_text=mail_body,
+            geo_url=geo_famille,
+            status=mail_status,
+        )
+        result['gsm_queued'] = delivery.get('gsm_queued', False)
+        result['sms_api'] = delivery.get('http_sent', False)
+        result['email_status'] = mail_status
+        return delivery
+
+    if alert_type == 'sos':
+        full = (
+            f'URGENCE — {nom} a appuyé sur le bouton urgence le {heure}.\n'
+            f'Lieu : {zone}.\n{gps_line}\n'
+            f'Intervention immédiate recommandée.'
+        )
+        sms = f'URGENCE GérioTrack: {nom} demande aide ({zone}). Carte: {geo_carte_sms}'[:160]
+        _notify_famille_sms_email(sms, full, f'URGENCE — {nom} · {zone}')
+        med_body = f'{nom} — URGENCE portail patient · {zone}. {gps_line}'
+        _notify_medecin_platform(f'URGENCE — {nom} · {zone}', med_body, 'urgence')
+
+    elif alert_type == 'im_ok':
+        text = custom_message or f'Je vais bien.'
+        full = f'{nom} ({heure}) : {text}\nLieu : {zone}.'
+        sms = f'GérioTrack: {nom} va bien ({zone}). {text[:60]}'[:160]
+        _notify_famille_sms_email(sms, full, f'{nom} — Je vais bien')
+        _notify_medecin_platform(
+            f'{nom} — Je vais bien',
+            f'{nom} signale : {text} · {zone}',
+            'message',
+        )
+
+    elif alert_type == 'location':
+        full = (
+            f'{nom} partage sa position le {heure}.\n'
+            f'Lieu : {zone}.\n{gps_line}'
+        )
+        sms = f'GérioTrack: position {nom} — {zone}. Carte: {geo_carte_sms}'[:160]
+        _notify_famille_sms_email(sms, full, f'Position — {nom} · {zone}')
+        _notify_medecin_platform(
+            f'Position — {nom}',
+            f'{nom} partage sa position · {zone}. {gps_line}',
+            'message',
+        )
+
+    elif alert_type == 'message':
+        text = (custom_message or '').strip() or 'Message du patient'
+        full = f'Message de {nom} ({heure}) :\n{text}\nLieu : {zone}.'
+        sms = f'GérioTrack msg {nom}: {text[:80]}'[:160]
+        _notify_famille_sms_email(sms, full, f'Message — {nom}')
+        _notify_medecin_platform(f'Message patient — {nom}', f'{text} · {zone}', 'message')
+
+    elif alert_type == 'message_medecin':
+        text = (custom_message or '').strip() or 'Message du patient'
+        med_body = f'{nom} ({heure}) : {text} · {zone}'
+        _notify_medecin_platform(f'Message — {nom}', med_body, 'message')
+        OutboundMessage.objects.create(
+            patient_code=patient_code,
+            channel='app',
+            recipient_type='medecin',
+            recipient_name=medecin,
+            recipient_phone=medecin_phone or '—',
+            message_body=med_body,
+            status='delivered',
+        )
+
+    elif alert_type == 'message_famille':
+        text = (custom_message or '').strip() or 'Message du patient'
+        full = f'Message de {nom} ({heure}) :\n{text}\nLieu : {zone}.'
+        sms = f'GérioTrack msg {nom}: {text[:80]}'[:160]
+        _notify_famille_sms_email(sms, full, f'Message — {nom}')
+
+    else:
+        return {'ok': False, 'error': f'Type alerte inconnu : {alert_type}'}
+
+    return result
 
 
 def process_esp_payload(payload, device_id=None):
@@ -651,6 +1046,10 @@ def process_esp_payload(payload, device_id=None):
 
         state.sensor_online = True
         state.updated_at = now
+
+        if pid == active_patient and data['lat'] is not None and data['lon'] is not None:
+            state.latitude = data['lat']
+            state.longitude = data['lon']
 
         if shared_ecg:
             state.ecg_raw = shared_ecg['ecg_raw']

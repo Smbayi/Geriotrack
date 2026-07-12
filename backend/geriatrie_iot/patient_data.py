@@ -55,6 +55,64 @@ def resolve_zone_from_gps(lat, lon):
     return best_name or 'Kinshasa'
 
 
+# Cache reverse geocoding (Nominatim / OpenStreetMap)
+_LOCATION_CACHE = {}
+
+
+def resolve_location_from_gps(lat, lon):
+    """
+    Commune + voie/avenue la plus proche (OSM) pour alertes et portail.
+    Retourne {commune, street, label}.
+    """
+    commune = resolve_zone_from_gps(lat, lon) or 'Kinshasa'
+    if lat is None or lon is None:
+        return {'commune': commune, 'street': None, 'label': commune}
+    try:
+        lat_f, lon_f = float(lat), float(lon)
+    except (TypeError, ValueError):
+        return {'commune': commune, 'street': None, 'label': commune}
+    if lat_f == 0.0 and lon_f == 0.0:
+        return {'commune': commune, 'street': None, 'label': commune}
+
+    key = (round(lat_f, 5), round(lon_f, 5))
+    if key in _LOCATION_CACHE:
+        return _LOCATION_CACHE[key]
+
+    street = None
+    label = commune
+    try:
+        import json
+        import urllib.request
+        url = (
+            f'https://nominatim.openstreetmap.org/reverse?lat={lat_f}&lon={lon_f}'
+            f'&format=json&zoom=18&accept-language=fr'
+        )
+        req = urllib.request.Request(url, headers={'User-Agent': 'GerioTrack/1.0 (geriatrie-iot)'})
+        with urllib.request.urlopen(req, timeout=4) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            addr = data.get('address') or {}
+            street = (
+                addr.get('road') or addr.get('pedestrian') or addr.get('footway')
+                or addr.get('residential') or addr.get('neighbourhood')
+            )
+            suburb = addr.get('suburb') or addr.get('quarter') or addr.get('city_district')
+            if street and commune:
+                label = f'{street}, {commune}'
+            elif suburb and commune:
+                label = f'{suburb}, {commune}'
+            elif street:
+                label = street
+            elif data.get('display_name'):
+                parts = [p.strip() for p in data['display_name'].split(',')[:2]]
+                label = ', '.join(parts) if parts else commune
+    except Exception:
+        pass
+
+    result = {'commune': commune, 'street': street, 'label': label}
+    _LOCATION_CACHE[key] = result
+    return result
+
+
 def get_patient(patient_code):
     for p in PATIENTS_BASE:
         if p['id'] == patient_code:

@@ -62,8 +62,12 @@ urlpatterns = [
     path('api/notifications/read/', sensor_views.mark_notifications_read, name='notifications_read'),
     path('api/messages/',       sensor_views.api_messages,   name='api_messages'),
     path('api/messages/send/',  sensor_views.send_message,   name='api_send_message'),
+    path('api/sms/send/',       sensor_views.api_sms_send,   name='api_sms_send'),
     path('api/emails/',         sensor_views.api_emails,     name='api_emails'),
     path('api/family/inbox/',   sensor_views.api_family_inbox, name='api_family_inbox'),
     path('api/family/accounts/', sensor_views.api_family_accounts, name='api_family_accounts'),
+    path('api/patient/inbox/',  sensor_views.api_patient_inbox,  name='api_patient_inbox'),
+    path('api/portail/login/',  sensor_views.api_portail_login,  name='api_portail_login'),
+    path('api/portail/credentials/', sensor_views.api_portail_credentials, name='api_portail_credentials'),
     path('api/movements/',      sensor_views.api_movements,  name='api_movements'),
 ]

@@ -201,6 +201,8 @@ def api_gps(request):
             'id': p['id'],
             'nom': f"{p['prenom']} {p['nom']}",
             'chambre': p['chambre'],
+            'zone_label': p.get('zone_label') or p['chambre'],
+            'zone_street': p.get('zone_street'),
             'statut': p['statut'],
             'lat': p['lat'],
             'lon': p['lon'],

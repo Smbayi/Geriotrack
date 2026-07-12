@@ -269,18 +269,41 @@ if(sessionStorage.getItem('gerio_role')!=='patient'){
   window.location.href='/portail/';
 }
 
-const PATIENTS={
-  P001:{id:'P001',p:'Jean',n:'Kabongo',a:78,zone:'Gombe',s:'stable',med:'Dr. Mutombo',medTel:'+243 81 111 0001',fam:'Marie Kabongo',famTel:'+243 81 234 5678',lat:-4.3050,lon:15.3080,note:'Vous suivez bien votre traitement. Continuez ainsi.',hist:[{m:'Consultation OK',tm:'Aujourd\'hui'}],alerts:[{type:'blue',m:'Rappel : prendre vos médicaments',tm:'Aujourd\'hui 09:00'}]},
-  P002:{id:'P002',p:'Marie',n:'Kadima',a:84,zone:'Lingwala',s:'alert',med:'Dr. Tshimanga',medTel:'+243 81 111 0002',fam:'Paul Kadima',famTel:'+243 82 987 6543',lat:-4.3180,lon:15.3020,note:'Surveillez votre activité. Votre famille a été informée.',hist:[{m:'Alerte chute signalée',tm:'14:32'}],alerts:[{type:'red',m:'Chute détectée — famille alertée',tm:'Aujourd\'hui 14:32'},{type:'red',m:'Immobilité prolongée',tm:'Aujourd\'hui 14:30'}]},
-  P008:{id:'P008',p:'André',n:'Kabila',a:82,zone:'Kalamu',s:'alert',med:'Dr. Tshimanga',medTel:'+243 81 111 0002',fam:'Julie Kabila',famTel:'+243 81 112 2334',lat:-4.3480,lon:15.3050,note:'Reposez-vous. Votre famille a été contactée.',hist:[{m:'Alerte chute',tm:'14:45'}],alerts:[{type:'red',m:'Chute détectée — famille alertée',tm:'Aujourd\'hui 14:45'}]},
-};
-
 const patientId=sessionStorage.getItem('gerio_profil')||'P001';
-let me={...(PATIENTS[patientId]||PATIENTS.P001)};
+let me={id:patientId,p:'',n:'',zone:'—',s:'stable',med:'—',medTel:'',fam:'—',famTel:'',lat:null,lon:null,note:'—',hist:[],alerts:[]};
 
-document.getElementById('uAv').textContent=(me.p[0]+me.n[0]).toUpperCase();
-document.getElementById('uName').textContent=`${me.p} ${me.n}`;
-document.getElementById('hello').textContent=`Bonjour ${me.p}`;
+document.getElementById('uAv').textContent='P';
+document.getElementById('uName').textContent='Patient';
+
+async function apiSend(alertType, message){
+  const res=await fetch('/api/messages/send/',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({patient_id:me.id,alert_type:alertType,message:message||''}),
+  });
+  const d=await res.json().catch(()=>({}));
+  if(!res.ok||!d.ok) throw new Error(d.error||'Échec envoi');
+  return d;
+}
+
+async function loadPatient(){
+  try{
+    const res=await fetch(`/api/patient/inbox/?patient_id=${encodeURIComponent(patientId)}`);
+    if(!res.ok) return;
+    const d=await res.json();
+    if(!d.ok||!d.patient) return;
+    const p=d.patient;
+    me={...me,
+      id:p.id,p:p.prenom,n:p.nom,zone:p.zone||p.chambre||'Kinshasa',s:p.statut||'stable',
+      med:p.medecin||'—',medTel:p.medecin_tel||'',fam:p.famille||'—',famTel:p.famille_tel||'',
+      lat:p.lat,lon:p.lon,note:p.note||'Suivi en cours.',hist:p.hist||[],alerts:p.alerts||[],
+    };
+    document.getElementById('uAv').textContent=(me.p[0]+me.n[0]).toUpperCase();
+    document.getElementById('uName').textContent=`${me.p} ${me.n}`;
+    document.getElementById('hello').textContent=`Bonjour ${me.p}`;
+    renderAll();
+  }catch(e){console.warn(e);}
+}
 
 function renderAll(){
   const p=me;
@@ -289,20 +312,21 @@ function renderAll(){
   else if(p.s==='warn'){orb.className='status-orb warn';orb.textContent='Surveiller';}
   else{orb.className='status-orb ok';orb.textContent='Tout va bien';}
   document.getElementById('infoZone').textContent=p.zone;
-  document.getElementById('infoAlerts').textContent=p.alerts.length;
-  document.getElementById('navAlertBadge').textContent=p.alerts.length;
-  document.querySelectorAll('.nav-badge-mobile').forEach(el=>el.textContent=p.alerts.length);
+  document.getElementById('infoAlerts').textContent=(p.alerts||[]).length;
+  document.getElementById('navAlertBadge').textContent=(p.alerts||[]).length;
+  document.querySelectorAll('.nav-badge-mobile').forEach(el=>el.textContent=(p.alerts||[]).length);
   document.getElementById('famShort').textContent=p.fam;
   document.getElementById('docShort').textContent=p.med;
   document.getElementById('famName').textContent=p.fam;
-  document.getElementById('famTel').textContent=p.famTel;
+  document.getElementById('famTel').textContent=p.famTel||'—';
   document.getElementById('docName').textContent=p.med;
-  document.getElementById('docTel').textContent=p.medTel;
+  document.getElementById('docTel').textContent=p.medTel||'—';
   document.getElementById('locZone').textContent=p.zone;
-  document.getElementById('locCoords').textContent=`${Math.abs(p.lat).toFixed(4)}°S · ${p.lon.toFixed(4)}°E`;
+  document.getElementById('locCoords').textContent=(p.lat!=null&&p.lon!=null)
+    ? `${Math.abs(p.lat).toFixed(4)}°S · ${Number(p.lon).toFixed(4)}°E` : 'GPS en attente…';
   document.getElementById('sNote').textContent=p.note;
-  document.getElementById('sHist').innerHTML=p.hist.map(h=>`<div class="hitem"><div class="a-text">${h.m}</div><div class="a-time">${h.tm}</div></div>`).join('');
-  document.getElementById('allAlerts').innerHTML=p.alerts.map(a=>`<div class="alert-item">
+  document.getElementById('sHist').innerHTML=(p.hist||[]).map(h=>`<div class="hitem"><div class="a-text">${h.m||h}</div><div class="a-time">${h.tm||''}</div></div>`).join('');
+  document.getElementById('allAlerts').innerHTML=(p.alerts||[]).map(a=>`<div class="alert-item">
     <div class="a-icon ${a.type==='red'?'ai-red':'ai-blue'}"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
     <div><div class="a-text">${a.m}</div><div class="a-time">${a.tm}</div></div>
   </div>`).join('')||'<div style="color:var(--txt3)">Aucune alerte</div>';
@@ -318,25 +342,62 @@ function showPanel(id){
   document.getElementById('pageSub').textContent=titles[id][1];
 }
 
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
-function imOk(){me.s='stable';toast('Message envoyé : « Je vais bien » — simulation');renderAll();}
-function sos(){
-  me.s='alert';
-  me.alerts.unshift({type:'red',m:'Vous avez demandé de l’aide — famille alertée',tm:'À l\'instant'});
-  toast('URGENCE envoyée à votre famille et au médecin');
-  renderAll();
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
+
+async function imOk(){
+  try{
+    await apiSend('im_ok','Je vais bien, ne vous inquiétez pas.');
+    me.s='stable';
+    toast('Message envoyé à votre famille et au médecin');
+    await loadPatient();
+  }catch(e){toast('Erreur : '+e.message);}
 }
-function smsFamily(){toast(`Message envoyé à ${me.fam} — logiciel`);}
-function smsDoctor(){toast(`Message envoyé à ${me.med} — logiciel`);}
-function shareLocation(){toast(`Position ${me.zone} envoyée à la famille — logiciel`);}
+
+async function sos(){
+  if(!confirm('Confirmer l\'alerte URGENCE ? Votre famille et le médecin seront prévenus.')) return;
+  try{
+    const d=await apiSend('sos');
+    me.s='alert';
+    me.alerts.unshift({type:'red',m:'Urgence envoyée — famille et médecin alertés',tm:'À l\'instant'});
+    toast(`URGENCE envoyée · ${d.zone||me.zone}`);
+    renderAll();
+  }catch(e){toast('Erreur urgence : '+e.message);}
+}
+
+async function smsFamily(){
+  try{
+    await apiSend('message_famille','Le patient souhaite contacter sa famille.');
+    toast(`Message envoyé à ${me.fam}`);
+  }catch(e){toast('Erreur : '+e.message);}
+}
+
+async function smsDoctor(){
+  try{
+    await apiSend('message_medecin','Le patient souhaite contacter son médecin.');
+    toast(`Message envoyé à ${me.med} (plateforme)`);
+  }catch(e){toast('Erreur : '+e.message);}
+}
+
+async function shareLocation(){
+  try{
+    const d=await apiSend('location');
+    toast(`Position ${d.zone||me.zone} envoyée à la famille`);
+  }catch(e){toast('Erreur : '+e.message);}
+}
+
 function goMap(){window.location.href=`/portail/carte/?patient=${me.id}`;}
 function quickMsg(t){document.getElementById('msgText').value=t;}
-function sendMessage(){
+
+async function sendMessage(){
   const t=document.getElementById('msgText').value.trim();
   if(!t){toast('Écrivez un message');return;}
-  toast('Message envoyé à votre famille — simulation');
-  document.getElementById('msgText').value='';
+  try{
+    await apiSend('message_famille',t);
+    toast('Message envoyé à votre famille (SMS + e-mail)');
+    document.getElementById('msgText').value='';
+  }catch(e){toast('Erreur : '+e.message);}
 }
+
 function logout(){
   sessionStorage.removeItem('gerio_role');
   sessionStorage.removeItem('gerio_profil');
@@ -354,7 +415,8 @@ document.getElementById('bottomNav').innerHTML=`
 
 setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR');},1000);
 document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR');
-renderAll();
+loadPatient();
+setInterval(loadPatient,5000);
 </script>
 </body>
 </html>
