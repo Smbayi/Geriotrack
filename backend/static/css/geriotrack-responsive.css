@@ -181,13 +181,7 @@ body:has(.body-row) > .sidebar {
   .analyse-ov { padding: 0 !important; }
   .analyse-panel { width: 100% !important; border-radius: 0 !important; }
   .analyse-body { grid-template-columns: 1fr !important; }
-  #avatarCanvas {
-    min-height: 180px !important;
-    height: 180px !important;
-    max-height: 180px !important;
-  }
-
-  /* Géolocalisation */
+  /* Overlay analyse — styles détaillés dans analyse-compact.css */
   body:has(.body-row) {
     height: auto !important;
     min-height: 100vh;

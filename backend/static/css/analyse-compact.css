@@ -1,0 +1,491 @@
+/* GérioTrack — Analyse / Suivi compact (carrés + ECG rectangle) */
+
+.analyse-ov,
+.analyse-panel,
+.analyse-body,
+.layout,
+.sensors {
+  max-width: 100%;
+}
+
+.analyse-panel,
+.analyse-body {
+  overflow-x: hidden;
+}
+
+/* ── Page analyse standalone ── */
+.layout {
+  gap: 10px;
+}
+
+.sensors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.sensor-card#mouvement,
+.sensor-card#ecg {
+  grid-column: 1 / -1;
+}
+
+.sensor-card {
+  border-radius: 12px;
+}
+
+.sensor-body {
+  padding: 10px 12px !important;
+}
+
+.sensor-grid {
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 6px !important;
+  margin-bottom: 8px !important;
+}
+
+.metric {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8px 6px !important;
+  border-radius: 10px;
+}
+
+.metric-label {
+  font-size: 8px !important;
+  margin-bottom: 4px !important;
+  letter-spacing: 0.04em;
+}
+
+.metric-val {
+  font-size: 14px !important;
+}
+
+.metric-val span {
+  font-size: 9px !important;
+  display: block;
+  margin-top: 1px;
+}
+
+.chart-wrap {
+  padding: 6px 8px !important;
+  margin-top: 8px !important;
+}
+
+canvas.sensor-canvas {
+  height: 56px !important;
+}
+
+canvas#ecgCanvas {
+  height: 88px !important;
+}
+
+.temp-gauge {
+  gap: 10px;
+}
+
+.gauge-ring {
+  width: 72px !important;
+  height: 72px !important;
+}
+
+.temp-details {
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 6px !important;
+}
+
+.temp-details .metric {
+  aspect-ratio: 1;
+}
+
+.avatar-card #avatarCanvas {
+  height: 200px !important;
+  min-height: 160px !important;
+}
+
+.avatar-status {
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 6px !important;
+  padding: 10px !important;
+}
+
+.as-item {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8px !important;
+}
+
+.as-label {
+  font-size: 8px !important;
+}
+
+.as-val {
+  font-size: 13px !important;
+}
+
+.ecg-meta {
+  gap: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+.ecg-bpm {
+  font-size: 28px !important;
+}
+
+.ecg-meta .metric {
+  min-width: 0;
+  flex: 1;
+}
+
+.sensor-tags,
+.a-tags {
+  margin-top: 8px !important;
+  gap: 4px !important;
+}
+
+.sensor-tags .tag,
+.a-tags .a-tag {
+  font-size: 9px !important;
+  padding: 2px 6px !important;
+}
+
+.card-header,
+.a-card-h {
+  padding: 8px 10px !important;
+}
+
+.card-sub,
+.a-card-h .sub {
+  font-size: 9px !important;
+}
+
+/* ── Overlay Suivi (patients.html) ── */
+.analyse-body {
+  gap: 8px !important;
+  padding: 10px !important;
+}
+
+.a-left {
+  width: 100%;
+}
+
+.a-left .a-card {
+  display: grid;
+  grid-template-columns: 96px 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 6px;
+  padding-bottom: 6px;
+}
+
+.a-left .a-card-h {
+  grid-column: 1 / -1;
+}
+
+#avatarCanvas {
+  grid-row: 2 / 4;
+  grid-column: 1;
+  width: 96px !important;
+  max-width: 96px !important;
+  height: 120px !important;
+  min-height: 120px !important;
+  max-height: 120px !important;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#avatarCanvas canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+
+.a-stats {
+  grid-column: 2 / 4;
+  grid-row: 2 / 4;
+  padding: 0 6px 6px 0 !important;
+  gap: 6px !important;
+  align-content: start;
+}
+
+.a-stat {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6px 4px !important;
+}
+
+.a-stat .lbl {
+  font-size: 7px !important;
+}
+
+.a-stat .val {
+  font-size: 11px !important;
+}
+
+.a-sensors {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.a-card#mouvement,
+.a-card#ecg {
+  grid-column: 1 / -1;
+}
+
+.a-card#temperature {
+  grid-column: 1 / -1;
+}
+
+.orient-row {
+  gap: 6px !important;
+  padding: 8px 8px 4px !important;
+}
+
+.orient-box {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8px !important;
+  text-align: center;
+}
+
+.orient-box .olbl {
+  font-size: 8px !important;
+  line-height: 1.2;
+}
+
+.orient-box .oval {
+  font-size: 16px !important;
+}
+
+.a-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  padding: 8px !important;
+}
+
+.a-metric {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6px 4px !important;
+  min-width: 0;
+}
+
+.a-metric .lbl {
+  font-size: 7px !important;
+  margin-bottom: 2px !important;
+}
+
+.a-metric .val {
+  font-size: 11px !important;
+  line-height: 1.2;
+}
+
+.a-metric .val span {
+  font-size: 8px !important;
+  display: block;
+}
+
+.risk-live {
+  padding: 0 8px 6px !important;
+}
+
+.risk-warn {
+  margin: 0 8px 6px !important;
+  padding: 6px 8px !important;
+  font-size: 10px !important;
+}
+
+.a-chart {
+  margin: 0 8px 6px !important;
+  padding: 4px 6px !important;
+}
+
+.a-chart canvas {
+  height: 48px !important;
+}
+
+.a-card#ecg .a-chart canvas {
+  height: 72px !important;
+}
+
+.ecg-row {
+  padding: 8px !important;
+  gap: 8px !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.ecg-row > div:first-child {
+  grid-column: 1;
+  text-align: center;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px;
+}
+
+.ecg-bpm-big {
+  font-size: 22px !important;
+  line-height: 1;
+}
+
+.ecg-row .a-metric {
+  aspect-ratio: 1;
+}
+
+.ecg-row .ecg-st {
+  grid-column: 1 / -1;
+  text-align: center;
+  justify-self: center;
+}
+
+.a-gsm {
+  padding: 6px 10px !important;
+  gap: 6px !important;
+}
+
+.a-gsm-t {
+  width: 100%;
+  margin-bottom: 2px;
+}
+
+.analyse-hdr {
+  padding: 10px 12px !important;
+  flex-wrap: wrap;
+  gap: 8px !important;
+}
+
+.analyse-hdr .live-badge {
+  order: 3;
+}
+
+/* Desktop : layout classique */
+@media (min-width: 900px) {
+  .layout {
+    grid-template-columns: 220px 1fr !important;
+  }
+
+  .avatar-card {
+    position: sticky;
+    top: 76px;
+  }
+
+  .avatar-card #avatarCanvas {
+    height: 220px !important;
+  }
+
+  .analyse-body {
+    grid-template-columns: 200px 1fr !important;
+  }
+
+  .a-left .a-card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #avatarCanvas {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 140px !important;
+    min-height: 140px !important;
+    max-height: 140px !important;
+    grid-row: auto;
+    grid-column: auto;
+  }
+
+  .a-stats {
+    grid-column: auto;
+    grid-row: auto;
+    padding: 10px !important;
+  }
+
+  .a-sensors {
+    grid-template-columns: 1fr !important;
+  }
+
+  .a-card#temperature {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .analyse-ov {
+    padding: 0 !important;
+  }
+
+  .analyse-panel {
+    width: 100% !important;
+    max-width: 100vw !important;
+    border-radius: 0 !important;
+    height: 100%;
+  }
+
+  .a-card-h .sub {
+    display: none;
+  }
+
+  .a-tags {
+    display: none;
+  }
+
+  .sensor-tags {
+    display: none;
+  }
+
+  .gsm-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .patient-bar .patient-meta {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .sensors {
+    grid-template-columns: 1fr;
+  }
+
+  .temp-gauge {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 400px) {
+  .a-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .a-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .sensor-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}

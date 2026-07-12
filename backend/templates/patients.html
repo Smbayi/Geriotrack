@@ -6,6 +6,7 @@
 <title>GérioTrack — Patients</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/css/geriotrack-responsive.css">
+<link rel="stylesheet" href="/static/css/analyse-compact.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
 :root{--bg:#0a0e17;--bg2:#111827;--bg3:#1a2235;--bg4:#212d42;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--teal:#00d4aa;--teal-dim:rgba(0,212,170,0.10);--red:#ff4d6d;--red-dim:rgba(255,77,109,0.10);--amber:#f59e0b;--amber-dim:rgba(245,158,11,0.10);--blue:#60a5fa;--blue-dim:rgba(96,165,250,0.10);--purple:#a78bfa;--purple-dim:rgba(167,139,250,0.10);--green:#34d399;--green-dim:rgba(52,211,153,0.10);--txt:#e2e8f0;--txt2:#94a3b8;--txt3:#475569;--sidebar-w:240px;--font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'IBM Plex Mono',monospace}
@@ -183,13 +184,13 @@ tbody td{padding:12px 14px;font-size:13px;color:var(--txt2);vertical-align:middl
 /* ANALYSE OVERLAY */
 .analyse-ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;display:flex;align-items:stretch;justify-content:center;backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .25s;padding:12px}
 .analyse-ov.open{opacity:1;pointer-events:all}
-.analyse-panel{width:min(1100px,100%);max-height:100%;background:var(--bg);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;transform:translateY(16px);transition:transform .3s;position:relative}
+.analyse-panel{width:min(1100px,100%);max-height:100%;max-width:100vw;background:var(--bg);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;transform:translateY(16px);transition:transform .3s;position:relative}
 .analyse-ov.open .analyse-panel{transform:translateY(0)}
 .analyse-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--bg2);flex-shrink:0}
 .analyse-hdr .modal-av{width:36px;height:36px;font-size:13px}
 .analyse-title{font-family:var(--font-head);font-size:15px;font-weight:700;color:#fff}
 .analyse-sub{font-size:11px;color:var(--txt3);font-family:var(--font-mono);margin-top:2px}
-.analyse-body{flex:1;overflow-y:auto;padding:14px;display:grid;grid-template-columns:280px 1fr;gap:12px;align-items:start;min-height:0}
+.analyse-body{flex:1;overflow-x:hidden;overflow-y:auto;padding:14px;display:grid;grid-template-columns:200px 1fr;gap:12px;align-items:start;min-height:0;width:100%}
 @media(max-width:900px){.analyse-body{grid-template-columns:1fr}}
 .a-left{display:flex;flex-direction:column}
 .a-left .a-card{display:flex;flex-direction:column}
@@ -935,6 +936,9 @@ function initAvatar(){
   renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
   root.appendChild(renderer.domElement);
+  renderer.domElement.style.width='100%';
+  renderer.domElement.style.height='100%';
+  renderer.domElement.style.display='block';
   scene.add(new THREE.HemisphereLight(0xb8d4ff,0x1a2235,0.9));
   const dir=new THREE.DirectionalLight(0x00d4aa,0.7); dir.position.set(3,5,2); scene.add(dir);
   const floor=new THREE.Mesh(new THREE.CircleGeometry(1.6,48), new THREE.MeshStandardMaterial({color:0x1a2235,metalness:0.2,roughness:0.8}));
