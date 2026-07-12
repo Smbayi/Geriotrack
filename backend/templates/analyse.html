@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GérioTrack — Analyse en temps réel</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/geriotrack-responsive.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
 :root{--bg:#0a0e17;--bg2:#111827;--bg3:#1a2235;--bg4:#212d42;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--teal:#00d4aa;--teal-dim:rgba(0,212,170,0.10);--red:#ff4d6d;--red-dim:rgba(255,77,109,0.10);--amber:#f59e0b;--amber-dim:rgba(245,158,11,0.10);--blue:#60a5fa;--blue-dim:rgba(96,165,250,0.10);--purple:#a78bfa;--purple-dim:rgba(167,139,250,0.10);--green:#34d399;--txt:#e2e8f0;--txt2:#94a3b8;--txt3:#475569;--sidebar-w:240px;--font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'IBM Plex Mono',monospace}
@@ -581,5 +582,6 @@ const urlPid=new URLSearchParams(location.search).get('patient');
 if(urlPid && PATIENTS.some(p=>p.id===urlPid)){ select.value=urlPid; current=PATIENTS.find(p=>p.id===urlPid); applyPatient(); pollLiveSensors(); }
 if(location.hash==='#ecg') setTimeout(()=>document.getElementById('ecg')?.scrollIntoView({behavior:'smooth'}),400);
 </script>
+<script src="/static/js/geriotrack-mobile.js"></script>
 </body>
 </html>

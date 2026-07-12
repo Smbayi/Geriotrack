@@ -14,7 +14,10 @@
 
 const char* ssid     = "MOI";
 const char* password = "Elsa@202";
-String djangoURL = "http://192.168.150.205:8000/api/recevoir/";
+// Production Render (Internet requis) :
+String djangoURL = "https://geriotrack.onrender.com/api/recevoir/";
+// Labo local (même Wi-Fi que le PC Django) :
+// String djangoURL = "http://192.168.150.205:8000/api/recevoir/";
 
 #define DHTPIN 4
 #define DHTTYPE DHT11
