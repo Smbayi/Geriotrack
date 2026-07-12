@@ -1,6 +1,5 @@
 /* GérioTrack — responsive PC · tablette · smartphone */
 
-/* ── Menu mobile (injecté par geriotrack-mobile.js) ── */
 .menu-toggle {
   display: none;
   width: 40px;
@@ -28,8 +27,8 @@
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  z-index: 99;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 900;
   backdrop-filter: blur(2px);
 }
 body.sidebar-open {
@@ -39,66 +38,49 @@ body.sidebar-open .sidebar-backdrop {
   display: block;
 }
 
+/* Sidebar au-dessus de tout (carte, overlays) */
+body:not(:has(.bottom-nav)) > .sidebar,
+body:has(.body-row) > .sidebar {
+  z-index: 910 !important;
+}
+
 /* ── Tablette (≤1024px) ── */
 @media (max-width: 1024px) {
   .stats-grid,
   .stats {
     grid-template-columns: repeat(2, 1fr) !important;
   }
-  .two-cols,
-  .two,
-  .three-cols,
-  .three,
-  .bottom-row,
-  .grid2 {
+  .two-cols, .two, .three-cols, .three, .bottom-row, .grid2 {
     grid-template-columns: 1fr !important;
   }
-  .content {
-    padding: 18px 20px !important;
-  }
-  .topbar {
-    padding-left: 16px !important;
-    padding-right: 16px !important;
-    gap: 10px !important;
-  }
-  .side-panel {
-    width: 280px !important;
-  }
-  .patient-select {
-    min-width: 200px !important;
-  }
-  .avatar-card {
-    position: static !important;
-  }
-  #avatarCanvas {
-    height: 280px !important;
-  }
+  .content { padding: 18px 20px !important; }
+  .topbar { padding-left: 16px !important; padding-right: 16px !important; }
+  .side-panel { width: 280px !important; }
+  .avatar-card { position: static !important; }
+  #avatarCanvas { min-height: 200px !important; }
 }
 
 /* ── Smartphone (≤768px) ── */
 @media (max-width: 768px) {
-  .menu-toggle {
-    display: inline-flex;
-  }
+  .menu-toggle { display: inline-flex; }
 
-  /* Sidebar admin (dashboard, patients, alertes, analyse) — pas le portail famille */
-  body:not(:has(.bottom-nav)) > .sidebar {
+  body:not(:has(.bottom-nav)) > .sidebar,
+  body:has(.body-row) > .sidebar {
     position: fixed !important;
     left: 0;
     top: 0;
     bottom: 0;
-    z-index: 200 !important;
     transform: translateX(-100%);
     transition: transform 0.28s ease;
     box-shadow: 8px 0 32px rgba(0, 0, 0, 0.35);
   }
-  body:not(:has(.bottom-nav)).sidebar-open > .sidebar {
+  body:not(:has(.bottom-nav)).sidebar-open > .sidebar,
+  body:has(.body-row).sidebar-open > .sidebar {
     transform: translateX(0);
   }
   body:not(:has(.bottom-nav)) > .main {
     margin-left: 0 !important;
     width: 100%;
-    min-width: 0;
   }
 
   .topbar {
@@ -106,6 +88,7 @@ body.sidebar-open .sidebar-backdrop {
     min-height: 56px;
     flex-wrap: wrap;
     padding: 10px 14px !important;
+    z-index: 800 !important;
   }
   .topbar > div:first-child {
     display: flex;
@@ -114,281 +97,144 @@ body.sidebar-open .sidebar-backdrop {
     flex: 1;
     min-width: 0;
   }
-  .topbar-title {
-    font-size: 14px !important;
-  }
-  .topbar-sub {
-    display: none !important;
-  }
-  .topbar-right {
-    gap: 8px !important;
-  }
-  .clock {
-    display: none !important;
-  }
-  .live-badge {
-    font-size: 10px !important;
-    padding: 3px 8px !important;
-  }
+  .topbar-sub { display: none !important; }
+  .clock { display: none !important; }
 
+  /* 4 petits carrés — dashboard + alertes */
   .stats-grid,
   .stats {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
-  }
-  .stat-value {
-    font-size: 26px !important;
-  }
-  .stat-delta {
-    top: 14px !important;
-    right: 14px !important;
-  }
-
-  .content {
-    padding: 14px !important;
-  }
-
-  /* Tableaux défilables */
-  .table-wrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  table {
-    min-width: 640px;
-  }
-
-  .toolbar {
+    grid-template-columns: repeat(2, 1fr) !important;
     gap: 8px !important;
+    margin-bottom: 14px !important;
   }
-  .search-wrap {
-    min-width: 100% !important;
-    max-width: 100% !important;
-    order: -1;
-  }
-  .rc {
-    width: 100%;
-    margin-left: 0 !important;
-  }
-  .monitor-bar {
+  .stat-card {
+    padding: 10px 8px !important;
+    border-radius: 10px !important;
+    aspect-ratio: 1;
+    display: flex !important;
     flex-direction: column;
-    align-items: stretch !important;
-  }
-  .monitor-select {
-    min-width: 0 !important;
-    width: 100%;
-  }
-
-  /* Modales plein écran */
-  .modal-ov {
-    justify-content: center !important;
-    align-items: stretch !important;
-  }
-  .modal-panel {
-    width: 100% !important;
-    max-width: 100% !important;
-    border-left: none !important;
-    transform: translateY(100%) !important;
-  }
-  .modal-ov.open .modal-panel {
-    transform: translateY(0) !important;
-  }
-  .modal-hdr,
-  .modal-body {
-    padding-left: 16px !important;
-    padding-right: 16px !important;
-  }
-  .vrow,
-  .igrid,
-  .orient-row,
-  .a-metrics,
-  .msg-meta {
-    grid-template-columns: 1fr !important;
-  }
-  .macts .mact {
-    min-width: 100% !important;
-  }
-
-  /* Overlay analyse */
-  .analyse-ov {
-    padding: 0 !important;
-  }
-  .analyse-panel {
-    width: 100% !important;
-    max-height: 100% !important;
-    border-radius: 0 !important;
-    border: none !important;
-  }
-  .analyse-body {
-    grid-template-columns: 1fr !important;
-    padding: 10px !important;
-  }
-  #avatarCanvas {
-    height: 160px !important;
-    max-height: 160px !important;
-  }
-
-  .notif-panel {
-    width: min(320px, calc(100vw - 24px)) !important;
-    right: -4px !important;
-  }
-
-  .pgrid {
-    grid-template-columns: 1fr !important;
-  }
-
-  .patient-bar {
-    flex-direction: column;
-    align-items: stretch !important;
-  }
-  .patient-select {
-    width: 100% !important;
-    min-width: 0 !important;
-  }
-  .patient-meta {
-    margin-left: 0 !important;
-    width: 100%;
-  }
-  .layout {
-    grid-template-columns: 1fr !important;
-  }
-  .gsm-bar {
-    flex-direction: column;
-    align-items: stretch !important;
-  }
-  .gsm-bar-title {
-    margin-right: 0 !important;
-    margin-bottom: 6px;
-  }
-  .gsm-btn {
-    width: 100%;
+    align-items: center;
     justify-content: center;
+    text-align: center;
+    min-height: 0;
+  }
+  .stat-card .stat-icon {
+    width: 26px !important;
+    height: 26px !important;
+    margin-bottom: 6px !important;
+  }
+  .stat-card .stat-icon svg { width: 13px !important; height: 13px !important; }
+  .stat-card .stat-value {
+    font-size: 18px !important;
+    margin-bottom: 2px;
+    line-height: 1;
+  }
+  .stat-card .stat-label {
+    font-size: 8px !important;
+    line-height: 1.25;
+    padding: 0 4px;
+  }
+  .stat-card .stat-delta {
+    position: static !important;
+    font-size: 7px !important;
+    margin-top: 4px;
+    padding: 1px 5px;
+  }
+  .stats > .stat {
+    aspect-ratio: 1;
+    padding: 10px 8px !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .stats > .stat .lbl {
+    font-size: 8px !important;
+    margin-bottom: 4px !important;
+    line-height: 1.2;
+  }
+  .stats > .stat .val {
+    font-size: 18px !important;
+    line-height: 1;
   }
 
-  /* Géolocalisation — carte + panneau empilés */
+  .content { padding: 14px !important; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 640px; }
+  tbody tr, .pcard { animation: none !important; }
+
+  .notif-wrap { position: static !important; }
+  .notif-panel {
+    position: fixed !important;
+    top: 58px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: none !important;
+    z-index: 920 !important;
+  }
+
+  .modal-panel { width: 100% !important; transform: translateY(100%) !important; }
+  .modal-ov.open .modal-panel { transform: translateY(0) !important; }
+  .analyse-ov { padding: 0 !important; }
+  .analyse-panel { width: 100% !important; border-radius: 0 !important; }
+  .analyse-body { grid-template-columns: 1fr !important; }
+  #avatarCanvas {
+    min-height: 180px !important;
+    height: 180px !important;
+    max-height: 180px !important;
+  }
+
+  /* Géolocalisation */
   body:has(.body-row) {
     height: auto !important;
     min-height: 100vh;
     overflow: auto !important;
     flex-direction: column;
   }
-  body:has(.body-row) > .sidebar {
-    position: fixed !important;
-    transform: translateX(-100%);
-    transition: transform 0.28s ease;
-    z-index: 250 !important;
-  }
-  body:has(.body-row).sidebar-open > .sidebar {
-    transform: translateX(0);
-  }
-  body:has(.body-row) > .main {
-    flex: 1;
-    min-height: 0;
-    width: 100%;
-  }
-  .body-row {
-    flex-direction: column !important;
-    overflow: visible !important;
-  }
+  body:has(.body-row) > .main { width: 100%; }
+  .body-row { flex-direction: column !important; overflow: visible !important; }
+  .map-column { display: flex; flex-direction: column; flex: 1; min-height: 0; }
   .map-container {
-    min-height: 52vh !important;
-    height: 52vh !important;
+    min-height: 45vh !important;
+    height: 45vh !important;
     flex: none !important;
   }
+  .map-overlay-tl,
+  .map-controls,
+  .city-badge { display: none !important; }
   .side-panel {
     width: 100% !important;
     height: auto !important;
-    max-height: none !important;
     border-left: none !important;
     border-top: 1px solid var(--border, rgba(255, 255, 255, 0.07));
   }
-  .map-overlay-tl {
-    top: 10px !important;
-    left: 10px !important;
-    max-width: calc(100% - 20px);
-  }
-  .map-controls {
-    flex-wrap: wrap;
-    justify-content: center;
-    max-width: calc(100% - 20px);
-    bottom: 12px !important;
-  }
-  .map-ctrl-btn {
-    padding: 8px 10px !important;
-    font-size: 10px !important;
-  }
   .alert-banner {
-    width: calc(100% - 24px);
-    max-width: 360px;
-    padding: 8px 12px !important;
-  }
-  .city-badge {
-    bottom: auto !important;
-    top: 10px;
-    right: 10px;
-    font-size: 10px !important;
+    width: calc(100% - 16px);
+    max-width: 100%;
+    top: 8px !important;
+    font-size: 11px !important;
+    padding: 8px 10px !important;
   }
 
-  /* Portail famille / patient (bottom-nav géré dans le template) */
   body:has(.bottom-nav) .main {
     padding-bottom: calc(var(--bottom-h, 64px) + 8px);
   }
-  .hero {
-    flex-direction: column;
-    align-items: flex-start !important;
-  }
-  .actions {
-    grid-template-columns: 1fr !important;
-  }
 }
 
-/* ── Petit smartphone (≤480px) ── */
 @media (max-width: 480px) {
-  .stat-card {
-    padding: 16px !important;
-  }
-  .sensor-val {
-    font-size: 22px !important;
-  }
-  .ecg-bpm,
-  .ecg-bpm-big {
-    font-size: 24px !important;
-  }
-  .btn-primary,
-  .btn-warn {
-    width: 100%;
-    justify-content: center;
-  }
   .filter-group {
-    width: 100%;
     overflow-x: auto;
     flex-wrap: nowrap !important;
-    padding-bottom: 4px;
     -webkit-overflow-scrolling: touch;
   }
-  .fb {
-    flex-shrink: 0;
-  }
-  .form-panel {
-    max-height: 100vh !important;
-    border-radius: 12px 12px 0 0 !important;
-  }
-  .p-hr {
-    display: none;
-  }
-  .gps-btns {
-    flex-direction: column;
-  }
+  .fb { flex-shrink: 0; }
 }
 
-/* ── Zones tactiles confortables ── */
 @media (hover: none) and (pointer: coarse) {
-  .nav-item,
-  .icon-btn,
-  .menu-toggle,
-  .fb,
-  .btn-primary,
-  .gsm-btn,
-  .a-gsm-btn {
+  .nav-item, .icon-btn, .menu-toggle, .fb, .btn-primary, .gsm-btn, .a-gsm-btn {
     min-height: 44px;
   }
 }

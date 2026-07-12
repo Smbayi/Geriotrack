@@ -90,7 +90,7 @@ thead th{padding:11px 14px;text-align:left;font-size:11px;font-weight:500;color:
 thead th:hover{color:var(--txt2)}
 .si{margin-left:4px;opacity:.4;font-size:10px}
 thead th.sorted .si{opacity:1;color:var(--teal)}
-tbody tr{border-bottom:1px solid var(--border);transition:background .12s;cursor:pointer;animation:fadeUp .3s ease both}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s;cursor:pointer}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:var(--bg3)}
 tbody td{padding:12px 14px;font-size:13px;color:var(--txt2);vertical-align:middle}
@@ -113,7 +113,7 @@ tbody td{padding:12px 14px;font-size:13px;color:var(--txt2);vertical-align:middl
 .abt.ac2:hover{color:var(--green);border-color:rgba(52,211,153,.3);background:var(--green-dim)}
 .abt.al:hover{color:var(--red);border-color:rgba(255,77,109,.3);background:var(--red-dim)}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
-.pcard{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:all .2s;animation:fadeUp .3s ease both}
+.pcard{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .2s}
 .pcard:hover{border-color:var(--border2);transform:translateY(-2px)}
 .pcard-top{padding:18px 18px 14px;position:relative}
 .pcard-top-bg{position:absolute;inset:0;opacity:.04;background:linear-gradient(135deg,currentColor,transparent)}
@@ -198,7 +198,7 @@ tbody td{padding:12px 14px;font-size:13px;color:var(--txt2);vertical-align:middl
 .a-card-h .dot{width:7px;height:7px;border-radius:50%}
 .a-card-h .ttl{font-family:var(--font-head);font-size:12px;font-weight:600;color:#fff}
 .a-card-h .sub{font-size:10px;color:var(--txt3);margin-left:auto;font-family:var(--font-mono)}
-#avatarCanvas{width:100%;height:175px;max-height:175px;display:block;background:radial-gradient(ellipse at center,#152033 0%,#0a0e17 70%);flex-shrink:0}
+#avatarCanvas{width:100%;height:175px;min-height:175px;max-height:175px;display:block;background:radial-gradient(ellipse at center,#152033 0%,#0a0e17 70%);flex-shrink:0;position:relative;overflow:hidden}
 .a-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px;flex-shrink:0}
 .a-stat{background:var(--bg3);border-radius:8px;padding:6px 8px}
 .a-stat .lbl{font-size:9px;color:var(--txt3);font-family:var(--font-mono);text-transform:uppercase;margin-bottom:2px}
@@ -528,6 +528,23 @@ const PT=[
   {id:'P011',p:'Odette', n:'Mbuyi',    a:74,ch:'Ch.6', s:'stable', r:.19,t:27.4,h:65,po:'58kg',ta:'162cm',med:'Dr. Mutombo', ct:'Louis Mbuyi · +243 81 455 6678',     pa:['Hypothyroïdie'],                    note:'Thyroïde stabilisée. TSH dans les normes.',             last:'Il y a 25min',c:'#34d399',hist:[{t:'ok',m:'TSH normale',tm:'Aujourd\'hui'}]},
   {id:'P012',p:'Fernand',n:'Kasongo',  a:91,ch:'Ch.10',s:'stable', r:.35,t:27.3,h:67,po:'65kg',ta:'168cm',med:'Dr. Tshimanga',ct:'Camille Kasongo · +243 82 788 9901', pa:['Dégén. maculaire','Arthrose'],     note:'Plus âgé du service. Suivi quotidien.',                  last:'Il y a 30min',c:'#60a5fa',hist:[{t:'ok',m:'Bonne nuit 7h',tm:'Aujourd\'hui'}]},
 ];
+const LS_CUSTOM='geriotrack_custom_patients';
+function loadCustomPatients(){
+  try{
+    const raw=localStorage.getItem(LS_CUSTOM);
+    if(!raw) return;
+    JSON.parse(raw).forEach(cp=>{
+      if(!PT.some(x=>x.id===cp.id)) PT.unshift(cp);
+    });
+  }catch(e){}
+}
+function saveCustomPatients(){
+  try{
+    const custom=PT.filter(p=>p.custom);
+    localStorage.setItem(LS_CUSTOM, JSON.stringify(custom));
+  }catch(e){}
+}
+loadCustomPatients();
 
 let filt='all',sk=null,sa=true,view='table';
 const ini=p=>(p.p[0]+p.n[0]).toUpperCase();
@@ -593,7 +610,7 @@ function renderTable(){
   if(!data.length){tb.innerHTML='';em.style.display='flex';return;}
   em.style.display='none';
   tb.innerHTML=data.map((p,i)=>`
-    <tr class="${p.id===activePatientId?'row-active':''}" style="animation-delay:${i*.04}s" onclick="openP('${p.id}')">
+    <tr data-id="${p.id}" class="${p.id===activePatientId?'row-active':''}" onclick="openP('${p.id}')">
       <td><div class="pc"><div class="pav" style="background:${p.c}18;color:${p.c};border-color:${p.c}40">${ini(p)}</div><div><div class="pname">${p.p} ${p.n}</div><div class="pid">${p.id} · ${p.med}</div></div></div></td>
       <td style="font-family:var(--font-mono);font-size:12px">${p.a} ans</td>
       <td style="font-family:var(--font-mono);font-size:12px;color:var(--txt)">${p.ch}</td>
@@ -614,7 +631,7 @@ function renderGrid(){
   document.getElementById('rc').textContent=data.length+' patient'+(data.length>1?'s':'');
   if(!data.length){gv.innerHTML='<div class="empty-state" style="display:flex;grid-column:1/-1"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p style="font-size:14px;color:var(--txt2)">Aucun patient trouvé</p></div>';return;}
   gv.innerHTML=data.map((p,i)=>`
-    <div class="pcard" style="animation-delay:${i*.05}s" onclick="openP('${p.id}')">
+    <div class="pcard" data-id="${p.id}" onclick="openP('${p.id}')">
       <div class="pcard-top" style="color:${p.c}">
         <div class="pcard-top-bg"></div>
         <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px">
@@ -649,6 +666,42 @@ function updateFilterLabels(){
   if(badge) badge.textContent=n;
 }
 function render(){updateFilterLabels();view==='table'?renderTable():renderGrid();}
+
+function updatePatientListInPlace(){
+  const data=getF();
+  document.getElementById('rc').textContent=data.length+' patient'+(data.length>1?'s':'');
+  if(view==='table'){
+    const tb=document.getElementById('tbody'), em=document.getElementById('empty');
+    if(!data.length){tb.innerHTML='';em.style.display='flex';return;}
+    em.style.display='none';
+    const ids=data.map(p=>p.id);
+    const existing=[...tb.querySelectorAll('tr')].map(tr=>tr.dataset.id);
+    if(existing.length!==ids.length||!ids.every((id,i)=>existing[i]===id)){renderTable();return;}
+    data.forEach(p=>{
+      const tr=tb.querySelector(`tr[data-id="${p.id}"]`);
+      if(!tr) return;
+      tr.classList.toggle('row-active', p.id===activePatientId);
+      const cells=tr.children;
+      if(cells[3]) cells[3].innerHTML=badge(p.s);
+      if(cells[4]) cells[4].innerHTML=`<div style="display:flex;align-items:center;gap:5px"><div class="rbw"><div class="rbb" style="width:${p.r*100}%;background:${rc(p.r)}"></div></div><span style="font-size:11px;font-family:var(--font-mono);color:${rc(p.r)}">${(p.r*100).toFixed(0)}%</span></div>`;
+      if(cells[5]) cells[5].textContent=p.t+'°C';
+      if(cells[6]) cells[6].textContent=p.h+'%';
+      if(cells[7]) cells[7].textContent=p.last;
+    });
+  } else {
+    const gv=document.getElementById('gridView');
+    const ids=data.map(p=>p.id);
+    const existing=[...gv.querySelectorAll('.pcard')].map(c=>c.dataset.id);
+    if(existing.length!==ids.length||!ids.every((id,i)=>existing[i]===id)){renderGrid();return;}
+    data.forEach(p=>{
+      const card=gv.querySelector(`.pcard[data-id="${p.id}"]`);
+      if(!card) return;
+      const riskEl=card.querySelector('.cvv');
+      if(riskEl) riskEl.textContent=(p.r*100).toFixed(0)+'%';
+    });
+  }
+  updateFilterLabels();
+}
 function setF(f,btn){filt=f;document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');render();}
 
 const COLORS=['#00d4aa','#60a5fa','#a78bfa','#34d399','#f59e0b','#ff4d6d'];
@@ -680,9 +733,11 @@ function submitPatient(e){
     id,p:prenom,n:nom,a:age,ch:chambre,s:'stable',r:0.2,t:27.2,h:65,
     po:poids,ta:taille,med,ct:`${contact} · ${contactTel}`,
     pa:patho.length?patho:['Aucun antécédent saisi'],
-    note,last:'À l\'instant',c:COLORS[nextNum%COLORS.length],
+    note,last:'À l\'instant',c:COLORS[nextNum%COLORS.length],custom:true,
     hist:[{t:'ok',m:`Patient créé · ${device}`,tm:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}],
   });
+  saveCustomPatients();
+  initActiveSelect();
   closeForm();
   filt='all';
   document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));
@@ -823,6 +878,8 @@ function openAnalyse(id){
   requestAnimationFrame(()=>{
     initAvatar();
     resizeAvatar();
+    setTimeout(resizeAvatar, 120);
+    setTimeout(resizeAvatar, 400);
     startSensorPoll();
   });
 }
@@ -1144,8 +1201,8 @@ if(autoAnalyse && PT.some(p=>p.id===autoAnalyse)){
 setInterval(async ()=>{
   if(document.getElementById('analyseOv').classList.contains('open')) return;
   await syncFromAPI();
-  render();
-},1000);
+  updatePatientListInPlace();
+},3000);
 </script>
 <script src="/static/js/geriotrack-mobile.js"></script>
 <script src="/static/js/geriotrack-notify.js"></script>
