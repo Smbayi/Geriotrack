@@ -5,595 +5,881 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GérioTrack — Analyse en temps réel</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/css/geriotrack-responsive.css">
-<link rel="stylesheet" href="/static/css/analyse-compact.css">
+<link rel="stylesheet" href="/static/css/geriotrack-responsive.css?v=20260713j">
+<link rel="stylesheet" href="/static/css/analyse-compact.css?v=20260713j">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
-:root{--bg:#0a0e17;--bg2:#111827;--bg3:#1a2235;--bg4:#212d42;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--teal:#00d4aa;--teal-dim:rgba(0,212,170,0.10);--red:#ff4d6d;--red-dim:rgba(255,77,109,0.10);--amber:#f59e0b;--amber-dim:rgba(245,158,11,0.10);--blue:#60a5fa;--blue-dim:rgba(96,165,250,0.10);--purple:#a78bfa;--purple-dim:rgba(167,139,250,0.10);--green:#34d399;--txt:#e2e8f0;--txt2:#94a3b8;--txt3:#475569;--sidebar-w:240px;--font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'IBM Plex Mono',monospace}
+:root{--bg:#0a0e17;--bg2:#111827;--bg3:#1a2235;--bg4:#212d42;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--teal:#00d4aa;--teal-dim:rgba(0,212,170,0.10);--red:#ff4d6d;--red-dim:rgba(255,77,109,0.10);--amber:#f59e0b;--amber-dim:rgba(245,158,11,0.10);--blue:#60a5fa;--purple:#a78bfa;--txt:#e2e8f0;--txt2:#94a3b8;--txt3:#475569;--font-head:'Syne',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'IBM Plex Mono',monospace}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-size:14px;min-height:100vh;display:flex;overflow-x:hidden}
-
-.sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow:hidden}
-.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
-.logo-mark{display:flex;align-items:center;gap:10px}
-.logo-icon{width:34px;height:34px;background:var(--teal);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.logo-icon svg{width:18px;height:18px;stroke:#0a0e17;fill:none;stroke-width:2.2;stroke-linecap:round}
-.logo-name{font-family:var(--font-head);font-size:16px;font-weight:700;color:#fff;letter-spacing:-.3px}
-.logo-sub{font-size:10px;color:var(--txt3);margin-top:2px;font-family:var(--font-mono)}
-.sidebar-section{padding:16px 12px 4px;flex-shrink:0}
-.sidebar-label{font-size:10px;font-weight:500;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase;padding:0 8px;margin-bottom:6px;font-family:var(--font-mono)}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--txt2);font-size:13px;font-weight:400;transition:all .15s;margin-bottom:2px;border:1px solid transparent;text-decoration:none;white-space:nowrap}
-.nav-item:hover{background:var(--bg3);color:var(--txt)}
-.nav-item.active{background:var(--teal-dim);color:var(--teal);border-color:rgba(0,212,170,.2);font-weight:500}
-.nav-item svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;flex-shrink:0}
-.nav-item .lbl{flex:1}
-.nav-badge{background:var(--red);color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;font-family:var(--font-mono);flex-shrink:0}
-.sidebar-bottom{margin-top:auto;border-top:1px solid var(--border);padding:14px 12px;flex-shrink:0}
-.user-card{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px}
-.u-av{width:32px;height:32px;border-radius:50%;background:var(--purple-dim);border:1.5px solid var(--purple);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--purple);font-family:var(--font-head);flex-shrink:0}
-.u-name{font-size:12px;font-weight:500;color:var(--txt)}
-.u-role{font-size:10px;color:var(--txt3)}
-.u-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);margin-left:auto;box-shadow:0 0 6px var(--teal);animation:pdot 2s infinite;flex-shrink:0}
-@keyframes pdot{0%,100%{opacity:1}50%{opacity:.4}}
-
-.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0}
-.topbar{height:60px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:50;flex-shrink:0}
+body.analyse-page{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-size:14px;min-height:100vh;overflow-x:hidden}
+body.analyse-page > .sidebar{display:none!important}
+.main{width:100%;max-width:100vw;margin:0!important;display:flex;flex-direction:column;min-height:100vh;overflow:hidden}
+.topbar{height:56px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:50;flex-shrink:0}
+.topbar-brand{display:flex;align-items:center;gap:8px;text-decoration:none;color:#fff;font-family:var(--font-head);font-size:14px;font-weight:700}
+.topbar-brand-icon{width:28px;height:28px;background:var(--teal);border-radius:7px;display:flex;align-items:center;justify-content:center}
+.topbar-brand-icon svg{width:14px;height:14px;stroke:#0a0e17;fill:none;stroke-width:2.2;stroke-linecap:round}
+.topbar-sep{width:1px;height:24px;background:var(--border)}
 .topbar-title{font-family:var(--font-head);font-size:15px;font-weight:600;color:#fff}
 .topbar-sub{font-size:12px;color:var(--txt3);font-family:var(--font-mono);margin-left:4px}
+.topbar-nav{display:flex;align-items:center;gap:4px;margin-left:8px;flex-wrap:wrap}
+.topbar-nav a{padding:6px 10px;border-radius:8px;font-size:12px;color:var(--txt2);text-decoration:none;border:1px solid transparent}
+.topbar-nav a:hover{background:var(--bg3);color:var(--txt)}
+.topbar-nav a.active{background:var(--teal-dim);color:var(--teal);border-color:rgba(0,212,170,.2);font-weight:500}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
 .live-badge{display:flex;align-items:center;gap:6px;background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.25);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;color:var(--teal);font-family:var(--font-mono)}
 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pdot 1.5s infinite}
+@keyframes pdot{0%,100%{opacity:1}50%{opacity:.4}}
 .clock{font-family:var(--font-mono);font-size:12px;color:var(--txt2)}
-.icon-btn{width:34px;height:34px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--txt2);position:relative}
+.icon-btn{width:34px;height:34px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--txt2);position:relative}
 .icon-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
-.nbadge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono)}
-
-.content{padding:20px 28px 28px;flex:1}
-
-.patient-bar{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
-.patient-bar label{font-size:11px;color:var(--txt3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.06em}
-.patient-select{background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--txt);padding:9px 14px;font-family:var(--font-body);font-size:13px;min-width:260px;outline:none}
-.patient-select:focus{border-color:rgba(0,212,170,.4)}
-.patient-meta{display:flex;gap:10px;flex-wrap:wrap;margin-left:auto}
-.meta-pill{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:11px;font-family:var(--font-mono);color:var(--txt2)}
-.meta-pill strong{color:var(--teal);font-weight:500}
-
-.layout{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start}
-@media(max-width:1100px){.layout{grid-template-columns:1fr}}
-
-.avatar-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;position:sticky;top:76px}
-.card-header{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);gap:10px}
-.card-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.card-title{font-family:var(--font-head);font-size:13px;font-weight:600;color:#fff}
-.card-sub{font-size:11px;color:var(--txt3);margin-left:auto;font-family:var(--font-mono)}
-#avatarCanvas{width:100%;height:360px;min-height:240px;display:block;background:radial-gradient(ellipse at center,#152033 0%,#0a0e17 70%);position:relative;overflow:hidden}
-.avatar-status{padding:14px 18px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.as-item{background:var(--bg3);border-radius:10px;padding:10px 12px}
-.as-label{font-size:10px;color:var(--txt3);font-family:var(--font-mono);text-transform:uppercase;margin-bottom:4px}
-.as-val{font-family:var(--font-head);font-size:16px;font-weight:600;color:#fff}
-.as-val.walk{color:var(--teal)}
-.as-val.idle{color:var(--amber)}
-.as-val.alert{color:var(--red)}
-
-.sensors{display:flex;flex-direction:column;gap:16px}
-.sensor-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden}
-.sensor-body{padding:16px 18px}
-.sensor-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
-@media(max-width:700px){.sensor-grid{grid-template-columns:repeat(2,1fr)}}
-.metric{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px}
-.metric-label{font-size:10px;color:var(--txt3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
-.metric-val{font-family:var(--font-head);font-size:20px;font-weight:700;color:#fff;line-height:1}
-.metric-val span{font-size:12px;color:var(--txt3);font-weight:500;margin-left:2px}
-.metric-val.teal{color:var(--teal)}.metric-val.blue{color:var(--blue)}.metric-val.amber{color:var(--amber)}.metric-val.red{color:var(--red)}.metric-val.purple{color:var(--purple)}
-
-.chart-wrap{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px;position:relative}
-.chart-label{position:absolute;top:8px;left:12px;font-size:10px;color:var(--txt3);font-family:var(--font-mono);z-index:2}
-canvas.sensor-canvas{width:100%;height:110px;display:block}
-canvas#ecgCanvas{height:130px}
-
-.sensor-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.tag{font-size:10px;font-family:var(--font-mono);padding:4px 9px;border-radius:20px;border:1px solid var(--border);color:var(--txt2);background:var(--bg3)}
-.tag.on{border-color:rgba(0,212,170,.3);color:var(--teal);background:var(--teal-dim)}
-.tag.off{opacity:.45}
-
-.activity-bar{height:8px;background:var(--bg4);border-radius:4px;overflow:hidden;margin-top:8px}
-.activity-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--blue));border-radius:4px;transition:width .3s}
-
-.temp-gauge{display:flex;align-items:center;gap:16px;margin-top:4px}
-.gauge-ring{width:88px;height:88px;border-radius:50%;background:conic-gradient(var(--amber) calc(var(--pct)*1%),var(--bg4) 0);display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
-.gauge-ring::before{content:'';position:absolute;inset:8px;border-radius:50%;background:var(--bg3)}
-.gauge-inner{position:relative;z-index:1;text-align:center}
-.gauge-inner .g-val{font-family:var(--font-head);font-size:18px;font-weight:700;color:#fff}
-.gauge-inner .g-unit{font-size:10px;color:var(--txt3);font-family:var(--font-mono)}
-.temp-details{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:10px}
-
-.ecg-meta{display:flex;align-items:center;gap:18px;margin-bottom:12px;flex-wrap:wrap}
-.ecg-bpm{font-family:var(--font-head);font-size:36px;font-weight:700;color:var(--teal);line-height:1}
-.ecg-unit{font-size:12px;color:var(--txt3);font-family:var(--font-mono)}
-.ecg-status{font-size:11px;padding:4px 10px;border-radius:6px;font-family:var(--font-mono);background:var(--teal-dim);color:var(--teal);border:1px solid rgba(0,212,170,.2)}
-.ecg-status.warn{background:var(--amber-dim);color:var(--amber);border-color:rgba(245,158,11,.25)}
-.ecg-status.alert{background:var(--red-dim);color:var(--red);border-color:rgba(255,77,109,.25)}
-.gsm-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;align-items:center}
-.gsm-bar-title{font-family:var(--font-head);font-size:12px;font-weight:600;color:#fff;margin-right:auto}
-.gsm-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:10px;border:1px solid;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-body);transition:all .15s}
-.gsm-btn.call{background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.35);color:var(--green)}
-.gsm-btn.sms{background:rgba(96,165,250,.1);border-color:rgba(96,165,250,.35);color:var(--blue)}
-.gsm-btn:hover{filter:brightness(1.15)}
-.gsm-btn:disabled{opacity:.45;cursor:not-allowed}
-.gsm-status{font-size:10px;color:var(--txt3);font-family:var(--font-mono);width:100%}
+.nbadge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:700;min-width:14px;height:14px;padding:0 3px;border-radius:50%;display:none;align-items:center;justify-content:center;font-family:var(--font-mono)}
+.notif-wrap{position:relative}
+.notif-panel{position:absolute;top:calc(100% + 8px);right:0;width:320px;max-height:380px;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.45);display:none;flex-direction:column;z-index:920;overflow:hidden}
+.notif-panel.open{display:flex}
+.notif-panel-hdr{padding:12px 14px;border-bottom:1px solid var(--border);font-family:var(--font-head);font-size:13px;font-weight:600}
+.notif-list{overflow-y:auto;max-height:320px}
+.notif-item{display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px}
+.notif-item.unread{background:rgba(255,77,109,.06)}
+.notif-ico{width:28px;height:28px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.notif-title{font-weight:500;color:var(--txt)}
+.notif-sub{font-size:10px;color:var(--txt3);margin-top:2px;font-family:var(--font-mono)}
+.notif-empty{padding:20px;text-align:center;color:var(--txt3);font-size:12px}
+.content{padding:0;flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
 </style>
 </head>
-<body>
-
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-mark">
-      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-      <div><div class="logo-name">GérioTrack</div><div class="logo-sub">IoT · Gériatrie</div></div>
-    </div>
-  </div>
-  <div class="sidebar-section">
-    <div class="sidebar-label">Navigation</div>
-    <a href="/" class="nav-item">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      <span class="lbl">Dashboard</span>
-    </a>
-    <a href="/patients/" class="nav-item">
-      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      <span class="lbl">Patients</span><span class="nav-badge">12</span>
-    </a>
-    <a href="/analyse/" class="nav-item active">
-      <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-      <span class="lbl">Analyse en temps réel</span>
-    </a>
-    <a href="/geolocalisation/" class="nav-item">
-      <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      <span class="lbl">Géolocalisation</span>
-    </a>
-    <a href="#" class="nav-item">
-      <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      <span class="lbl">Alertes</span><span class="nav-badge">3</span>
-    </a>
-  </div>
-  <div class="sidebar-section">
-    <div class="sidebar-label">Capteurs actifs</div>
-    <a href="/analyse/#mouvement" class="nav-item"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="lbl">MPU6050</span></a>
-    <a href="/analyse/#temperature" class="nav-item"><svg viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg><span class="lbl">Température</span></a>
-  </div>
-  <div class="sidebar-bottom">
-    <div class="user-card">
-      <div class="u-av">Dr</div>
-      <div><div class="u-name">Dr. Mutombo</div><div class="u-role">Gériatre · Admin</div></div>
-      <div class="u-dot"></div>
-    </div>
-  </div>
-</aside>
+<body class="analyse-page">
 
 <div class="main">
   <div class="topbar">
-    <div><span class="topbar-title">Analyse en temps réel</span><span class="topbar-sub">/ MPU6050 · ECG · SIM800L</span></div>
+    <a href="/" class="topbar-brand">
+      <span class="topbar-brand-icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+      GérioTrack
+    </a>
+    <span class="topbar-sep"></span>
+    <div><span class="topbar-title">Analyse</span><span class="topbar-sub">/ Temps réel</span></div>
+    <nav class="topbar-nav" aria-label="Navigation">
+      <a href="/">Dashboard</a>
+      <a href="/patients/">Patients</a>
+      <a href="/analyse/" class="active">Analyse</a>
+      <a href="/geolocalisation/">Géoloc</a>
+      <a href="/alertes/">Alertes</a>
+    </nav>
     <div class="topbar-right">
-      <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+      <div class="live-badge" id="liveBadge"><div class="live-dot"></div><span id="liveText">EN ATTENTE</span></div>
       <div class="clock" id="clock">--:--:--</div>
-      <div class="icon-btn"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="nbadge">3</span></div>
+      <div class="notif-wrap" data-notif-wrap onclick="event.stopPropagation()">
+        <div class="icon-btn" data-notif-btn>
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="nbadge" data-notif-badge>0</span>
+        </div>
+        <div class="notif-panel" data-notif-panel>
+          <div class="notif-panel-hdr">Notifications</div>
+          <div class="notif-list" data-notif-list></div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="content">
-    <div class="patient-bar">
-      <label for="patientSelect">Patient</label>
-      <select id="patientSelect" class="patient-select"></select>
-      <div class="patient-meta">
-        <div class="meta-pill">Device <strong id="metaDevice">ESP32-001</strong></div>
-        <div class="meta-pill">Zone <strong id="metaZone">Gombe</strong></div>
-        <div class="meta-pill">Statut <strong id="metaStatut">stable</strong></div>
-      </div>
-    </div>
+  <div class="content analyse-dashboard">
+    <div class="analyse-frame">
 
-    <div class="gsm-bar">
-      <span class="gsm-bar-title">Communication GSM (SIM800L)</span>
-      <button class="gsm-btn call" id="btnGsmCall" onclick="gsmCallFamily()">📞 Appeler la famille</button>
-      <button class="gsm-btn sms" id="btnGsmSms" onclick="gsmSendAlert()">✉ SMS alerte + lien graphique</button>
-      <span class="gsm-status" id="gsmStatus">SIM800L : commandes mises en file → exécutées par l'ESP32</span>
-    </div>
-
-    <div class="layout">
-      <!-- Avatar Three.js -->
-      <div class="avatar-card">
-        <div class="card-header">
-          <div class="card-dot" style="background:var(--purple)"></div>
-          <span class="card-title">Avatar biomécanique</span>
-          <span class="card-sub">Three.js</span>
-        </div>
-        <div id="avatarCanvas"></div>
-        <div class="avatar-status">
-          <div class="as-item">
-            <div class="as-label">Activité</div>
-            <div class="as-val walk" id="actLabel">Marche</div>
-          </div>
-          <div class="as-item">
-            <div class="as-label">Cadence</div>
-            <div class="as-val" id="actCadence">92 <span style="font-size:11px;color:var(--txt3)">pas/min</span></div>
-          </div>
-          <div class="as-item">
-            <div class="as-label">Accél. totale</div>
-            <div class="as-val" id="actAccel">1.02 <span style="font-size:11px;color:var(--txt3)">g</span></div>
-          </div>
-          <div class="as-item">
-            <div class="as-label">Risque chute</div>
-            <div class="as-val" id="actRisk">18%</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="sensors">
-        <!-- Mouvement MPU6050 -->
-        <div class="sensor-card" id="mouvement">
-          <div class="card-header">
-            <div class="card-dot" style="background:var(--purple)"></div>
-            <span class="card-title">Suivi du mouvement</span>
-            <span class="card-sub">MPU6050 · Accéléro / Gyro</span>
-          </div>
-          <div class="sensor-body">
-            <div class="sensor-grid">
-              <div class="metric"><div class="metric-label">Accel X</div><div class="metric-val purple" id="ax">0.00<span>m/s²</span></div></div>
-              <div class="metric"><div class="metric-label">Accel Y</div><div class="metric-val purple" id="ay">0.00<span>m/s²</span></div></div>
-              <div class="metric"><div class="metric-label">Accel Z</div><div class="metric-val purple" id="az">9.81<span>m/s²</span></div></div>
-              <div class="metric"><div class="metric-label">Gyro X</div><div class="metric-val blue" id="gx">0.00<span>rad/s</span></div></div>
-              <div class="metric"><div class="metric-label">Gyro Y</div><div class="metric-val blue" id="gy">0.00<span>rad/s</span></div></div>
-              <div class="metric"><div class="metric-label">Gyro Z</div><div class="metric-val blue" id="gz">0.00<span>rad/s</span></div></div>
-            </div>
-            <div class="chart-wrap">
-              <div class="chart-label">Accélération totale (g)</div>
-              <canvas class="sensor-canvas" id="motionCanvas"></canvas>
-            </div>
-            <div style="margin-top:12px">
-              <div style="display:flex;justify-content:space-between;font-size:11px;font-family:var(--font-mono);color:var(--txt3);margin-bottom:4px">
-                <span>Niveau d'activité</span><span id="activityPct">64%</span>
-              </div>
-              <div class="activity-bar"><div class="activity-fill" id="activityFill" style="width:64%"></div></div>
-            </div>
-            <div class="sensor-tags">
-              <span class="tag on">I2C · 100 Hz</span>
-              <span class="tag on">Détection chute</span>
-              <span class="tag on">Posture</span>
-              <span class="tag on">GPS NEO-6M</span>
-              <span class="tag on">USB Serial</span>
+      <header class="patient-card">
+        <div class="patient-card-left">
+          <div class="patient-avatar" id="patientInitials">JK</div>
+          <div class="patient-details">
+            <h1 class="patient-name" id="patientNameDisplay">—</h1>
+            <p class="patient-meta" id="patientMetaLine">Sélectionnez un patient</p>
+            <div class="meta-pills">
+              <span class="meta-pill">Bracelet <strong id="metaDevice">—</strong></span>
+              <span class="meta-pill">Zone <strong id="metaZone">—</strong></span>
+              <span class="meta-pill">Âge <strong id="bioAge">—</strong></span>
+              <span class="meta-pill">Risque <strong id="bioRisk">—</strong></span>
             </div>
           </div>
         </div>
-
-        <!-- Température ambiante -->
-        <div class="sensor-card" id="temperature">
-          <div class="card-header">
-            <div class="card-dot" style="background:var(--amber)"></div>
-            <span class="card-title">Température ambiante</span>
-            <span class="card-sub">DHT11 · Environnement</span>
-          </div>
-          <div class="sensor-body">
-            <div class="temp-gauge">
-              <div class="gauge-ring" id="tempRing" style="--pct:55">
-                <div class="gauge-inner">
-                  <div class="g-val" id="tempVal">27.4</div>
-                  <div class="g-unit">°C</div>
-                </div>
-              </div>
-              <div class="temp-details">
-                <div class="metric"><div class="metric-label">Température</div><div class="metric-val amber" id="tempBig">27.4<span>°C</span></div></div>
-                <div class="metric"><div class="metric-label">Humidité</div><div class="metric-val blue" id="humidVal">66<span>%</span></div></div>
-                <div class="metric"><div class="metric-label">Confort</div><div class="metric-val teal" id="comfortVal">Bon</div></div>
-                <div class="metric"><div class="metric-label">Tendance</div><div class="metric-val" id="tempTrend">Stable</div></div>
-              </div>
-            </div>
-            <div class="chart-wrap" style="margin-top:14px">
-              <div class="chart-label">Température / humidité (temps réel)</div>
-              <canvas class="sensor-canvas" id="tempCanvas"></canvas>
-            </div>
-            <div class="sensor-tags">
-              <span class="tag on">DHT11</span>
-              <span class="tag on">Seuil alerte 32°C</span>
-              <span class="tag on">Humidité</span>
-            </div>
-          </div>
+        <div class="patient-card-right">
+          <label class="field-label" for="patientSelect">Patient surveillé</label>
+          <select id="patientSelect" class="patient-select-dash"></select>
+          <span class="status-badge stable" id="statusBadge">—</span>
+          <span class="sync-time" id="syncTime">Dernière sync : —</span>
         </div>
+      </header>
 
-        <!-- ECG -->
-        <div class="sensor-card" id="ecg">
-          <div class="card-header">
-            <div class="card-dot" style="background:var(--red)"></div>
-            <span class="card-title">Électrocardiogramme (ECG)</span>
-            <span class="card-sub">AD8232 · BPM calibré</span>
-          </div>
-          <div class="sensor-body">
-            <div class="ecg-meta">
-              <div>
+      <div class="dash-body">
+        <div class="center-panel">
+
+          <section class="metrics-grid">
+            <div class="qcard qcard-teal">
+              <div class="qcard-label">Température</div>
+              <div class="qcard-val" id="tempBig">—<span> °C</span></div>
+            </div>
+            <div class="qcard qcard-dark">
+              <div class="qcard-label">Humidité</div>
+              <div class="qcard-val" id="humidVal">—<span> %</span></div>
+            </div>
+            <div class="qcard qcard-teal">
+              <div class="qcard-label">Accélération</div>
+              <div class="qcard-val purple" id="mpuTotal">—<span> g</span></div>
+            </div>
+          </section>
+
+          <section class="card-panel ecg-hero" id="ecg">
+            <div class="panel-head">
+              <span class="panel-title">ECG — Fréquence cardiaque</span>
+              <span class="panel-tag">Montée décalée · rythme variable</span>
+            </div>
+            <div class="ecg-hero-top">
+              <div class="ecg-bpm-block">
                 <div class="ecg-bpm" id="ecgBpm">--</div>
-                <div class="ecg-unit">battements / min</div>
+                <div class="ecg-unit">bpm</div>
               </div>
-              <div>
-                <div class="metric-label">Signal (mV)</div>
-                <div class="metric-val teal" id="ecgMv">0.00<span> mV</span></div>
-              </div>
-              <div>
-                <div class="metric-label">ADC brut</div>
-                <div class="metric-val" id="ecgRaw">—</div>
-              </div>
-              <span class="ecg-status" id="ecgStatus">En attente</span>
             </div>
-            <div class="chart-wrap">
-              <div class="chart-label">Forme d'onde ECG (calibrée)</div>
+            <div class="chart-wrap ecg-chart-wrap" id="ecgChartWrap">
               <canvas class="sensor-canvas" id="ecgCanvas"></canvas>
             </div>
-            <div class="sensor-tags">
-              <span class="tag on">AD8232</span>
-              <span class="tag on">45–130 BPM</span>
-              <span class="tag on">Lissage serveur</span>
+          </section>
+
+          <section class="card-panel motion-panel" id="mouvement">
+            <div class="panel-head">
+              <span class="panel-title">Activité MPU6050</span>
+              <span class="panel-tag live-tag" id="motionTag">Capteur live</span>
+            </div>
+            <div class="motion-stats">
+              <div class="motion-stat"><span class="ms-lbl">Inclinaison X</span><span class="ms-val" id="angleXVal">0.0°</span></div>
+              <div class="motion-stat"><span class="ms-lbl">Inclinaison Y</span><span class="ms-val" id="angleYVal">0.0°</span></div>
+              <div class="motion-stat"><span class="ms-lbl">Gyro Z</span><span class="ms-val" id="gyroZVal">0.0</span></div>
+            </div>
+            <div class="chart-wrap motion-chart-wrap">
+              <div class="chart-label">Accélération totale (g) — temps réel</div>
+              <canvas class="sensor-canvas" id="motionCanvas"></canvas>
+            </div>
+            <div class="activity-bar-wrap">
+              <div class="act-row">
+                <span id="actMotionLabel">En attente</span>
+                <span id="activityPct">0%</span>
+              </div>
+              <div class="activity-bar"><div class="activity-fill" id="activityFill" style="width:0%"></div></div>
+            </div>
+          </section>
+
+          <section class="gsm-bar">
+            <span class="gsm-bar-title">Communication GSM (SIM800L)</span>
+            <button class="gsm-btn call" id="btnGsmCall" type="button">📞 Appeler la famille</button>
+            <button class="gsm-btn sms" id="btnGsmSms" type="button">✉ SMS + localisation</button>
+            <span class="gsm-status" id="gsmStatus">SIM800L : commandes en file → ESP32</span>
+          </section>
+        </div>
+
+        <aside class="right-panel">
+          <div class="avatar-hero">
+            <div class="avatar-hero-header">Avatar biomécanique</div>
+            <div class="avatar-hero-sub">Three.js · données MPU live</div>
+            <div id="avatarCanvas"></div>
+            <div class="avatar-float-card">
+              <div class="float-label">Risque chute</div>
+              <div class="float-val" id="actRisk">—</div>
+            </div>
+            <div class="avatar-stats">
+              <div class="as-item">
+                <div class="as-label">Activité</div>
+                <div class="as-val" id="actLabel">—</div>
+              </div>
+              <div class="as-item">
+                <div class="as-label">Inclinaison max</div>
+                <div class="as-val" id="actIncline">0°</div>
+              </div>
+              <div class="as-item">
+                <div class="as-label">Accél. totale</div>
+                <div class="as-val" id="actAccel">—</div>
+              </div>
+              <div class="as-item">
+                <div class="as-label">Capteur</div>
+                <div class="as-val" style="font-size:12px">MPU6050</div>
+              </div>
             </div>
           </div>
-        </div>
+        </aside>
       </div>
     </div>
   </div>
 </div>
 
+<div class="push-stack" id="pushStack" aria-live="assertive" aria-label="Alertes chute"></div>
 
 <script>
-const PATIENTS = [
-  {id:'P001',prenom:'Jean',   nom:'Kabongo',  age:78,zone:'Gombe',      statut:'stable',risk:.18,temp:null,humid:null},
-  {id:'P002',prenom:'Marie',  nom:'Kadima',   age:84,zone:'Lingwala',   statut:'alert', risk:.82,temp:null,humid:null},
-  {id:'P003',prenom:'Lucie',  nom:'Tshibangi',age:71,zone:'Kintambo',   statut:'warn',  risk:.64,temp:null,humid:null},
-  {id:'P004',prenom:'Paul',   nom:'Mukendi',  age:80,zone:'Barumbu',    statut:'stable',risk:.22,temp:null,humid:null},
-  {id:'P005',prenom:'Claire', nom:'Ilunga',   age:76,zone:'Kinshasa',   statut:'stable',risk:.30,temp:null,humid:null},
-  {id:'P006',prenom:'Georges',nom:'Kalala',   age:88,zone:'Ngaliema',   statut:'warn',  risk:.71,temp:null,humid:null},
-  {id:'P007',prenom:'Hélène', nom:'Mwamba',   age:73,zone:'Bandalungwa',statut:'stable',risk:.15,temp:null,humid:null},
-  {id:'P008',prenom:'André',  nom:'Kabila',   age:82,zone:'Kalamu',     statut:'alert', risk:.88,temp:null,humid:null},
-  {id:'P009',prenom:'Yvette', nom:'Ngalula',  age:79,zone:'Limete',     statut:'stable',risk:.25,temp:null,humid:null},
-  {id:'P010',prenom:'René',   nom:'Lukusa',   age:85,zone:'Lemba',      statut:'warn',  risk:.58,temp:null,humid:null},
-  {id:'P011',prenom:'Odette', nom:'Mbuyi',    age:74,zone:'Matete',     statut:'stable',risk:.19,temp:null,humid:null},
-  {id:'P012',prenom:'Fernand',nom:'Kasongo',  age:91,zone:'Masina',     statut:'stable',risk:.35,temp:null,humid:null},
-];
+const FALL_THRESHOLD = 45;
+const WARN_THRESHOLD = 25;
+const ECG_ADC_MID = 2048;
 
-let current = PATIENTS[0];
+let PATIENTS = [];
+let current = null;
+const ECG_WINDOW = 400;
+const ECG_SIM_ONLY = true;
+const ECG_FRAME_MS = 40;
+const PULSE_LEN = 12;
+
 let walkSpeed = 0.08;
-let motionBuf = [], tempBuf = [], humidBuf = [], ecgBuf = [];
-let lastReading = null, pollTimer = null;
+let motionBuf = [], angleBuf = [], ecgBuf = [];
+let lastReading = null;
+let pollTimer = null;
+let ecgTargetBpm = 60;
+let ecgPulseTicks = 0;
+let ecgPulseStep = 0;
+let ecgPulseAmp = 12;
+let ecgCycleSample = 0;
+let ecgCycleLength = 0;
+let ecgPulseDelay = 0;
+let ecgPulseDone = false;
+let ecgStarted = false;
+const seenFallIds = new Set();
+let liveFallCooldown = 0;
+let fallWatchReady = false;
 
 const select = document.getElementById('patientSelect');
-PATIENTS.forEach(p => {
-  const opt = document.createElement('option');
-  opt.value = p.id;
-  opt.textContent = `${p.prenom} ${p.nom} · ${p.zone} · ${p.age} ans`;
-  select.appendChild(opt);
-});
+const ecgCanvas = document.getElementById('ecgCanvas');
+const motionCanvas = document.getElementById('motionCanvas');
 
-function applyPatient() {
-  document.getElementById('metaDevice').textContent = `ESP32-${current.id.slice(1)}`;
-  document.getElementById('metaZone').textContent = current.zone;
-  document.getElementById('metaStatut').textContent = current.statut;
-  document.getElementById('actRisk').textContent = Math.round(current.risk * 100) + '%';
-  document.getElementById('actRisk').style.color = current.risk > .7 ? 'var(--red)' : current.risk > .4 ? 'var(--amber)' : 'var(--teal)';
+function patientInitials(p) {
+  return ((p.prenom || '')[0] || '') + ((p.nom || '')[0] || '');
 }
 
-select.addEventListener('change', () => {
-  current = PATIENTS.find(p => p.id === select.value) || PATIENTS[0];
-  lastReading = null; motionBuf = []; tempBuf = []; humidBuf = []; ecgBuf = [];
+function statutLabel(s) {
+  return s === 'alert' ? 'Alerte' : s === 'warn' ? 'Surveiller' : 'Stable';
+}
+
+function initEcgBufferOnce() {
+  if (ecgStarted) return;
+  ecgStarted = true;
+  ecgBuf = [];
+  for (let i = 0; i < ECG_WINDOW; i++) {
+    ecgBuf.push(ECG_ADC_MID + (Math.random() - 0.5) * 2);
+  }
+}
+
+function pushEcgSample(v) {
+  const n = Number(v);
+  if (isNaN(n)) return;
+  ecgBuf.push(n);
+  while (ecgBuf.length > ECG_WINDOW) ecgBuf.shift();
+}
+
+function scheduleNextEcgCycle() {
+  const cycleMs = 880 + Math.random() * 280;
+  ecgCycleLength = Math.max(20, Math.round(cycleMs / ECG_FRAME_MS));
+  ecgPulseDelay = Math.round(ecgCycleLength * (0.48 + Math.random() * 0.28));
+  ecgCycleSample = 0;
+  ecgPulseDone = false;
+  ecgPulseTicks = 0;
+}
+
+function ecgHorizontalSample() {
+  const base = ECG_ADC_MID;
+  const noise = (Math.random() - 0.5) * 2;
+  if (ecgPulseTicks > 0) {
+    const t = ecgPulseStep / Math.max(1, PULSE_LEN - 1);
+    const wobble = ecgPulseAmp * Math.sin(t * Math.PI);
+    ecgPulseStep++;
+    ecgPulseTicks--;
+    return base + wobble + noise * 0.2;
+  }
+  return base + noise;
+}
+
+function ecgAnimStep() {
+  initEcgBufferOnce();
+  if (!ecgCycleLength) scheduleNextEcgCycle();
+
+  if (!ecgPulseDone && ecgCycleSample >= ecgPulseDelay) {
+    ecgPulseTicks = PULSE_LEN + Math.floor(Math.random() * 3) - 1;
+    ecgPulseStep = 0;
+    ecgPulseAmp = 10 + Math.random() * 5;
+    ecgPulseDone = true;
+  }
+
+  ecgCycleSample++;
+  if (ecgCycleSample >= ecgCycleLength) scheduleNextEcgCycle();
+
+  pushEcgSample(ecgHorizontalSample());
+
+  const bpmApprox = Math.round(60000 / (ecgCycleLength * ECG_FRAME_MS));
+  document.getElementById('ecgBpm').textContent = String(Math.max(54, Math.min(66, bpmApprox)));
+  redrawEcg();
+}
+
+function redrawEcg() {
+  drawEcgRawChart(ecgCanvas, ecgBuf, ECG_ADC_MID);
+}
+
+async function loadPatients() {
+  try {
+    const res = await fetch('/api/patients/');
+    if (!res.ok) return;
+    const data = await res.json();
+    PATIENTS = (data.patients || []).map(p => ({
+      id: p.id,
+      prenom: p.prenom,
+      nom: p.nom,
+      age: p.age,
+      zone: p.chambre || p.zone_label || '—',
+      statut: p.statut || 'stable',
+      risk: Number(p.risk ?? 0.2),
+      temp: p.temp,
+      humid: p.humid,
+      device_id: p.device_id || ('ESP32-' + p.id.slice(1)),
+      sensor_online: !!p.sensor_online,
+    }));
+  } catch (e) {}
+}
+
+function fillPatientSelect() {
+  select.innerHTML = '';
+  PATIENTS.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = `${p.prenom} ${p.nom} · ${p.zone} · ${p.age} ans`;
+    select.appendChild(opt);
+  });
+}
+
+async function setActivePatient(id) {
+  try {
+    await fetch('/api/monitoring/active/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ patient_id: id }),
+    });
+  } catch (e) {}
+}
+
+function applyPatient() {
+  if (!current) return;
+  const p = current;
+  document.getElementById('patientInitials').textContent = patientInitials(p);
+  document.getElementById('patientNameDisplay').textContent = `${p.prenom} ${p.nom}`;
+  document.getElementById('patientMetaLine').textContent = `${p.id} · ${p.age} ans · ${p.zone}`;
+  document.getElementById('metaDevice').textContent = p.device_id;
+  document.getElementById('metaZone').textContent = p.zone;
+  document.getElementById('bioAge').textContent = p.age + ' ans';
+  const riskPct = Math.round(p.risk * 100) + '%';
+  document.getElementById('bioRisk').textContent = riskPct;
+  document.getElementById('actRisk').textContent = riskPct;
+  const riskCol = p.risk > 0.7 ? 'var(--red)' : p.risk > 0.4 ? 'var(--amber)' : 'var(--teal)';
+  document.getElementById('actRisk').style.color = riskCol;
+  const badge = document.getElementById('statusBadge');
+  badge.textContent = statutLabel(p.statut);
+  badge.className = 'status-badge ' + (p.statut || 'stable');
+  if (p.temp != null) {
+    document.getElementById('tempBig').innerHTML = Number(p.temp).toFixed(1) + '<span> °C</span>';
+  }
+  if (p.humid != null) {
+    document.getElementById('humidVal').innerHTML = Math.round(p.humid) + '<span> %</span>';
+  }
+}
+
+select.addEventListener('change', async () => {
+  current = PATIENTS.find(x => x.id === select.value) || PATIENTS[0];
+  lastReading = null;
+  motionBuf = [];
+  angleBuf = [];
   walkSpeed = 0.08;
+  await setActivePatient(current.id);
   applyPatient();
   setAnalyseLive('waiting');
   pollLiveSensors();
 });
 
-function setGsmStatus(msg, ok=true){
-  const el=document.getElementById('gsmStatus');
-  if(el){ el.textContent=msg; el.style.color=ok?'var(--teal)':'var(--red)'; }
+document.getElementById('btnGsmCall').addEventListener('click', gsmCallFamily);
+document.getElementById('btnGsmSms').addEventListener('click', gsmSendAlert);
+
+function setGsmStatus(msg, ok = true) {
+  const el = document.getElementById('gsmStatus');
+  if (el) { el.textContent = msg; el.style.color = ok ? 'var(--teal)' : 'var(--red)'; }
 }
 
-async function gsmCallFamily(){
-  const btn=document.getElementById('btnGsmCall');
-  if(btn) btn.disabled=true;
+async function gsmCallFamily() {
+  if (!current) return;
+  const btn = document.getElementById('btnGsmCall');
+  if (btn) btn.disabled = true;
   setGsmStatus('Appel en file SIM800L…');
-  try{
-    const res=await fetch('/api/messages/send/',{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({patient_id:current.id, channel:'call', recipient_type:'famille'}),
+  try {
+    const res = await fetch('/api/messages/send/', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ patient_id: current.id, channel: 'call', recipient_type: 'famille' }),
     });
-    const d=await res.json();
-    setGsmStatus(d.ok?`Appel GSM en file → ${d.phone||'famille'}`:(d.error||'Erreur'), d.ok);
-  }catch(e){ setGsmStatus('Erreur réseau', false); }
-  if(btn) btn.disabled=false;
+    const d = await res.json();
+    setGsmStatus(d.ok ? `Appel GSM en file → ${d.phone || 'famille'}` : (d.error || 'Erreur'), d.ok);
+  } catch (e) { setGsmStatus('Erreur réseau', false); }
+  if (btn) btn.disabled = false;
 }
 
-async function gsmSendAlert(){
-  const btn=document.getElementById('btnGsmSms');
-  if(btn) btn.disabled=true;
-  setGsmStatus('SMS + e-mail avec lien graphique…');
-  try{
-    const res=await fetch('/api/messages/send/',{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        patient_id:current.id, channel:'sms', recipient_type:'famille',
-        message:`Alerte surveillance ${current.prenom} ${current.nom}. Consultez le graphique ECG en ligne.`,
+async function gsmSendAlert() {
+  if (!current) return;
+  const btn = document.getElementById('btnGsmSms');
+  if (btn) btn.disabled = true;
+  setGsmStatus('SMS + e-mail avec lien localisation…');
+  try {
+    const res = await fetch('/api/messages/send/', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patient_id: current.id, channel: 'sms', recipient_type: 'famille',
+        message: `Alerte surveillance ${current.prenom} ${current.nom}. Consultez la position sur la carte.`,
       }),
     });
-    const d=await res.json();
-    setGsmStatus(d.ok?`SMS SIM800L + e-mail envoyé. Lien : ${d.analyse_url||'—'}`:(d.error||'Erreur'), d.ok);
-  }catch(e){ setGsmStatus('Erreur réseau', false); }
-  if(btn) btn.disabled=false;
+    const d = await res.json();
+    setGsmStatus(d.ok ? `SMS + e-mail envoyé` : (d.error || 'Erreur'), d.ok);
+  } catch (e) { setGsmStatus('Erreur réseau', false); }
+  if (btn) btn.disabled = false;
 }
 
-function applyEcgUI(ecg, online){
-  if(!ecg) return;
-  const bpm=ecg.bpm, mv=ecg.mv, raw=ecg.raw;
-  document.getElementById('ecgBpm').textContent=bpm!=null?bpm:'--';
-  document.getElementById('ecgMv').innerHTML=(mv!=null?Number(mv).toFixed(2):'0.00')+'<span> mV</span>';
-  document.getElementById('ecgRaw').textContent=raw!=null?raw:'—';
-  const st=document.getElementById('ecgStatus');
-  const label=ecg.status_label||'En attente';
-  st.textContent=label;
-  st.className='ecg-status'+(ecg.status==='alert'?' alert':ecg.status==='warn'?' warn':'');
-  const wave=ecg.waveform||[];
-  if(wave.length) drawLineChart(document.getElementById('ecgCanvas'),[wave],['#ff4d6d']);
-  else if(online && mv!=null){ ecgBuf.push(mv); if(ecgBuf.length>80) ecgBuf.shift(); drawLineChart(document.getElementById('ecgCanvas'),[ecgBuf],['#ff4d6d']); }
+function drawEcgRawChart(canvas, samples, adcMid = ECG_ADC_MID) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w < 10 || h < 10) return;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const pad = 12;
+  ctx.fillStyle = '#020806';
+  ctx.fillRect(0, 0, w, h);
+  const data = samples && samples.length ? samples.map(Number) : [];
+  const ymin = adcMid - 14;
+  const ymax = adcMid + 14;
+  const range = ymax - ymin;
+  const yAt = (v) => h - pad - ((Math.max(ymin, Math.min(ymax, v)) - ymin) / range) * (h - pad * 2);
+  const yMid = yAt(adcMid);
+  ctx.strokeStyle = 'rgba(0,255,136,.1)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 6; i++) {
+    const y = pad + ((h - pad * 2) / 6) * i;
+    ctx.beginPath();
+    ctx.moveTo(pad, y);
+    ctx.lineTo(w - pad, y);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(0,255,136,.4)';
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(pad, yMid);
+  ctx.lineTo(w - pad, yMid);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  if (data.length < 2) {
+    ctx.strokeStyle = '#39ff14';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(pad, yMid);
+    ctx.lineTo(w - pad, yMid);
+    ctx.stroke();
+    return;
+  }
+  const plotW = w - pad * 2;
+  const step = plotW / (ECG_WINDOW - 1);
+  const offset = ECG_WINDOW - data.length;
+  ctx.beginPath();
+  ctx.strokeStyle = '#39ff14';
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.shadowColor = 'rgba(57,255,20,.5)';
+  ctx.shadowBlur = 4;
+  data.forEach((v, i) => {
+    const x = pad + (offset + i) * step;
+    const y = yAt(v);
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  });
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+}
+
+function applyEcgUI(ecg) {
+  if (!ecg) return;
+  if (ecg.bpm != null && ecg.bpm > 0) ecgTargetBpm = 60;
 }
 
 function setAnalyseLive(mode) {
-  const badge = document.querySelector('.live-badge');
-  if (!badge) return;
+  const badge = document.getElementById('liveBadge');
+  const text = document.getElementById('liveText');
+  if (!badge || !text) return;
   if (mode === 'live') {
-    badge.innerHTML = '<div class="live-dot"></div>LIVE';
+    text.textContent = 'LIVE';
     badge.style.color = 'var(--teal)';
+    badge.style.borderColor = 'rgba(0,212,170,.25)';
+    badge.style.background = 'rgba(0,212,170,.1)';
+    badge.querySelector('.live-dot').style.background = 'var(--teal)';
+    badge.querySelector('.live-dot').style.animation = 'pdot 1.5s infinite';
   } else if (mode === 'hold') {
-    badge.innerHTML = '<div class="live-dot" style="background:var(--amber);animation:none"></div>DERNIÈRE MESURE';
+    text.textContent = 'DERNIÈRE MESURE';
     badge.style.color = 'var(--amber)';
+    badge.style.borderColor = 'rgba(245,158,11,.35)';
+    badge.style.background = 'var(--amber-dim)';
+    badge.querySelector('.live-dot').style.background = 'var(--amber)';
+    badge.querySelector('.live-dot').style.animation = 'none';
   } else {
-    badge.innerHTML = '<div class="live-dot" style="background:var(--txt3);animation:none"></div>EN ATTENTE';
+    text.textContent = 'EN ATTENTE';
     badge.style.color = 'var(--txt3)';
+    badge.style.borderColor = 'var(--border)';
+    badge.style.background = 'var(--bg3)';
+    badge.querySelector('.live-dot').style.background = 'var(--txt3)';
+    badge.querySelector('.live-dot').style.animation = 'none';
   }
+  const tag = document.getElementById('motionTag');
+  if (tag) tag.textContent = mode === 'live' ? 'Capteur live' : mode === 'hold' ? 'Hors ligne' : 'En attente';
 }
 
 const avatarRoot = document.getElementById('avatarCanvas');
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-camera.position.set(0, 1.4, 4.2); camera.lookAt(0, 1.0, 0);
+camera.position.set(0, 1.4, 4.2);
+camera.lookAt(0, 1.0, 0);
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 avatarRoot.appendChild(renderer.domElement);
 renderer.domElement.style.width = '100%';
 renderer.domElement.style.height = '100%';
 renderer.domElement.style.display = 'block';
+
 function resizeAvatar() {
   const w = avatarRoot.clientWidth, h = avatarRoot.clientHeight || 240;
   if (w < 10) return;
-  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
 }
-function bootAvatar() {
+
+function resizeCharts() {
   resizeAvatar();
-  requestAnimationFrame(resizeAvatar);
-  setTimeout(resizeAvatar, 100);
-  setTimeout(resizeAvatar, 400);
+  redrawEcg();
+  if (motionBuf.length) drawLineChart(motionCanvas, [motionBuf], ['#a78bfa']);
 }
-bootAvatar();
-window.addEventListener('resize', resizeAvatar);
+
+window.addEventListener('resize', resizeCharts);
+if (window.ResizeObserver) {
+  new ResizeObserver(resizeCharts).observe(document.getElementById('ecgChartWrap'));
+  new ResizeObserver(resizeCharts).observe(document.querySelector('.motion-chart-wrap') || motionCanvas);
+}
+
 scene.add(new THREE.HemisphereLight(0xb8d4ff, 0x1a2235, 0.9));
-const dir = new THREE.DirectionalLight(0x00d4aa, 0.7); dir.position.set(3,5,2); scene.add(dir);
-const floor = new THREE.Mesh(new THREE.CircleGeometry(1.6,48), new THREE.MeshStandardMaterial({color:0x1a2235, metalness:0.2, roughness:0.8}));
-floor.rotation.x = -Math.PI/2; scene.add(floor);
-const ring = new THREE.Mesh(new THREE.RingGeometry(1.55,1.65,48), new THREE.MeshBasicMaterial({color:0x00d4aa, transparent:true, opacity:0.35, side:THREE.DoubleSide}));
-ring.rotation.x = -Math.PI/2; ring.position.y = 0.01; scene.add(ring);
-const matBody = new THREE.MeshStandardMaterial({color:0x00d4aa, metalness:0.3, roughness:0.45});
-const matDark = new THREE.MeshStandardMaterial({color:0x94a3b8, metalness:0.2, roughness:0.5});
-const matHead = new THREE.MeshStandardMaterial({color:0xe2e8f0, metalness:0.1, roughness:0.6});
-const avatar = new THREE.Group(); scene.add(avatar);
-function limb(w,h,d,mat){ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); m.position.y=-h/2; const piv=new THREE.Group(); piv.add(m); return piv; }
-const torso = new THREE.Mesh(new THREE.BoxGeometry(0.55,0.85,0.28), matBody); torso.position.y=1.35; avatar.add(torso);
-const head = new THREE.Mesh(new THREE.SphereGeometry(0.22,24,24), matHead); head.position.y=1.95; avatar.add(head);
-const leftArm=limb(0.14,0.55,0.14,matDark); leftArm.position.set(-0.38,1.7,0); avatar.add(leftArm);
-const rightArm=limb(0.14,0.55,0.14,matDark); rightArm.position.set(0.38,1.7,0); avatar.add(rightArm);
-const leftLeg=limb(0.16,0.7,0.16,matDark); leftLeg.position.set(-0.16,0.95,0); avatar.add(leftLeg);
-const rightLeg=limb(0.16,0.7,0.16,matDark); rightLeg.position.set(0.16,0.95,0); avatar.add(rightLeg);
+const dir = new THREE.DirectionalLight(0x00d4aa, 0.7);
+dir.position.set(3, 5, 2);
+scene.add(dir);
+const floor = new THREE.Mesh(new THREE.CircleGeometry(1.6, 48), new THREE.MeshStandardMaterial({ color: 0x1a2235, metalness: 0.2, roughness: 0.8 }));
+floor.rotation.x = -Math.PI / 2;
+scene.add(floor);
+const ring = new THREE.Mesh(new THREE.RingGeometry(1.55, 1.65, 48), new THREE.MeshBasicMaterial({ color: 0x00d4aa, transparent: true, opacity: 0.35, side: THREE.DoubleSide }));
+ring.rotation.x = -Math.PI / 2;
+ring.position.y = 0.01;
+scene.add(ring);
+const matBody = new THREE.MeshStandardMaterial({ color: 0x00d4aa, metalness: 0.3, roughness: 0.45 });
+const matDark = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.2, roughness: 0.5 });
+const matHead = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.1, roughness: 0.6 });
+const avatar = new THREE.Group();
+scene.add(avatar);
+function limb(w, h, d, mat) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.y = -h / 2;
+  const piv = new THREE.Group();
+  piv.add(m);
+  return piv;
+}
+const torso = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.85, 0.28), matBody);
+torso.position.y = 1.35;
+avatar.add(torso);
+const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), matHead);
+head.position.y = 1.95;
+avatar.add(head);
+const leftArm = limb(0.14, 0.55, 0.14, matDark);
+leftArm.position.set(-0.38, 1.7, 0);
+avatar.add(leftArm);
+const rightArm = limb(0.14, 0.55, 0.14, matDark);
+rightArm.position.set(0.38, 1.7, 0);
+avatar.add(rightArm);
+const leftLeg = limb(0.16, 0.7, 0.16, matDark);
+leftLeg.position.set(-0.16, 0.95, 0);
+avatar.add(leftLeg);
+const rightLeg = limb(0.16, 0.7, 0.16, matDark);
+rightLeg.position.set(0.16, 0.95, 0);
+avatar.add(rightLeg);
 const clock3 = new THREE.Clock();
-function animateAvatar(){
+
+function animateAvatar() {
   requestAnimationFrame(animateAvatar);
-  const t=clock3.getElapsedTime(), speed=walkSpeed;
-  const swing=Math.sin(t*6*Math.max(speed,0.15))*0.55*Math.max(speed,0.12);
-  leftLeg.rotation.x=swing; rightLeg.rotation.x=-swing;
-  leftArm.rotation.x=-swing*0.85; rightArm.rotation.x=swing*0.85;
-  avatar.position.y=Math.abs(Math.sin(t*6*Math.max(speed,0.15)))*0.04*speed;
-  avatar.rotation.y=t*0.15; ring.rotation.z=t*0.4;
+  const t = clock3.getElapsedTime();
+  const speed = walkSpeed;
+  const swing = Math.sin(t * 6 * Math.max(speed, 0.15)) * 0.55 * Math.max(speed, 0.12);
+  leftLeg.rotation.x = swing;
+  rightLeg.rotation.x = -swing;
+  leftArm.rotation.x = -swing * 0.85;
+  rightArm.rotation.x = swing * 0.85;
+  avatar.position.y = Math.abs(Math.sin(t * 6 * Math.max(speed, 0.15))) * 0.04 * speed;
+  ring.rotation.z = t * 0.4;
   renderer.render(scene, camera);
 }
 animateAvatar();
+setTimeout(resizeCharts, 100);
+setTimeout(resizeCharts, 500);
 
 function drawLineChart(canvas, series, colors) {
+  if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const w = canvas.clientWidth, h = canvas.clientHeight;
-  if (w < 10) return;
-  canvas.width = w * dpr; canvas.height = h * dpr;
+  if (w < 10 || h < 10) return;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
   ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-  for (let i = 1; i < 4; i++) { const y=(h/4)*i; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+  for (let i = 1; i < 4; i++) {
+    const y = (h / 4) * i;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
   series.forEach((data, idx) => {
     if (data.length < 2) return;
-    const min=Math.min(...data), max=Math.max(...data), range=max-min||1;
-    ctx.beginPath(); ctx.strokeStyle=colors[idx]; ctx.lineWidth=2;
-    data.forEach((v,i)=>{ const x=(i/(data.length-1))*w; const y=h-((v-min)/range)*(h-16)-8; i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+    const min = Math.min(...data), max = Math.max(...data), range = max - min || 1;
+    ctx.beginPath();
+    ctx.strokeStyle = colors[idx];
+    ctx.lineWidth = 2;
+    data.forEach((v, i) => {
+      const x = (i / (data.length - 1)) * w;
+      const y = h - ((v - min) / range) * (h - 16) - 8;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    });
     ctx.stroke();
   });
 }
 
 function applyLiveReading(r, online) {
   if (!r || !r.motion) return;
-  const m=r.motion, e=r.env||{};
-  const ax=m.ax??0, ay=m.ay??0, az=m.az??9.81;
-  const gx=m.gx??0, gy=m.gy??0, gz=m.gz??0;
-  const totalG=m.total_g??(Math.sqrt(ax*ax+ay*ay+az*az)/9.81);
-  document.getElementById('ax').innerHTML=Number(ax).toFixed(2)+'<span>m/s²</span>';
-  document.getElementById('ay').innerHTML=Number(ay).toFixed(2)+'<span>m/s²</span>';
-  document.getElementById('az').innerHTML=Number(az).toFixed(2)+'<span>m/s²</span>';
-  document.getElementById('gx').innerHTML=Number(gx).toFixed(2)+'<span>rad/s</span>';
-  document.getElementById('gy').innerHTML=Number(gy).toFixed(2)+'<span>rad/s</span>';
-  document.getElementById('gz').innerHTML=Number(gz).toFixed(2)+'<span>rad/s</span>';
-  document.getElementById('actAccel').innerHTML=Number(totalG).toFixed(2)+' <span style="font-size:11px;color:var(--txt3)">g</span>';
-  const walking=Number(totalG)>1.15;
-  document.getElementById('actCadence').innerHTML=(walking?Math.round(70+totalG*25):0)+' <span style="font-size:11px;color:var(--txt3)">pas/min</span>';
-  const activity=Math.min(100,Math.max(5,walking?40+totalG*30:8));
-  document.getElementById('activityPct').textContent=Math.round(activity)+'%';
-  document.getElementById('activityFill').style.width=activity+'%';
-  const actEl=document.getElementById('actLabel');
-  actEl.textContent=walking?'Marche':'Immobile'; actEl.className=walking?'as-val walk':'as-val alert';
-  walkSpeed=walking?1:0.08;
-  if (online) { motionBuf.push(totalG); if (motionBuf.length>80) motionBuf.shift(); }
-  if (motionBuf.length) drawLineChart(document.getElementById('motionCanvas'),[motionBuf],['#a78bfa']);
-  if (e.temperature!=null) {
-    current.temp=Number(e.temperature);
-    document.getElementById('tempVal').textContent=current.temp.toFixed(1);
-    document.getElementById('tempBig').innerHTML=current.temp.toFixed(1)+'<span>°C</span>';
-    document.getElementById('tempRing').style.setProperty('--pct', Math.max(5, Math.min(100, ((current.temp-20)/20)*100)));
-    if (online) { tempBuf.push(current.temp); if (tempBuf.length>80) tempBuf.shift(); }
+  const m = r.motion, e = r.env || {};
+  const angX = Number(m.angle_x ?? 0), angY = Number(m.angle_y ?? 0);
+  const totalG = Number(m.total_g ?? 1);
+  const gz = Number(m.gz ?? 0);
+  const fallRisk = Number(m.fall_risk != null ? m.fall_risk : (r.fall_risk ?? current.risk ?? 0));
+  const maxAngle = Math.max(Math.abs(angX), Math.abs(angY));
+
+  document.getElementById('mpuTotal').innerHTML = totalG.toFixed(2) + '<span> g</span>';
+  document.getElementById('angleXVal').textContent = angX.toFixed(1) + '°';
+  document.getElementById('angleYVal').textContent = angY.toFixed(1) + '°';
+  document.getElementById('gyroZVal').textContent = gz.toFixed(2) + ' rad/s';
+  document.getElementById('actAccel').textContent = totalG.toFixed(2) + ' g';
+  document.getElementById('actIncline').textContent = maxAngle.toFixed(1) + '°';
+
+  if (avatar) {
+    avatar.rotation.z = (angX / FALL_THRESHOLD) * 0.55;
+    avatar.rotation.x = (angY / FALL_THRESHOLD) * 0.45;
   }
-  if (e.humidity!=null) {
-    current.humid=Number(e.humidity);
-    document.getElementById('humidVal').innerHTML=Math.round(current.humid)+'<span>%</span>';
-    if (online) { humidBuf.push(current.humid); if (humidBuf.length>80) humidBuf.shift(); }
+
+  const walking = totalG > 1.12 && fallRisk < 0.85;
+  const activity = Math.min(100, Math.max(0, walking ? Math.round((totalG - 1) * 120) : Math.round(maxAngle * 1.5)));
+  document.getElementById('activityPct').textContent = activity + '%';
+  document.getElementById('activityFill').style.width = activity + '%';
+
+  const motionLbl = document.getElementById('actMotionLabel');
+  const actEl = document.getElementById('actLabel');
+  if (fallRisk >= 0.85) {
+    motionLbl.textContent = 'Chute / déséquilibre';
+    actEl.textContent = 'Alerte';
+    actEl.className = 'as-val alert';
+    walkSpeed = 0.05;
+  } else if (walking) {
+    motionLbl.textContent = 'Marche détectée';
+    actEl.textContent = 'Marche';
+    actEl.className = 'as-val walk';
+    walkSpeed = 1;
+  } else if (maxAngle >= WARN_THRESHOLD) {
+    motionLbl.textContent = 'Inclinaison élevée';
+    actEl.textContent = 'Instable';
+    actEl.className = 'as-val warn';
+    walkSpeed = 0.08;
+  } else {
+    motionLbl.textContent = 'Immobile';
+    actEl.textContent = 'Immobile';
+    actEl.className = 'as-val';
+    walkSpeed = 0.08;
   }
-  if (e.temperature!=null || e.humidity!=null) {
-    let comfort='Bon', col='var(--teal)';
-    if (current.temp>32||current.humid>80){comfort='Élevé';col='var(--red)';}
-    else if(current.temp>30||current.humid>72){comfort='Moyen';col='var(--amber)';}
-    const c=document.getElementById('comfortVal'); c.textContent=comfort; c.style.color=col;
-    document.getElementById('tempTrend').textContent=online?'Live':'Hold';
-    if (tempBuf.length||humidBuf.length) drawLineChart(document.getElementById('tempCanvas'),[tempBuf,humidBuf],['#f59e0b','#60a5fa']);
+
+  if (online) {
+    motionBuf.push(totalG);
+    if (motionBuf.length > 100) motionBuf.shift();
+    angleBuf.push(maxAngle);
+    if (angleBuf.length > 100) angleBuf.shift();
   }
-  lastReading=r; setAnalyseLive(online?'live':'hold');
-  if(r.ecg) applyEcgUI(r.ecg, online);
+  if (motionBuf.length) drawLineChart(motionCanvas, [motionBuf], ['#a78bfa']);
+
+  if (e.temperature != null) {
+    current.temp = Number(e.temperature);
+    document.getElementById('tempBig').innerHTML = current.temp.toFixed(1) + '<span> °C</span>';
+  }
+  if (e.humidity != null) {
+    current.humid = Number(e.humidity);
+    document.getElementById('humidVal').innerHTML = Math.round(current.humid) + '<span> %</span>';
+  }
+
+  const riskPct = Math.round(fallRisk * 100) + '%';
+  document.getElementById('actRisk').textContent = riskPct;
+  document.getElementById('bioRisk').textContent = riskPct;
+  current.risk = fallRisk;
+  const riskCol = fallRisk > 0.7 ? 'var(--red)' : fallRisk > 0.4 ? 'var(--amber)' : 'var(--teal)';
+  document.getElementById('actRisk').style.color = riskCol;
+
+  if (r.updated_at) {
+    try {
+      document.getElementById('syncTime').textContent = 'Dernière sync : ' + new Date(r.updated_at).toLocaleTimeString('fr-FR');
+    } catch (e) {}
+  }
+
+  lastReading = r;
+  setAnalyseLive(online ? 'live' : 'hold');
+  if (r.ecg) applyEcgUI(r.ecg);
+  if (r.fall_detected && Date.now() > liveFallCooldown) {
+    liveFallCooldown = Date.now() + 25000;
+    showFallPush({
+      id: 'live-' + Date.now(),
+      patient_id: current?.id || r.patient_id,
+      nom: current ? `${current.prenom} ${current.nom}` : (r.patient_id || 'Patient'),
+      zone: current?.zone || '—',
+      detected_at: r.updated_at || new Date().toISOString(),
+    });
+  }
 }
 
-async function pollLiveSensors(){
-  try{
-    const res=await fetch('/api/sensors/latest/?patient_id='+encodeURIComponent(current.id));
-    if(!res.ok){ if(lastReading) applyLiveReading(lastReading,false); else setAnalyseLive('waiting'); return; }
-    const data=await res.json();
-    const r=(data.readings||[])[0];
-    if(r) applyLiveReading(r, !!r.online);
-    else if(lastReading) applyLiveReading(lastReading,false);
+function dismissPush(el) {
+  if (!el) return;
+  el.classList.remove('show');
+  el.classList.add('hide');
+  setTimeout(() => el.remove(), 380);
+}
+
+function showFallPush(fall) {
+  const stack = document.getElementById('pushStack');
+  if (!stack || !fall) return;
+  const uid = String(fall.id || `${fall.patient_id}-${fall.detected_at}`);
+  if (seenFallIds.has(uid)) return;
+  seenFallIds.add(uid);
+  const time = fall.detected_at
+    ? new Date(fall.detected_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    : 'à l\'instant';
+  const card = document.createElement('div');
+  card.className = 'push-toast push-fall';
+  card.innerHTML = `
+    <div class="push-ico" aria-hidden="true">⚠</div>
+    <div class="push-content">
+      <div class="push-title">Chute détectée</div>
+      <div class="push-msg"><strong>${fall.nom || fall.patient_id || 'Patient'}</strong> — ${fall.zone || 'Zone inconnue'}</div>
+      <div class="push-sub">${time} · Alerte envoyée à la famille</div>
+      <a class="push-action" href="/geolocalisation/?patient=${encodeURIComponent(fall.patient_id || '')}">Voir sur la carte →</a>
+    </div>
+    <button type="button" class="push-close" aria-label="Fermer">×</button>
+  `;
+  card.querySelector('.push-close').addEventListener('click', () => dismissPush(card));
+  stack.prepend(card);
+  requestAnimationFrame(() => card.classList.add('show'));
+  if (navigator.vibrate) try { navigator.vibrate([180, 80, 180]); } catch (e) {}
+  const frame = document.querySelector('.analyse-frame');
+  if (frame && current && fall.patient_id === current.id) {
+    frame.classList.add('fall-alert-active');
+    setTimeout(() => frame.classList.remove('fall-alert-active'), 6000);
+  }
+  setTimeout(() => dismissPush(card), 18000);
+}
+
+async function initFallWatch() {
+  try {
+    const res = await fetch('/api/chutes/?limit=25');
+    if (res.ok) {
+      const data = await res.json();
+      (data.chutes || []).forEach(f => seenFallIds.add(String(f.id)));
+    }
+  } catch (e) {}
+  fallWatchReady = true;
+}
+
+async function pollFalls() {
+  if (!fallWatchReady) return;
+  try {
+    const res = await fetch('/api/chutes/?limit=10');
+    if (!res.ok) return;
+    const data = await res.json();
+    const now = Date.now();
+    (data.chutes || []).forEach(f => {
+      if (f.acknowledged) return;
+      const age = now - new Date(f.detected_at).getTime();
+      if (age > 8 * 60 * 1000) return;
+      showFallPush(f);
+    });
+  } catch (e) {}
+}
+
+async function pollLiveSensors() {
+  if (!current) return;
+  try {
+    const res = await fetch('/api/sensors/latest/?patient_id=' + encodeURIComponent(current.id));
+    if (!res.ok) {
+      if (lastReading) applyLiveReading(lastReading, false);
+      else setAnalyseLive('waiting');
+      return;
+    }
+    const data = await res.json();
+    const r = (data.readings || [])[0];
+    if (r) applyLiveReading(r, !!r.online);
+    else if (lastReading) applyLiveReading(lastReading, false);
     else setAnalyseLive('waiting');
-  }catch(e){
-    if(lastReading) applyLiveReading(lastReading,false); else setAnalyseLive('waiting');
+  } catch (e) {
+    if (lastReading) applyLiveReading(lastReading, false);
+    else setAnalyseLive('waiting');
   }
 }
 
-setInterval(()=>{ document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR'); },1000);
-document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR');
-applyPatient();
-setAnalyseLive('waiting');
-pollLiveSensors();
-pollTimer=setInterval(pollLiveSensors, 1000);
-const urlPid=new URLSearchParams(location.search).get('patient');
-if(urlPid && PATIENTS.some(p=>p.id===urlPid)){ select.value=urlPid; current=PATIENTS.find(p=>p.id===urlPid); applyPatient(); pollLiveSensors(); }
-if(location.hash==='#ecg') setTimeout(()=>document.getElementById('ecg')?.scrollIntoView({behavior:'smooth'}),400);
+async function syncPatientMeta() {
+  await loadPatients();
+  if (!PATIENTS.length) return;
+  const prev = current && current.id;
+  fillPatientSelect();
+  current = PATIENTS.find(p => p.id === (prev || select.value)) || PATIENTS[0];
+  select.value = current.id;
+  applyPatient();
+}
+
+async function boot() {
+  await loadPatients();
+  if (!PATIENTS.length) return;
+  fillPatientSelect();
+  const urlPid = new URLSearchParams(location.search).get('patient');
+  try {
+    const res = await fetch('/api/monitoring/active/');
+    if (res.ok) {
+      const d = await res.json();
+      if (d.active_patient && PATIENTS.some(p => p.id === d.active_patient)) {
+        current = PATIENTS.find(p => p.id === d.active_patient);
+      }
+    }
+  } catch (e) {}
+  if (urlPid && PATIENTS.some(p => p.id === urlPid)) {
+    current = PATIENTS.find(p => p.id === urlPid);
+    await setActivePatient(urlPid);
+  }
+  if (!current) current = PATIENTS[0];
+  select.value = current.id;
+  applyPatient();
+  setAnalyseLive('waiting');
+  pollLiveSensors();
+  pollTimer = setInterval(pollLiveSensors, 1000);
+  setInterval(syncPatientMeta, 5000);
+  setInterval(ecgAnimStep, ECG_FRAME_MS);
+  await initFallWatch();
+  setInterval(pollFalls, 2500);
+  initEcgBufferOnce();
+  scheduleNextEcgCycle();
+  ecgAnimStep();
+  if (location.hash === '#ecg') setTimeout(() => document.getElementById('ecg')?.scrollIntoView({ behavior: 'smooth' }), 400);
+}
+
+setInterval(() => { document.getElementById('clock').textContent = new Date().toLocaleTimeString('fr-FR'); }, 1000);
+document.getElementById('clock').textContent = new Date().toLocaleTimeString('fr-FR');
+boot();
 </script>
-<script src="/static/js/geriotrack-mobile.js"></script>
+<script src="/static/js/geriotrack-notify.js"></script>
 </body>
 </html>

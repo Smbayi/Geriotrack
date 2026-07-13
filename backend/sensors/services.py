@@ -125,22 +125,49 @@ def smooth_bpm(prev_bpm, new_bpm):
     return int(round(prev_bpm * 0.65 + b * 0.35))
 
 
-def process_ecg_reading(raw_adc, bpm_device=None, prev_bpm=None, prev_waveform=None):
+def process_ecg_reading(
+    raw_adc, bpm_device=None, prev_bpm=None, prev_waveform=None,
+    ecg_samples=None, electrodes_ok=True,
+):
     """
-    Calibre ECG : ADC → mV, BPM lissé, statut.
-    prev_waveform : liste existante à laquelle ajouter le point.
+    ECG fidèle au moniteur série : forme d'onde en ADC brut (0–4095),
+    BPM = valeur calculée par l'ESP32 (pas de lissage agressif).
     """
     waveform = list(prev_waveform or [])
-    if raw_adc is not None:
-        mv = calibrate_ecg_mv(raw_adc)
-        waveform.append(mv)
+
+    samples = []
+    if ecg_samples:
+        for v in ecg_samples:
+            try:
+                samples.append(int(float(v)))
+            except (TypeError, ValueError):
+                pass
+    elif raw_adc is not None:
+        try:
+            samples.append(int(float(raw_adc)))
+        except (TypeError, ValueError):
+            pass
+
+    if samples:
+        waveform.extend(samples)
         if len(waveform) > ECG_WAVEFORM_LEN:
             waveform = waveform[-ECG_WAVEFORM_LEN:]
-    else:
-        mv = None
 
-    bpm = smooth_bpm(prev_bpm, bpm_device)
-    status_key, status_label = classify_ecg_bpm(bpm)
+    mv = calibrate_ecg_mv(raw_adc) if raw_adc is not None else None
+
+    if not electrodes_ok:
+        bpm = None
+        if samples or waveform:
+            status_key, status_label = 'live', 'Signal live'
+        else:
+            status_key, status_label = 'offline', 'Électrodes déconnectées'
+    elif bpm_device is not None and int(bpm_device) > 0:
+        bpm = max(ECG_BPM_MIN, min(ECG_BPM_MAX, int(bpm_device)))
+        status_key, status_label = classify_ecg_bpm(bpm)
+    else:
+        bpm = prev_bpm
+        status_key, status_label = classify_ecg_bpm(bpm)
+
     return {
         'ecg_raw': int(raw_adc) if raw_adc is not None else None,
         'ecg_mv': mv,
@@ -148,6 +175,7 @@ def process_ecg_reading(raw_adc, bpm_device=None, prev_bpm=None, prev_waveform=N
         'ecg_status': status_key,
         'ecg_status_label': status_label,
         'ecg_waveform': waveform,
+        'ecg_electrodes_ok': bool(electrodes_ok),
     }
 
 
@@ -609,7 +637,7 @@ def parse_esp_payload(payload):
     if lat == 0.0 and lon == 0.0:
         lat, lon = None, None
 
-    ecg_raw = payload.get('ecg_raw', payload.get('ecg', payload.get('ecg_adc')))
+    ecg_raw = payload.get('ecg_raw', payload.get('ecg_brut', payload.get('ecg', payload.get('ecg_adc'))))
     if ecg_raw is not None:
         try:
             ecg_raw = int(float(ecg_raw))
@@ -618,6 +646,16 @@ def parse_esp_payload(payload):
     ecg_bpm = _num(payload, 'bpm', 'heart_rate', 'ecg_bpm')
     if ecg_bpm is not None:
         ecg_bpm = int(ecg_bpm)
+
+    electrodes_ok = True
+    if 'electrodes_connectees' in payload:
+        electrodes_ok = _bool_val(payload, 'electrodes_connectees')
+    elif 'electrodes_ok' in payload:
+        electrodes_ok = _bool_val(payload, 'electrodes_ok')
+
+    ecg_samples = payload.get('ecg_samples') or payload.get('ecg_waveform') or []
+    if not isinstance(ecg_samples, list):
+        ecg_samples = []
 
     return {
         'temperature': temperature,
@@ -634,6 +672,8 @@ def parse_esp_payload(payload):
         'speed': _num(gps, 'speed'),
         'ecg_raw': ecg_raw,
         'ecg_bpm': ecg_bpm,
+        'ecg_electrodes_ok': electrodes_ok,
+        'ecg_samples': ecg_samples,
     }
 
 
@@ -685,7 +725,6 @@ def _dispatch_fall_messages(fall_event, patient_code, device_id=None):
     street = loc.get('street') or ''
     heure = fall_event.detected_at.astimezone().strftime('%d/%m/%Y à %H:%M')
     gps_line = ''
-    analyse_url = build_analyse_url(patient_code)
     geo_famille = build_carte_url(patient_code, portail=True, via_login=True)
     geo_carte_sms = build_carte_url(patient_code, portail=True, via_login=False)
     geo_medecin = build_carte_url(patient_code, portail=False)
@@ -701,7 +740,6 @@ def _dispatch_fall_messages(fall_event, patient_code, device_id=None):
         f'{lieu_line}.\n'
         f'{gps_line}\n'
         f'Voir position : {geo_medecin}\n'
-        f'Graphique ECG : {analyse_url}\n'
         f'Intervention immédiate requise. Médecin : {patient.get("medecin", "")}.'
     )
     famille_msg = (
@@ -709,7 +747,6 @@ def _dispatch_fall_messages(fall_event, patient_code, device_id=None):
         f'{lieu_line}.\n'
         f'{gps_line}\n'
         f'Voir la position sur la carte (après connexion) : {geo_famille}\n'
-        f'Suivi ECG : {analyse_url}\n'
         f'Le médecin {patient.get("medecin", "")} a été prévenu sur la plateforme.'
     )
     gsm_sms_short = (
@@ -757,8 +794,7 @@ def _dispatch_fall_messages(fall_event, patient_code, device_id=None):
     mail_body = (
         f'{famille_msg}\n\n'
         f'—\n'
-        f'Graphique ECG / analyse : {analyse_url}\n'
-        f'Lien carte / position (mot de passe puis carte) : {geo_famille}\n'
+        f'Carte / position : {geo_famille}\n'
         f'Espace famille : {espace_famille}\n'
         f'Ce message a été envoyé automatiquement par GérioTrack.'
     )
@@ -808,7 +844,6 @@ def dispatch_patient_portal_alert(patient_code, alert_type, custom_message=None,
     loc = resolve_location_from_gps(lat, lon)
     zone = loc['label'] or patient.get('chambre', 'Kinshasa')
     heure = timezone.now().astimezone().strftime('%d/%m/%Y à %H:%M')
-    analyse_url = build_analyse_url(patient_code)
     geo_famille = build_carte_url(patient_code, portail=True, via_login=True)
     geo_carte_sms = build_carte_url(patient_code, portail=True, via_login=False)
     gps_line = f'GPS : {lat:.6f}, {lon:.6f}' if lat is not None and lon is not None else ''
@@ -859,7 +894,6 @@ def dispatch_patient_portal_alert(patient_code, alert_type, custom_message=None,
             f'{full_body}\n\n'
             f'—\n'
             f'Carte / position : {geo_famille}\n'
-            f'Analyse ECG : {analyse_url}\n'
             f'GérioTrack — alerte automatique.'
         )
         mail_status = _send_real_email(subject, mail_body, famille_email)
@@ -968,7 +1002,11 @@ def process_esp_payload(payload, device_id=None):
         data['angle_x'], data['angle_y'], data['total_g'], fall=data['fall']
     )
 
-    has_ecg = data.get('ecg_raw') is not None or data.get('ecg_bpm') is not None
+    has_ecg = (
+        data.get('ecg_raw') is not None
+        or data.get('ecg_bpm') is not None
+        or data.get('ecg_samples')
+    )
     shared_ecg = None
     if has_ecg:
         st_ref = PatientLiveState.objects.filter(patient_code=active_patient).first()
@@ -977,6 +1015,8 @@ def process_esp_payload(payload, device_id=None):
             bpm_device=data.get('ecg_bpm'),
             prev_bpm=st_ref.ecg_bpm if st_ref else None,
             prev_waveform=st_ref.ecg_waveform if st_ref else [],
+            ecg_samples=data.get('ecg_samples'),
+            electrodes_ok=data.get('ecg_electrodes_ok', True),
         )
 
     DeviceReadingLog.objects.create(
@@ -1171,7 +1211,13 @@ def reading_to_json(r, patient_code=None):
     ecg_mv = st.ecg_mv if st and st.ecg_mv is not None else r.ecg_mv
     ecg_wave = (st.ecg_waveform if st and st.ecg_waveform else r.ecg_waveform) or []
     ecg_status = st.ecg_status if st and st.ecg_status else ''
-    _, ecg_label = classify_ecg_bpm(ecg_bpm)
+    ecg_label = ''
+    if ecg_status == 'offline' and not (ecg_wave or ecg_raw is not None):
+        ecg_label = 'Électrodes déconnectées'
+    elif ecg_bpm is None and (ecg_wave or ecg_raw is not None):
+        ecg_label = 'Signal live'
+    else:
+        _, ecg_label = classify_ecg_bpm(ecg_bpm)
 
     return {
         'device_id': r.device_id,
@@ -1185,6 +1231,9 @@ def reading_to_json(r, patient_code=None):
             'status': ecg_status or classify_ecg_bpm(ecg_bpm)[0],
             'status_label': ecg_label,
             'waveform': ecg_wave[-ECG_WAVEFORM_LEN:],
+            'waveform_adc': ecg_wave[-ECG_WAVEFORM_LEN:],
+            'electrodes_ok': ecg_status != 'offline',
+            'adc_mid': ECG_ADC_MID,
             'analyse_url': build_analyse_url(patient_code) if patient_code else '',
         },
         'gps': {

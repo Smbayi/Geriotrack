@@ -846,43 +846,8 @@ function updateOrientationUI(angX, angY){
 
 function openAnalyse(id){
   const p=PT.find(x=>x.id===id); if(!p) return;
-  // Définir ce patient comme surveillé pour la chute / GPS
   setActivePatient(id);
-  analysePatient={...p, temp:p.t, humid:p.h};
-  const av=document.getElementById('aAv');
-  av.textContent=ini(p);
-  av.style.cssText=`background:${p.c}18;color:${p.c};border-color:${p.c}50;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;font-family:var(--font-head);flex-shrink:0;border:2px solid`;
-  document.getElementById('aName').textContent=`${p.p} ${p.n}`;
-  document.getElementById('aMeta').textContent=`${p.id} · ${p.ch} · MPU6050 · ECG · SIM800L`;
-  applyRiskToUI(p.r);
-  updateOrientationUI(0,0);
-  walkSpeed=0.08;
-  motionBuf=[]; angleBuf=[]; tempBuf=[]; humidBuf=[]; ecgBuf=[];
-  lastReading=null; hasSensorData=false;
-  motionBuf=[]; angleBuf=[]; tempBuf=[]; humidBuf=[];
-  setLiveStatus('waiting');
-  document.getElementById('actLabel').textContent='En attente';
-  document.getElementById('actLabel').className='val';
-  document.getElementById('actCadence').textContent='—';
-  document.getElementById('actAccel').textContent='—';
-  document.getElementById('tempBig').innerHTML='--.<span> °C</span>';
-  document.getElementById('humidVal').innerHTML='--<span> %</span>';
-  document.getElementById('comfortVal').textContent='—';
-  document.getElementById('activityPct').textContent='0%';
-  document.getElementById('activityFill').style.width='0%';
-  ['ax','ay','az','gx','gy','gz'].forEach(id=>{
-    const unit=id.startsWith('g')?' rad/s':' m/s²';
-    document.getElementById(id).innerHTML='0.00<span>'+unit+'</span>';
-  });
-  document.getElementById('analyseOv').classList.add('open');
-  document.getElementById('mOv').classList.remove('open');
-  requestAnimationFrame(()=>{
-    initAvatar();
-    resizeAvatar();
-    setTimeout(resizeAvatar, 120);
-    setTimeout(resizeAvatar, 400);
-    startSensorPoll();
-  });
+  window.location.href='/analyse/?patient='+encodeURIComponent(id);
 }
 
 function closeAnalyse(){
@@ -1197,7 +1162,8 @@ const urlParams=new URLSearchParams(location.search);
 const autoAnalyse=urlParams.get('analyse');
 const autoPatient=urlParams.get('patient');
 if(autoAnalyse && PT.some(p=>p.id===autoAnalyse)){
-  setTimeout(()=>openAnalyse(autoAnalyse),200);
+  setActivePatient(autoAnalyse);
+  window.location.replace('/analyse/?patient='+encodeURIComponent(autoAnalyse));
 } else if(autoPatient && PT.some(p=>p.id===autoPatient)){
   setTimeout(()=>openP(autoPatient),200);
 }

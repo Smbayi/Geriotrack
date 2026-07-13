@@ -1,5 +1,5 @@
 /**
- * GérioTrack — menu latéral mobile + fermeture au clic
+ * GérioTrack — menu latéral (☰) : masqué par défaut, ouvert au clic
  */
 (function () {
   if (document.querySelector('.bottom-nav')) return;
@@ -9,6 +9,8 @@
   if (!sidebar || !topbar) return;
 
   if (document.querySelector('.menu-toggle')) return;
+
+  var isAnalyse = document.body.classList.contains('analyse-page');
 
   var backdrop = document.createElement('div');
   backdrop.className = 'sidebar-backdrop';
@@ -46,12 +48,12 @@
 
   sidebar.querySelectorAll('.nav-item').forEach(function (link) {
     link.addEventListener('click', function () {
-      if (window.innerWidth <= 768) closeMenu();
+      closeMenu();
     });
   });
 
   window.addEventListener('resize', function () {
-    if (window.innerWidth > 768) closeMenu();
+    if (!isAnalyse && window.innerWidth > 768) closeMenu();
   });
 
   document.addEventListener('keydown', function (e) {

@@ -37,7 +37,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-siz
 .u-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);margin-left:auto;box-shadow:0 0 6px var(--teal);animation:pdot 2s infinite;flex-shrink:0}
 @keyframes pdot{0%,100%{opacity:1}50%{opacity:.4}}
 
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;min-width:0}
 .topbar{height:60px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;z-index:100}
 .topbar-title{font-family:var(--font-head);font-size:15px;font-weight:600;color:#fff}
 .topbar-sub{font-size:12px;color:var(--txt3);font-family:var(--font-mono);margin-left:4px}
@@ -72,8 +72,8 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-siz
 .map-toolbar .city-inline{font-size:10px;font-family:var(--font-mono);color:var(--txt3);margin-left:auto;align-self:center}
 .map-toolbar .city-inline strong{color:var(--teal)}
 
-.map-container{flex:1;position:relative}
-#map{width:100%;height:100%;background:var(--bg)}
+.map-container{flex:1;position:relative;min-height:0;overflow:hidden}
+#map{position:absolute;inset:0;width:100%;height:100%;background:var(--bg)}
 .maplibregl-ctrl-group{background:var(--bg2)!important;border:1px solid var(--border)!important;box-shadow:none!important}
 .maplibregl-ctrl-group button{background:var(--bg2)!important;border-color:var(--border)!important}
 .maplibregl-ctrl-group button+button{border-top-color:var(--border)!important}
@@ -161,9 +161,50 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-siz
 .fall-marker-wrap.historic .fall-marker-core{background:rgba(245,158,11,.18);border-color:var(--amber);font-size:13px;opacity:.9}
 .fall-marker-label{font-size:8px;color:var(--txt3);font-family:IBM Plex Mono,monospace;margin-top:1px}
 @keyframes map-pulse{0%{width:40px;height:40px;opacity:.55}100%{width:68px;height:68px;opacity:0}}
+
+/* ── PC : carte pleine hauteur (pas le layout smartphone) ── */
+@media (min-width: 769px) {
+  body.geo-page {
+    height: 100vh;
+    overflow: hidden;
+    flex-direction: row;
+  }
+  body.geo-page > .main {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    height: 100vh;
+    overflow: hidden;
+  }
+  body.geo-page .body-row {
+    flex: 1;
+    flex-direction: row !important;
+    min-height: 0;
+    overflow: hidden;
+  }
+  body.geo-page .map-column {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+  }
+  body.geo-page .map-container {
+    flex: 1 1 auto !important;
+    min-height: 320px !important;
+    height: auto !important;
+  }
+  body.geo-page .side-panel {
+    width: var(--panel-w) !important;
+    height: 100% !important;
+    max-height: none !important;
+    border-left: 1px solid var(--border);
+    border-top: none !important;
+    overflow-y: auto;
+  }
+}
 </style>
 </head>
-<body>
+<body class="geo-page">
 
 <aside class="sidebar">
   <div class="sidebar-logo">
@@ -228,14 +269,15 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-siz
             <div class="map-stat-pill"><div class="msp-dot" style="background:var(--red);box-shadow:0 0 6px var(--red);animation:pdot 1s infinite"></div><span class="msp-label">Alertes</span><span class="msp-val" id="stat-alert-count" style="color:var(--red)">2</span></div>
             <div class="map-stat-pill"><div class="msp-dot" style="background:var(--amber)"></div><span class="msp-label">MAJ GPS</span><span class="msp-val" id="stat-update" style="font-size:11px">--:--:--</span></div>
           </div>
-          <span class="city-inline">Zone · <strong>Kinshasa</strong></span>
+          <span class="city-inline">Zone · <strong>Grand Kinshasa</strong></span>
         </div>
         <div class="map-filters-scroll">
           <button class="map-ctrl-btn active" onclick="setMapFilter('all',this)">Tous (12)</button>
           <button class="map-ctrl-btn" onclick="setMapFilter('alert',this)">⚠ Alertes (2)</button>
           <button class="map-ctrl-btn" onclick="setMapFilter('warn',this)">Surveiller (3)</button>
           <button class="map-ctrl-btn" onclick="setMapFilter('stable',this)">Stables (7)</button>
-          <button class="map-ctrl-btn" onclick="centerAll()">📍 Centrer</button>
+          <button class="map-ctrl-btn" onclick="centerOnSelected()">📍 Centrer patient</button>
+          <button class="map-ctrl-btn" onclick="centerAll()">🗺 Vue ensemble</button>
         </div>
       </div>
     <div class="map-container">
@@ -298,16 +340,16 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-body);font-siz
 </div>
 
 <script>
-/* Limites strictes de Kinshasa — impossible de naviguer ailleurs */
+/* Zone élargie — Grand Kinshasa et environs (vue d'ensemble) */
 const KINSHASA = {
   center: [15.3136, -4.3276], // [lon, lat]
   maxBounds: [
-    [15.15, -4.52], // sud-ouest
-    [15.52, -4.22], // nord-est
+    [14.75, -4.90], // sud-ouest
+    [16.05, -3.85], // nord-est
   ],
-  minZoom: 11,
+  minZoom: 9,
   maxZoom: 18,
-  defaultZoom: 12,
+  defaultZoom: 11,
 };
 
 /* Positions simulées dans les communes de Kinshasa */
@@ -333,6 +375,7 @@ let fallMarkers = {};
 let CHUTES = [];
 let map;
 let mapReady = false;
+let pendingCenter = false;
 
 const FALL_LOC_EPS = 0.00005; // ~5 m — même lieu
 
@@ -471,10 +514,17 @@ function initMap() {
 
   map.on('load', () => {
     mapReady = true;
+    map.resize();
     renderMarkers();
     renderPanelList();
+    const wrap = document.querySelector('.map-container');
+    if (wrap && window.ResizeObserver) {
+      new ResizeObserver(() => { if (map) map.resize(); }).observe(wrap);
+    }
     centerAll();
+    if (pendingCenter || selectedId) centerOnSelected();
   });
+  window.addEventListener('resize', () => { if (map) map.resize(); });
 }
 
 function createMarkerElement(p) {
@@ -501,9 +551,14 @@ function renderMarkers() {
   markers = {};
 
   const visible = PATIENTS.filter(p => mapFilter === 'all' || p.statut === mapFilter);
-  const coords = computeDisplayCoords(visible);
+  const toShow = [...visible];
+  if (selectedId && !toShow.some(p => p.id === selectedId)) {
+    const sel = PATIENTS.find(p => p.id === selectedId);
+    if (sel) toShow.push(sel);
+  }
+  const coords = computeDisplayCoords(toShow);
 
-  visible.forEach(p => {
+  toShow.forEach(p => {
     const pos = coords[p.id] || { lat: p.lat, lon: p.lon };
     const popup = new maplibregl.Popup({ offset: 22, closeButton: false }).setHTML(`
       <div style="font-family:IBM Plex Mono,monospace;font-size:11px">
@@ -517,7 +572,7 @@ function renderMarkers() {
       </div>
     `);
 
-    const marker = new maplibregl.Marker({ element: createMarkerElement(p), anchor: 'bottom' })
+    const marker = new maplibregl.Marker({ element: createMarkerElement(p), anchor: 'center' })
       .setLngLat([pos.lon, pos.lat])
       .setPopup(popup)
       .addTo(map);
@@ -585,25 +640,19 @@ function selectPatient(id, opts = {}) {
   const p = PATIENTS.find(x => x.id === id);
   if (!p) return;
   document.querySelectorAll('.pp-item').forEach(el => el.classList.remove('active'));
-  const el = document.querySelector(`[data-id="${id}"]`);
+  const el = document.querySelector(`.pp-item[data-id="${id}"]`);
   if (el) el.classList.add('active');
-  document.getElementById('selectedCard').style.display = 'block';
+  const card = document.getElementById('selectedCard');
+  if (card) card.style.display = 'block';
   updateSelectedCard(p);
+  renderMarkers();
   renderFallMarkers();
-  if (opts.skipFly) return;
-
-  const patientFalls = CHUTES.filter(f => f.patient_id === id && f.lat != null && f.lon != null);
-  if (patientFalls.length) {
-    const coords = computeFallDisplayCoords(patientFalls);
-    const latest = patientFalls.sort((a, b) => new Date(b.detected_at) - new Date(a.detected_at))[0];
-    const pos = coords[latest.id] || { lat: latest.lat, lon: latest.lon };
-    map.flyTo({ center: [pos.lon, pos.lat], zoom: 15, essential: true, duration: 1000 });
-    return;
+  if (!opts.skipFly) {
+    centerOnSelected();
+    if (window.innerWidth <= 768) {
+      document.querySelector('.map-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
-
-  const coords = computeDisplayCoords(PATIENTS.filter(x => mapFilter === 'all' || x.statut === mapFilter));
-  const pos = coords[id] || { lat: p.lat, lon: p.lon };
-  map.flyTo({ center: [pos.lon, pos.lat], zoom: 14, essential: true, duration: 1000 });
 }
 
 function updateSelectedCard(p) {
@@ -613,13 +662,14 @@ function updateSelectedCard(p) {
   av.style.cssText = `background:${col}18;color:${col};border-color:${col}50;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;font-family:Syne,sans-serif;border:2px solid;flex-shrink:0`;
   document.getElementById('scName').textContent = `${p.prenom} ${p.nom}`;
   document.getElementById('scMeta').textContent = `${p.id} · ${p.chambre} · ${p.age} ans`;
-  // Temp: on affiche via API (sinon --.-)
   document.getElementById('scTemp').textContent = p.temp == null ? '--.-' : p.temp.toFixed(1);
   document.getElementById('scRisk').textContent = (p.risk * 100).toFixed(0) + '%';
   document.getElementById('scRisk').style.color = rc(p.risk);
   document.getElementById('scPrec').textContent = Math.floor(Math.random() * 5 + 3) + 'm';
-  document.getElementById('scLat').textContent = Math.abs(p.lat).toFixed(6) + '°S';
-  document.getElementById('scLon').textContent = p.lon.toFixed(6) + '°E';
+  const lat = p.lat != null ? Number(p.lat) : null;
+  const lon = p.lon != null ? Number(p.lon) : null;
+  document.getElementById('scLat').textContent = lat != null ? Math.abs(lat).toFixed(6) + '°S' : '—';
+  document.getElementById('scLon').textContent = lon != null ? lon.toFixed(6) + '°E' : '—';
 }
 
 function renderPanelList(query = '') {
@@ -632,7 +682,7 @@ function renderPanelList(query = '') {
 
   list.innerHTML = filtered.map(p => {
     const col = sc(p.statut);
-    return `<div class="pp-item ${p.statut}${selectedId === p.id ? ' active' : ''}" data-id="${p.id}" onclick="selectPatient('${p.id}')">
+    return `<div class="pp-item ${p.statut}${selectedId === p.id ? ' active' : ''}" data-id="${p.id}" role="button" tabindex="0">
       <div class="pp-av" style="background:${col}18;color:${col};border-color:${col}40;font-weight:800">${ini(p)}</div>
       <div><div class="pp-name">${ini(p)} · ${p.prenom} ${p.nom}</div><div class="pp-info">${p.chambre} · ${p.age} ans</div></div>
       <div class="pp-right"><div class="pp-temp" style="color:var(--amber)">${p.temp==null?'--.-':Number(p.temp).toFixed(1)}<span style="font-size:9px;color:var(--txt3)"> °C</span></div><div class="pp-status-dot" style="background:${col};margin-left:auto;${p.statut === 'alert' ? 'box-shadow:0 0 6px ' + col : ''}"></div></div>
@@ -649,16 +699,60 @@ function setMapFilter(f, btn) {
   renderMarkers();
 }
 
-function centerAll() {
-  const bounds = new maplibregl.LngLatBounds();
-  PATIENTS.forEach(p => bounds.extend([p.lon, p.lat]));
-  map.fitBounds(bounds, { padding: 60, maxZoom: 13, duration: 800 });
+function getPatientMapPos(id) {
+  const p = PATIENTS.find(x => x.id === id);
+  if (!p) return null;
+  const visible = PATIENTS.filter(x => mapFilter === 'all' || x.statut === mapFilter);
+  const coords = computeDisplayCoords(visible);
+  return coords[id] || { lat: p.lat, lon: p.lon };
+}
+
+function getMapPadding() {
+  const p = 40;
+  return { top: p, bottom: p, left: p, right: p };
 }
 
 function centerOnSelected() {
-  if (!selectedId) return;
+  if (!selectedId) { centerAll(); return; }
   const p = PATIENTS.find(x => x.id === selectedId);
-  if (p) map.flyTo({ center: [p.lon, p.lat], zoom: 15, essential: true, duration: 800 });
+  if (!p || p.lat == null || p.lon == null) return;
+  if (!mapReady || !map) {
+    pendingCenter = true;
+    return;
+  }
+  pendingCenter = false;
+  const pos = getPatientMapPos(selectedId) || { lat: Number(p.lat), lon: Number(p.lon) };
+  map.resize();
+  map.flyTo({
+    center: [Number(pos.lon), Number(pos.lat)],
+    zoom: 14,
+    duration: 900,
+    essential: true,
+  });
+  map.once('moveend', () => map.resize());
+  setTimeout(() => map.resize(), 350);
+}
+
+function centerAll() {
+  if (!mapReady || !map) return;
+  const bounds = new maplibregl.LngLatBounds();
+  const visible = PATIENTS.filter(pt => mapFilter === 'all' || pt.statut === mapFilter);
+  const coords = computeDisplayCoords(visible);
+  visible.forEach(pt => {
+    const pos = coords[pt.id] || pt;
+    if (pos.lat != null && pos.lon != null) bounds.extend([pos.lon, pos.lat]);
+  });
+  CHUTES.forEach(f => {
+    if (f.lat != null && f.lon != null) bounds.extend([f.lon, f.lat]);
+  });
+  if (bounds.isEmpty()) return;
+  map.resize();
+  map.fitBounds(bounds, {
+    padding: getMapPadding(),
+    maxZoom: 11,
+    duration: 800,
+    essential: true,
+  });
 }
 
 function sendSMS() {
@@ -680,7 +774,7 @@ function sendSMS() {
 
 function openAnalyse() {
   if (!selectedId) return;
-  window.location.href = `/patients/?analyse=${selectedId}`;
+  window.location.href = `/analyse/?patient=${encodeURIComponent(selectedId)}`;
 }
 
 function openFiche() {
@@ -693,6 +787,21 @@ setInterval(() => {
 }, 1000);
 document.getElementById('clock').textContent = new Date().toLocaleTimeString('fr-FR');
 document.addEventListener('DOMContentLoaded', () => {
+  const panelList = document.getElementById('patientPanelList');
+  if (panelList) {
+    panelList.addEventListener('click', (e) => {
+      const item = e.target.closest('.pp-item');
+      if (!item || !item.dataset.id) return;
+      selectPatient(item.dataset.id);
+    });
+    panelList.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const item = e.target.closest('.pp-item');
+      if (!item || !item.dataset.id) return;
+      e.preventDefault();
+      selectPatient(item.dataset.id);
+    });
+  }
   initMap();
   setInterval(syncFromAPI, 1000);
   syncFromAPI();

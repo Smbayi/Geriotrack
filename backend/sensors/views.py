@@ -303,7 +303,7 @@ def send_message(request):
         return JsonResponse(result, status=status)
 
     nom = NOMS.get(patient_id, patient_id)
-    analyse_url = services.build_analyse_url(patient_id)
+    geo_url = services.build_carte_url(patient_id, portail=True, via_login=True)
 
     if recipient_type == 'medecin':
         rname = patient.get('medecin', 'Médecin')
@@ -343,10 +343,10 @@ def send_message(request):
     if not body:
         body = (
             f'Alerte GérioTrack — {nom} ({patient_id}). '
-            f'Suivi ECG et capteurs : {analyse_url}'
+            f'Voir la position : {geo_url}'
         )
     gsm_sms = (
-        f'GérioTrack: {nom}. {body[:120]}. Graphique: {analyse_url}'
+        f'GérioTrack: {nom}. {body[:120]}. Carte: {geo_url}'
     )[:160]
     sms_result = services.send_sms(
         rphone, gsm_sms, patient_code=patient_id, device_id=device_id,
@@ -373,7 +373,7 @@ def send_message(request):
     mail_status = 'skipped'
     if recipient_type == 'famille':
         mail_subject = f'GérioTrack — Alerte {nom}'
-        mail_body = f'{body}\n\nGraphique ECG / analyse : {analyse_url}'
+        mail_body = f'{body}\n\nCarte / position : {geo_url}'
         mail_status = services._send_real_email(mail_subject, mail_body, famille_email)
 
     AppNotification.objects.create(
@@ -389,7 +389,7 @@ def send_message(request):
         'sms_api': sms_result.get('http_sent', False),
         'channel': sms_result.get('channel', 'sms'),
         'email_status': mail_status,
-        'analyse_url': analyse_url,
+        'geo_url': geo_url,
     }, status=201)
 
 

@@ -44,6 +44,25 @@ body:has(.body-row) > .sidebar {
   z-index: 910 !important;
 }
 
+/* Analyse : pas de sidebar, contenu pleine largeur */
+body.analyse-page > .main {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  width: 100%;
+}
+
+/* Overlay analyse (patients) — la sidebar ne doit pas recouvrir le panneau */
+body.analyse-overlay-open > .sidebar {
+  display: none !important;
+}
+body.analyse-overlay-open > .main {
+  margin-left: 0 !important;
+  width: 100% !important;
+}
+.analyse-ov.open {
+  z-index: 950 !important;
+}
+
 /* ── Tablette (≤1024px) ── */
 @media (max-width: 1024px) {
   .stats-grid,
@@ -182,24 +201,29 @@ body:has(.body-row) > .sidebar {
   .analyse-panel { width: 100% !important; border-radius: 0 !important; }
   .analyse-body { grid-template-columns: 1fr !important; }
   /* Overlay analyse — styles détaillés dans analyse-compact.css */
-  body:has(.body-row) {
+  /* Géolocalisation — layout smartphone uniquement */
+  body.geo-page:has(.body-row) {
     height: auto !important;
     min-height: 100vh;
     overflow: auto !important;
     flex-direction: column;
   }
-  body:has(.body-row) > .main { width: 100%; }
-  .body-row { flex-direction: column !important; overflow: visible !important; }
-  .map-column { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-  .map-container {
+  body.geo-page:has(.body-row) > .main { width: 100%; }
+  body.geo-page .body-row { flex-direction: column !important; overflow: visible !important; }
+  body.geo-page .map-column { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+  body.geo-page .map-container {
     min-height: 45vh !important;
     height: 45vh !important;
     flex: none !important;
   }
+  body.geo-page .map-container #map {
+    position: absolute;
+    inset: 0;
+  }
   .map-overlay-tl,
   .map-controls,
   .city-badge { display: none !important; }
-  .side-panel {
+  body.geo-page .side-panel {
     width: 100% !important;
     height: auto !important;
     border-left: none !important;
@@ -230,5 +254,31 @@ body:has(.body-row) > .sidebar {
 @media (hover: none) and (pointer: coarse) {
   .nav-item, .icon-btn, .menu-toggle, .fb, .btn-primary, .gsm-btn, .a-gsm-btn {
     min-height: 44px;
+  }
+}
+
+/* Géolocalisation PC — annule tout résidu mobile */
+@media (min-width: 769px) {
+  body.geo-page {
+    height: 100vh !important;
+    overflow: hidden !important;
+    flex-direction: row !important;
+  }
+  body.geo-page .body-row {
+    flex-direction: row !important;
+    overflow: hidden !important;
+    flex: 1;
+    min-height: 0;
+  }
+  body.geo-page .map-container {
+    flex: 1 1 auto !important;
+    min-height: 320px !important;
+    height: auto !important;
+  }
+  body.geo-page .side-panel {
+    width: var(--panel-w, 320px) !important;
+    height: 100% !important;
+    border-top: none !important;
+    border-left: 1px solid var(--border, rgba(255, 255, 255, 0.07)) !important;
   }
 }
