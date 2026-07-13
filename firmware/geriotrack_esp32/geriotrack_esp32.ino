@@ -14,10 +14,10 @@
 
 const char* ssid     = "MOI";
 const char* password = "Elsa@202";
-// Production Render (Internet requis) :
-String djangoURL = "https://geriotrack.onrender.com/api/recevoir/";
 // Labo local (même Wi-Fi que le PC Django) :
 // String djangoURL = "http://192.168.150.205:8000/api/recevoir/";
+// Production Render (Internet requis) :
+String djangoURL = "https://geriotrack.onrender.com/api/recevoir/";
 
 #define DHTPIN 4
 #define DHTTYPE DHT11
@@ -26,6 +26,8 @@ String djangoURL = "https://geriotrack.onrender.com/api/recevoir/";
 #define RXD_GSM 16
 #define TXD_GSM 17
 #define PIN_ECG 34
+#define PIN_LO_PLUS 32
+#define PIN_LO_MOINS 25
 const int BUZZER_X = 12;
 const int BUZZER_Y = 13;
 
@@ -42,15 +44,19 @@ bool alerteChuteActuelle = false;
 float lastAngleX = 0, lastAngleY = 0;
 sensors_event_t lastA, lastG, tempEvt;
 
-// ECG — calibration AD8232 (ADC 12 bits)
+// ECG AD8232 — ADC 12 bits, ligne de base ~2048
 const int ECG_MID = 2048;
+const int ECG_BUF_LEN = 80;
+int ecgBuf[ECG_BUF_LEN];
+int ecgBufIdx = 0;
+int ecgBufCount = 0;
 int ecgRaw = 0;
-int ecgBpm = 72;
-unsigned long lastBeatMs = 0;
-unsigned long beatIntervals[8] = {0};
-int beatIdx = 0;
-int lastEcgPeak = 0;
-bool ecgArmed = true;
+int ecgBpm = 0;
+bool electrodesOk = false;
+unsigned long dernierBattement = 0;
+int seuilDetectionPic = 2200;
+bool picDetecte = false;
+unsigned long lastEcgSerial = 0;
 
 String gsmReadAll(unsigned long timeoutMs = 3000) {
   String r = "";
@@ -145,33 +151,50 @@ void processGsmCommands(String jsonBody) {
   }
 }
 
-void updateEcg() {
-  ecgRaw = analogRead(PIN_ECG);
-  int signal = abs(ecgRaw - ECG_MID);
-  unsigned long now = millis();
+void updateEcg(unsigned long tempsActuel) {
+  electrodesOk = (digitalRead(PIN_LO_PLUS) == 0) && (digitalRead(PIN_LO_MOINS) == 0);
+  int valeurEcg = 0;
 
-  // Détection pic (seuil adaptatif)
-  int threshold = 180;
-  if (ecgArmed && signal > threshold && (now - lastBeatMs) > 350) {
-    if (lastBeatMs > 0) {
-      unsigned long interval = now - lastBeatMs;
-      if (interval > 400 && interval < 1500) {
-        beatIntervals[beatIdx % 8] = interval;
-        beatIdx++;
-        long sum = 0;
-        int n = min(beatIdx, 8);
-        for (int j = 0; j < n; j++) sum += beatIntervals[j];
-        if (n > 0) {
-          float avg = sum / (float)n;
-          ecgBpm = constrain((int)(60000.0 / avg), 45, 130);
-        }
+  if (electrodesOk) {
+    valeurEcg = analogRead(PIN_ECG);
+    if (valeurEcg > seuilDetectionPic && !picDetecte) {
+      unsigned long intervalle = tempsActuel - dernierBattement;
+      if (dernierBattement > 0 && intervalle > 400) {
+        ecgBpm = constrain((int)(60000UL / intervalle), 45, 150);
+        dernierBattement = tempsActuel;
+        picDetecte = true;
+      } else if (dernierBattement == 0) {
+        dernierBattement = tempsActuel;
+        picDetecte = true;
       }
+    } else if (valeurEcg < (seuilDetectionPic - 200)) {
+      picDetecte = false;
     }
-    lastBeatMs = now;
-    ecgArmed = false;
-    lastEcgPeak = signal;
+  } else {
+    valeurEcg = 0;
+    ecgBpm = 0;
+    picDetecte = false;
   }
-  if (signal < threshold / 2) ecgArmed = true;
+
+  ecgRaw = valeurEcg;
+  ecgBuf[ecgBufIdx] = valeurEcg;
+  ecgBufIdx = (ecgBufIdx + 1) % ECG_BUF_LEN;
+  if (ecgBufCount < ECG_BUF_LEN) ecgBufCount++;
+
+  if (tempsActuel - lastEcgSerial >= 200) {
+    lastEcgSerial = tempsActuel;
+    Serial.printf("ECG adc=%d bpm=%d elec=%s\n", valeurEcg, ecgBpm, electrodesOk ? "OK" : "OFF");
+  }
+}
+
+void appendEcgSamples(String& json) {
+  json += "\"ecg_samples\":[";
+  for (int i = 0; i < ecgBufCount; i++) {
+    int idx = (ecgBufIdx - ecgBufCount + i + ECG_BUF_LEN) % ECG_BUF_LEN;
+    if (i) json += ",";
+    json += String(ecgBuf[idx]);
+  }
+  json += "],";
 }
 
 void setup() {
@@ -180,6 +203,8 @@ void setup() {
   pinMode(BUZZER_X, OUTPUT);
   pinMode(BUZZER_Y, OUTPUT);
   pinMode(PIN_ECG, INPUT);
+  pinMode(PIN_LO_PLUS, INPUT);
+  pinMode(PIN_LO_MOINS, INPUT);
   analogReadResolution(12);
   analogSetAttenuation(ADC_11db);
   noTone(BUZZER_X);
@@ -218,7 +243,7 @@ void loop() {
   alerteChuteActuelle = (chuteX || chuteY);
 
   while (Serial1.available() > 0) gps.encode(Serial1.read());
-  updateEcg();
+  updateEcg(now);
 
   if (now - dernierEnvoi >= INTERVALLE_ENVOI) {
     dernierEnvoi = now;
@@ -249,8 +274,11 @@ void loop() {
       json += "\"gyro_x\":" + String(lastG.gyro.x, 3) + ",";
       json += "\"gyro_y\":" + String(lastG.gyro.y, 3) + ",";
       json += "\"gyro_z\":" + String(lastG.gyro.z, 3) + ",";
+      appendEcgSamples(json);
+      json += "\"ecg_brut\":" + String(ecgRaw) + ",";
       json += "\"ecg_raw\":" + String(ecgRaw) + ",";
       json += "\"bpm\":" + String(ecgBpm) + ",";
+      json += "\"electrodes_connectees\":" + String(electrodesOk ? "true" : "false") + ",";
       json += "\"latitude\":" + String(lat, 6) + ",";
       json += "\"longitude\":" + String(lng, 6);
       json += "}";
@@ -258,7 +286,8 @@ void loop() {
       int code = http.POST(json);
       if (code > 0) {
         String resp = http.getString();
-        Serial.printf("OK %d | BPM=%d ECG=%d chute=%d\n", code, ecgBpm, ecgRaw, alerteChuteActuelle);
+        Serial.printf("OK %d | BPM=%d ECG=%d elec=%s chute=%d\n",
+          code, ecgBpm, ecgRaw, electrodesOk ? "OK" : "OFF", alerteChuteActuelle);
         processGsmCommands(resp);
       } else {
         Serial.println(http.errorToString(code).c_str());

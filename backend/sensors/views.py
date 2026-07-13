@@ -373,7 +373,7 @@ def send_message(request):
     mail_status = 'skipped'
     if recipient_type == 'famille':
         mail_subject = f'GérioTrack — Alerte {nom}'
-        mail_body = f'{body}\n\nCarte / position : {geo_url}'
+        mail_body = f'{body}\n\nVoir la position : {geo_url}'
         mail_status = services._send_real_email(mail_subject, mail_body, famille_email)
 
     AppNotification.objects.create(

@@ -794,7 +794,7 @@ def _dispatch_fall_messages(fall_event, patient_code, device_id=None):
     mail_body = (
         f'{famille_msg}\n\n'
         f'—\n'
-        f'Carte / position : {geo_famille}\n'
+        f'Voir la position : {geo_famille}\n'
         f'Espace famille : {espace_famille}\n'
         f'Ce message a été envoyé automatiquement par GérioTrack.'
     )
@@ -893,7 +893,7 @@ def dispatch_patient_portal_alert(patient_code, alert_type, custom_message=None,
         mail_body = (
             f'{full_body}\n\n'
             f'—\n'
-            f'Carte / position : {geo_famille}\n'
+            f'Voir la position : {geo_famille}\n'
             f'GérioTrack — alerte automatique.'
         )
         mail_status = _send_real_email(subject, mail_body, famille_email)
